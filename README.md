@@ -96,11 +96,27 @@ Each job contains:
 - npm / pnpm  
 - Windows, macOS, or Linux  
 
-### Install dependencies
+### Installation
+1. Clone the repository:
+```bash
+git clone [https://github.com/your-repo/zaprint-desktop.git](https://github.com/Ibrahimkazi18/zaprint-desktop.git)
+cd zaprint-desktop
+```
+
+2. Install dependencies:
 ```bash
 npm install
+```
 
+3. Launch development mode:
+```bash
 npm run dev
+```
+
+### Building for Production
+To package the app for distribution:
+```bash
+npm run build
 ```
 
 ## 🧭 Future Enhancements
@@ -113,3 +129,14 @@ npm run dev
 [ ] Printer health (Ink/Paper) monitoring.
 
 [ ] Offline job caching.
+
+
+## 👤 Target Users
+
+- Local Print Shops
+
+- Commercial Copy Centers
+
+- Authorized Zaprint Partners
+
+License: Proprietary – © Zaprint. All rights reserved.
