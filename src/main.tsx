@@ -8,10 +8,18 @@ import AuthPage from './pages/AuthPage'
 import ShopOnboarding from './pages/ShopOnboarding'
 import Dashboard from './pages/Dashboard'
 
+import { Toaster } from 'react-hot-toast';
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth()
-  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return <div className="p-4 text-center">Loading...</div>
+  }
+
+  return user ? <>{children}</> : <Navigate to="/" replace />
 }
+
 
 function App() {
   return (
@@ -36,6 +44,7 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
+      <Toaster />
       <App />
     </AuthProvider>
   </React.StrictMode>

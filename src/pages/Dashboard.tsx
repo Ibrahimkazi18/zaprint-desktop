@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -8,11 +8,15 @@ import { ArrowUp, ArrowDown, LogOut, RefreshCw, Sun, Moon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { PrintJob } from '@/types'
+import { useToast } from '@/components/toast/useToast'
 
 export default function Dashboard() {
+  console.log("Rendering dashbaord")
   const { logout } = useAuth()
   const navigate = useNavigate()
 
+  const { show } = useToast();
+ 
   // Dark mode toggle
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (localStorage.theme === 'dark') return true
@@ -24,6 +28,11 @@ export default function Dashboard() {
     if (darkMode) {
       document.documentElement.classList.add('dark')
       localStorage.theme = 'dark'
+      show({
+        title: "Dark mode enabled",
+        variant: "info",
+        description: "You are now in dark mode"
+      })
     } else {
       document.documentElement.classList.remove('dark')
       localStorage.theme = 'light'

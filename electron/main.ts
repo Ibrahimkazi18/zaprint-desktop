@@ -1,20 +1,12 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import Store from "electron-store"
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
 process.env.APP_ROOT = path.join(__dirname, '..')
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -23,6 +15,23 @@ export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+
+const store = new Store()
+
+ipcMain.handle("auth:save", (_, session) => {
+  store.set("session", session)
+})
+
+ipcMain.handle("auth:get", () => {
+  const session = store.get("session")
+  console.log("📦 Restored session:", !!session)
+  return session ?? null
+})
+
+
+ipcMain.handle("auth:clear", () => {
+  store.delete("session")
+})
 
 let win: BrowserWindow | null
 

@@ -22,3 +22,9 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+
+contextBridge.exposeInMainWorld("auth", {
+  saveSession: (session: any) => ipcRenderer.invoke("auth:save", session),
+  getSession: () => ipcRenderer.invoke("auth:get"),
+  clearSession: () => ipcRenderer.invoke("auth:clear"),
+})

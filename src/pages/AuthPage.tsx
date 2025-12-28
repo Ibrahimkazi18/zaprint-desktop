@@ -7,11 +7,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Eye, EyeOff } from 'lucide-react'
+import { useToast } from '@/components/toast/useToast'
+
 
 export default function AuthPage() {
-  const { login } = useAuth()
+  const { login, signup } = useAuth()
   const navigate = useNavigate()
+
   const [isLogin, setIsLogin] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -23,91 +27,198 @@ export default function AuthPage() {
   const [showSignupPassword, setShowSignupPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const { show } = useToast()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
+  /* ---------------- LOGIN ---------------- */
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    login()
-    navigate('/dashboard')
+    setLoading(true)
+
+    try {
+      await login(loginEmail.trim(), loginPassword)
+
+      show({
+        title: 'Login successful',
+        description: 'Welcome back to Zaprint',
+        variant: 'success',
+      })
+
+      navigate('/dashboard')
+    } catch (err: any) {
+
+      show({
+        title: 'Login Failed',
+        description: 'Please retry some error occured',
+        variant: 'error',
+      })
+
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  /* ---------------- SIGNUP ---------------- */
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isValidEmail(signupEmail)) return
-    if (signupPassword !== confirmPassword) return
-    if (signupPassword.length < 6) return
 
-    login()
-    navigate('/onboarding')
+    if (!isValidEmail(signupEmail)) {
+      show({
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address',
+        variant: 'error',
+      })
+
+      return
+    }
+
+    if (signupPassword.length < 6) {
+      show({
+        title: 'Weak password',
+        description: 'Password must be at least 6 characters',
+        variant: 'error',
+      })
+      return
+    }
+
+    if (signupPassword !== confirmPassword) {
+      show({
+        title: 'Passwords do not match',
+        description: 'Please re-enter both passwords carefully',
+        variant: 'error',
+      })
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      await signup(signupEmail.trim(), signupPassword)
+
+      show({
+        title: 'Account created',
+        description: 'Welcome to Zaprint 🎉',
+        variant: 'success',
+      })
+
+      navigate('/onboarding')
+    } catch (err: any) {
+        show({
+          title: 'Signup failed',
+          description: err?.message || 'Unable to create account',
+          variant: 'error',
+        })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+        <CardHeader>
           <CardTitle className="text-2xl text-center">Welcome to Zaprint</CardTitle>
           <CardDescription className="text-center">
             {isLogin ? 'Log in to your account' : 'Create a new account'}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-          <Tabs value={isLogin ? 'login' : 'signup'} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login" onClick={() => setIsLogin(true)}>Login</TabsTrigger>
-              <TabsTrigger value="signup" onClick={() => setIsLogin(false)}>Sign Up</TabsTrigger>
+          <Tabs value={isLogin ? 'login' : 'signup'}>
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="login" onClick={() => setIsLogin(true)}>
+                Login
+              </TabsTrigger>
+              <TabsTrigger value="signup" onClick={() => setIsLogin(false)}>
+                Sign Up
+              </TabsTrigger>
             </TabsList>
 
+            {/* LOGIN */}
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input id="login-email" type="email" placeholder="you@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+
+                <div>
+                  <Label>Password</Label>
                   <div className="relative">
-                    <Input id="login-password" type={showLoginPassword ? 'text' : 'password'} value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required />
-                    <button type="button" onClick={() => setShowLoginPassword(!showLoginPassword)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
-                      {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    <Input
+                      type={showLoginPassword ? 'text' : 'password'}
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-3"
+                    >
+                      {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
-                <Button type="submit" className="w-full">Log In</Button>
+
+                <Button className="w-full" disabled={loading}>
+                  {loading ? 'Logging in...' : 'Log In'}
+                </Button>
               </form>
             </TabsContent>
 
+            {/* SIGNUP */}
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input id="signup-email" type="email" placeholder="you@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required />
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <div className="relative">
-                    <Input id="signup-password" type={showSignupPassword ? 'text' : 'password'} value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
-                    <button type="button" onClick={() => setShowSignupPassword(!showSignupPassword)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
-                      {showSignupPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
+
+                <div>
+                  <Label>Password</Label>
+                  <Input
+                    type={showSignupPassword ? 'text' : 'password'}
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    required
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <div className="relative">
-                    <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
-                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
+
+                <div>
+                  <Label>Confirm Password</Label>
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
                 </div>
-                <Button type="submit" className="w-full">Sign Up</Button>
+
+                <Button className="w-full" disabled={loading}>
+                  {loading ? 'Creating account...' : 'Sign Up'}
+                </Button>
               </form>
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="text-center text-sm text-muted-foreground">
-          {isLogin ? "Don't have an account? " : 'Already have an account? '}
-          <button type="button" onClick={() => setIsLogin(!isLogin)} className="underline hover:text-primary">
+
+        <CardFooter className="justify-center text-sm">
+          {isLogin ? "Don't have an account?" : 'Already have an account?'}
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="ml-1 underline"
+          >
             {isLogin ? 'Sign up' : 'Log in'}
           </button>
         </CardFooter>
