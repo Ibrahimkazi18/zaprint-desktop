@@ -140,7 +140,7 @@ export default function Sidebar({ className }: SidebarProps) {
       )}
     >
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b dark:border-slate-700">
         {!collapsed && <h2 className="text-lg font-semibold">Navigation</h2>}
         <Button
           variant="ghost"
