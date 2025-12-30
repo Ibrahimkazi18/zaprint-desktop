@@ -1,143 +1,132 @@
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Separator } from '@/components/ui/separator'
-import { ArrowUp, ArrowDown, LogOut, RefreshCw, Sun, Moon } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import { PrintJob } from '@/types'
-import { useToast } from '@/components/toast/useToast'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
+import { PrintJob } from "@/types";
+import { useToast } from "@/components/toast/useToast";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 export default function Dashboard() {
-  console.log("Rendering dashbaord")
-  const { logout } = useAuth()
-  const navigate = useNavigate()
-
+  console.log("Rendering dashboard");
   const { show } = useToast();
- 
-  // Dark mode toggle
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    if (localStorage.theme === 'dark') return true
-    if (localStorage.theme === 'light') return false
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-      localStorage.theme = 'dark'
-      show({
-        title: "Dark mode enabled",
-        variant: "info",
-        description: "You are now in dark mode"
-      })
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.theme = 'light'
-    }
-  }, [darkMode])
-
-  const toggleDarkMode = () => setDarkMode(!darkMode)
 
   // Mock queue data
   const [queue, setQueue] = useState<PrintJob[]>([
     {
-      id: 'job-001',
-      customerName: 'John Doe',
-      jobType: 'Document Print',
-      status: 'Printing',
+      id: "job-001",
+      customerName: "John Doe",
+      jobType: "Document Print",
+      status: "Printing",
       pages: 10,
       copies: 2,
-      colorMode: 'Color',
-      paperSize: 'A4',
-      binding: 'None',
-      notes: 'Urgent delivery',
-      estimatedTime: '5 mins',
+      colorMode: "Color",
+      paperSize: "A4",
+      binding: "None",
+      notes: "Urgent delivery",
+      estimatedTime: "5 mins",
     },
     {
-      id: 'job-002',
-      customerName: 'Jane Smith',
-      jobType: 'Poster Print',
-      status: 'Queued',
+      id: "job-002",
+      customerName: "Jane Smith",
+      jobType: "Poster Print",
+      status: "Queued",
       pages: 1,
       copies: 5,
-      colorMode: 'Color',
-      paperSize: 'A3',
-      binding: 'None',
-      notes: 'High quality gloss',
-      estimatedTime: '20 mins',
+      colorMode: "Color",
+      paperSize: "A3",
+      binding: "None",
+      notes: "High quality gloss",
+      estimatedTime: "20 mins",
     },
     {
-      id: 'job-003',
-      customerName: 'Alex Johnson',
-      jobType: 'Thesis Binding',
-      status: 'Queued',
+      id: "job-003",
+      customerName: "Alex Johnson",
+      jobType: "Thesis Binding",
+      status: "Queued",
       pages: 150,
       copies: 1,
-      colorMode: 'B&W',
-      paperSize: 'A4',
-      binding: 'Spiral',
-      notes: 'Include cover page',
-      estimatedTime: '30 mins',
+      colorMode: "B&W",
+      paperSize: "A4",
+      binding: "Spiral",
+      notes: "Include cover page",
+      estimatedTime: "30 mins",
     },
-  ])
-
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+  ]);
 
   const moveUp = (index: number) => {
-    if (index === 0) return
-    const newQueue = [...queue]
-    ;[newQueue[index - 1], newQueue[index]] = [newQueue[index], newQueue[index - 1]]
-    setQueue(newQueue)
-  }
+    if (index === 0) return;
+    const newQueue = [...queue];
+    [newQueue[index - 1], newQueue[index]] = [
+      newQueue[index],
+      newQueue[index - 1],
+    ];
+    setQueue(newQueue);
+    show({
+      title: "Queue Updated",
+      variant: "success",
+      description: `Moved ${newQueue[index - 1].customerName}'s job up`,
+    });
+  };
 
   const moveDown = (index: number) => {
-    if (index === queue.length - 1) return
-    const newQueue = [...queue]
-    ;[newQueue[index], newQueue[index + 1]] = [newQueue[index + 1], newQueue[index]]
-    setQueue(newQueue)
-  }
+    if (index === queue.length - 1) return;
+    const newQueue = [...queue];
+    [newQueue[index], newQueue[index + 1]] = [
+      newQueue[index + 1],
+      newQueue[index],
+    ];
+    setQueue(newQueue);
+    show({
+      title: "Queue Updated",
+      variant: "success",
+      description: `Moved ${newQueue[index + 1].customerName}'s job down`,
+    });
+  };
 
   const fetchQueue = async () => {
-    console.log('Fetching queue... (API placeholder)')
-  }
+    show({
+      title: "Refreshing Queue",
+      variant: "loading",
+      description: "Fetching latest print jobs...",
+    });
+    // Simulate API call
+    setTimeout(() => {
+      show({
+        title: "Queue Refreshed",
+        variant: "success",
+        description: "Print queue is up to date",
+      });
+    }, 1000);
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Top Bar */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Zaprint Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleDarkMode}
-              aria-label="Toggle dark mode"
-            >
-              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="container mx-auto px-6 py-8">
         {/* Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
           <div className="rounded-lg border bg-card p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Print Jobs Today</h3>
             <p className="text-3xl font-bold mt-4">12</p>
-            <p className="text-sm text-muted-foreground mt-2">+3 from yesterday</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              +3 from yesterday
+            </p>
           </div>
           <div className="rounded-lg border bg-card p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Active Customers</h3>
@@ -147,7 +136,9 @@ export default function Dashboard() {
           <div className="rounded-lg border bg-card p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Shop Rating</h3>
             <p className="text-3xl font-bold mt-4">4.8 ★</p>
-            <p className="text-sm text-muted-foreground mt-2">Based on 120 reviews</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Based on 120 reviews
+            </p>
           </div>
         </div>
 
@@ -168,7 +159,9 @@ export default function Dashboard() {
           </div>
 
           {queue.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No jobs in queue. Relax! ☕</p>
+            <p className="text-center text-muted-foreground py-8">
+              No jobs in queue. Relax! ☕
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -184,7 +177,10 @@ export default function Dashboard() {
               </TableHeader>
               <TableBody>
                 {queue.map((job, index) => (
-                  <TableRow key={job.id} className="hover:bg-muted/50 transition-colors">
+                  <TableRow
+                    key={job.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{job.id}</TableCell>
                     <TableCell>{job.customerName}</TableCell>
@@ -192,11 +188,11 @@ export default function Dashboard() {
                     <TableCell>
                       <Badge
                         variant={
-                          job.status === 'Printing'
-                            ? 'default'
-                            : job.status === 'Queued'
-                            ? 'secondary'
-                            : 'outline'
+                          job.status === "Printing"
+                            ? "default"
+                            : job.status === "Queued"
+                            ? "secondary"
+                            : "outline"
                         }
                       >
                         {job.status}
@@ -221,14 +217,31 @@ export default function Dashboard() {
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 pt-4">
-                            <p><strong>Type:</strong> {job.jobType}</p>
-                            <p><strong>Color Mode:</strong> {job.colorMode}</p>
-                            <p><strong>Paper Size:</strong> {job.paperSize}</p>
-                            <p><strong>Pages:</strong> {job.pages}</p>
-                            <p><strong>Copies:</strong> {job.copies}</p>
-                            <p><strong>Binding:</strong> {job.binding || 'None'}</p>
-                            <p><strong>Notes:</strong> {job.notes || 'N/A'}</p>
-                            <p><strong>Estimated Time:</strong> {job.estimatedTime}</p>
+                            <p>
+                              <strong>Type:</strong> {job.jobType}
+                            </p>
+                            <p>
+                              <strong>Color Mode:</strong> {job.colorMode}
+                            </p>
+                            <p>
+                              <strong>Paper Size:</strong> {job.paperSize}
+                            </p>
+                            <p>
+                              <strong>Pages:</strong> {job.pages}
+                            </p>
+                            <p>
+                              <strong>Copies:</strong> {job.copies}
+                            </p>
+                            <p>
+                              <strong>Binding:</strong> {job.binding || "None"}
+                            </p>
+                            <p>
+                              <strong>Notes:</strong> {job.notes || "N/A"}
+                            </p>
+                            <p>
+                              <strong>Estimated Time:</strong>{" "}
+                              {job.estimatedTime}
+                            </p>
                           </div>
                         </DialogContent>
                       </Dialog>
@@ -281,6 +294,6 @@ export default function Dashboard() {
           </ul>
         </div>
       </div>
-    </div>
-  )
+    </DashboardLayout>
+  );
 }
