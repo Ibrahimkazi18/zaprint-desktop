@@ -121,19 +121,19 @@ export default function Dashboard() {
       <div className="container mx-auto px-6 py-8">
         {/* Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Print Jobs Today</h3>
             <p className="text-3xl font-bold mt-4">12</p>
             <p className="text-sm text-muted-foreground mt-2">
               +3 from yesterday
             </p>
           </div>
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Active Customers</h3>
             <p className="text-3xl font-bold mt-4">45</p>
             <p className="text-sm text-muted-foreground mt-2">Ready for more</p>
           </div>
-          <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
             <h3 className="text-lg font-semibold">Shop Rating</h3>
             <p className="text-3xl font-bold mt-4">4.8 ★</p>
             <p className="text-sm text-muted-foreground mt-2">
@@ -179,7 +179,7 @@ export default function Dashboard() {
                 {queue.map((job, index) => (
                   <TableRow
                     key={job.id}
-                    className="hover:bg-muted/50 transition-colors"
+                    className="hover:bg-muted/50 dark:border-slate-700 transition-colors"
                   >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{job.id}</TableCell>
@@ -204,41 +204,41 @@ export default function Dashboard() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border border-input hover:bg-accent"
+                            className="border dark:border-slate-700 border-input hover:bg-accent"
                           >
                             Show Details
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Job Details: {job.id}</DialogTitle>
+                            <DialogTitle className="text-foreground">Job Details: {job.id}</DialogTitle>
                             <DialogDescription>
                               Detailed information for this print job.
                             </DialogDescription>
                           </DialogHeader>
-                          <div className="space-y-4 pt-4">
-                            <p>
+                          <div className="space-y-4 pt-4 text-background">
+                            <p className="text-foreground">
                               <strong>Type:</strong> {job.jobType}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Color Mode:</strong> {job.colorMode}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Paper Size:</strong> {job.paperSize}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Pages:</strong> {job.pages}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Copies:</strong> {job.copies}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Binding:</strong> {job.binding || "None"}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Notes:</strong> {job.notes || "N/A"}
                             </p>
-                            <p>
+                            <p className="text-foreground">
                               <strong>Estimated Time:</strong>{" "}
                               {job.estimatedTime}
                             </p>
