@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import { useToast } from "@/components/toast/useToast";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { show } = useToast();
-
   // Dark mode state
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (localStorage.theme === "dark") return true;
@@ -29,11 +26,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
-    show({
-      title: darkMode ? "Light mode enabled" : "Dark mode enabled",
-      variant: "info",
-      description: `You are now in ${darkMode ? "light" : "dark"} mode`,
-    });
   };
 
   return (

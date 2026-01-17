@@ -12,7 +12,6 @@ import {
 import { Sun, Moon, Settings, User, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/toast/useToast";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -22,24 +21,14 @@ interface NavbarProps {
 export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { show } = useToast();
 
   const handleLogout = () => {
     logout();
-    show({
-      title: "Logged out successfully",
-      variant: "success",
-      description: "See you next time!",
-    });
     navigate("/");
   };
 
   const handleSettings = () => {
-    show({
-      title: "Settings",
-      variant: "info",
-      description: "Settings panel coming soon!",
-    });
+    console.log("Settings clicked");
   };
 
   return (
@@ -100,26 +89,12 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() =>
-                  show({
-                    title: "Profile",
-                    variant: "info",
-                    description: "Profile page coming soon!",
-                  })
-                }
-              >
+              <DropdownMenuItem onClick={() => console.log("Profile clicked")}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() =>
-                  show({
-                    title: "More options",
-                    variant: "info",
-                    description: "More features coming soon!",
-                  })
-                }
+                onClick={() => console.log("More options clicked")}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>More</span>

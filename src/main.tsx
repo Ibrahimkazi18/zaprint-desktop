@@ -7,7 +7,10 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import AuthPage from "./pages/AuthPage";
 import ShopOnboarding from "./pages/ShopOnboarding";
 import Dashboard from "./pages/Dashboard";
-import CreatePage from "./components/pages/CreatePage";
+import Analytics from "./pages/Analytics";
+import Customers from "./pages/Customers";
+import Settings from "./pages/Settings";
+import Queue from "./pages/Queue";
 
 import { Toaster } from "react-hot-toast";
 
@@ -36,10 +39,34 @@ function App() {
           }
         />
         <Route
-          path="/create-page"
+          path="/analytics"
           element={
             <ProtectedRoute>
-              <CreatePage />
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <ProtectedRoute>
+              <Customers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/queue"
+          element={
+            <ProtectedRoute>
+              <Queue />
             </ProtectedRoute>
           }
         />

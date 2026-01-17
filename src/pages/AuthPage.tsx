@@ -1,228 +1,347 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Eye, EyeOff } from 'lucide-react'
-import { useToast } from '@/components/toast/useToast'
-
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff, Printer, Users, Star, TrendingUp } from "lucide-react";
 
 export default function AuthPage() {
-  const { login, signup } = useAuth()
-  const navigate = useNavigate()
+  const { login, signup } = useAuth();
+  const navigate = useNavigate();
 
-  const [isLogin, setIsLogin] = useState(true)
-  const [loading, setLoading] = useState(false)
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [loginEmail, setLoginEmail] = useState('')
-  const [loginPassword, setLoginPassword] = useState('')
-  const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  const [signupEmail, setSignupEmail] = useState('')
-  const [signupPassword, setSignupPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showSignupPassword, setShowSignupPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const { show } = useToast()
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  /* ---------------- LOGIN ---------------- */
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      await login(loginEmail.trim(), loginPassword)
-
-      show({
-        title: 'Login successful',
-        description: 'Welcome back to Zaprint',
-        variant: 'success',
-      })
-
-      navigate('/dashboard')
+      await login(loginEmail.trim(), loginPassword);
+      navigate("/dashboard");
     } catch (err: any) {
-
-      show({
-        title: 'Login Failed',
-        description: 'Please retry some error occured',
-        variant: 'error',
-      })
-
+      setError("Invalid email or password. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  /* ---------------- SIGNUP ---------------- */
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    setError("");
 
     if (!isValidEmail(signupEmail)) {
-      show({
-        title: 'Invalid Email',
-        description: 'Please enter a valid email address',
-        variant: 'error',
-      })
-
-      return
+      setError("Please enter a valid email address");
+      return;
     }
 
     if (signupPassword.length < 6) {
-      show({
-        title: 'Weak password',
-        description: 'Password must be at least 6 characters',
-        variant: 'error',
-      })
-      return
+      setError("Password must be at least 6 characters");
+      return;
     }
 
     if (signupPassword !== confirmPassword) {
-      show({
-        title: 'Passwords do not match',
-        description: 'Please re-enter both passwords carefully',
-        variant: 'error',
-      })
-      return
+      setError("Passwords do not match");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      await signup(signupEmail.trim(), signupPassword)
-
-      show({
-        title: 'Account created',
-        description: 'Welcome to Zaprint 🎉',
-        variant: 'success',
-      })
-
-      navigate('/onboarding')
+      await signup(signupEmail.trim(), signupPassword);
+      navigate("/onboarding");
     } catch (err: any) {
-        show({
-          title: 'Signup failed',
-          description: err?.message || 'Unable to create account',
-          variant: 'error',
-        })
+      setError(err?.message || "Unable to create account. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Welcome to Zaprint</CardTitle>
-          <CardDescription className="text-center">
-            {isLogin ? 'Log in to your account' : 'Create a new account'}
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen flex bg-background">
+      {/* Left side - Hero Section */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 p-12 flex-col justify-center">
+        <div className="text-white">
+          <h1 className="text-4xl font-bold mb-6">Welcome to Zaprint</h1>
+          <p className="text-xl mb-8 opacity-90">
+            The complete print shop management solution for modern businesses
+          </p>
 
-        <CardContent>
-          <Tabs value={isLogin ? 'login' : 'signup'}>
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="login" onClick={() => setIsLogin(true)}>
-                Login
-              </TabsTrigger>
-              <TabsTrigger value="signup" onClick={() => setIsLogin(false)}>
-                Sign Up
-              </TabsTrigger>
-            </TabsList>
+          <div className="space-y-6">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <Printer className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Queue Management</h3>
+                <p className="text-sm opacity-80">
+                  Organize and track all print jobs efficiently
+                </p>
+              </div>
+            </div>
 
-            {/* LOGIN */}
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <Label>Email</Label>
-                  <Input
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
-                  />
-                </div>
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Customer Management</h3>
+                <p className="text-sm opacity-80">
+                  Keep track of your customers and their preferences
+                </p>
+              </div>
+            </div>
 
-                <div>
-                  <Label>Password</Label>
-                  <div className="relative">
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Analytics & Reports</h3>
+                <p className="text-sm opacity-80">
+                  Get insights into your business performance
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <Star className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Rating System</h3>
+                <p className="text-sm opacity-80">
+                  Build trust with customer reviews and ratings
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 p-6 bg-white/10 rounded-lg">
+            <p className="text-sm opacity-90 mb-2">
+              Trusted by print shops nationwide
+            </p>
+            <div className="flex items-center space-x-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold">500+</div>
+                <div className="text-xs opacity-80">Active Shops</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">50K+</div>
+                <div className="text-xs opacity-80">Jobs Processed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">4.9★</div>
+                <div className="text-xs opacity-80">Average Rating</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right side - Auth Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">
+              {isLogin ? "Welcome Back" : "Get Started"}
+            </CardTitle>
+            <CardDescription>
+              {isLogin
+                ? "Sign in to your Zaprint account"
+                : "Create your Zaprint account"}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            {error && (
+              <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                {error}
+              </div>
+            )}
+
+            <Tabs value={isLogin ? "login" : "signup"}>
+              <TabsList className="grid grid-cols-2 w-full mb-6">
+                <TabsTrigger
+                  value="login"
+                  onClick={() => {
+                    setIsLogin(true);
+                    setError("");
+                  }}
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger
+                  value="signup"
+                  onClick={() => {
+                    setIsLogin(false);
+                    setError("");
+                  }}
+                >
+                  Sign Up
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email Address</Label>
                     <Input
-                      type={showLoginPassword ? 'text' : 'password'}
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
+                      id="login-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-3 top-3"
-                    >
-                      {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
                   </div>
-                </div>
 
-                <Button className="w-full" disabled={loading}>
-                  {loading ? 'Logging in...' : 'Log In'}
-                </Button>
-              </form>
-            </TabsContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showLoginPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showLoginPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-            {/* SIGNUP */}
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div>
-                  <Label>Email</Label>
-                  <Input
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    required
-                  />
-                </div>
+                  <Button className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              </TabsContent>
 
-                <div>
-                  <Label>Password</Label>
-                  <Input
-                    type={showSignupPassword ? 'text' : 'password'}
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    required
-                  />
-                </div>
+              <TabsContent value="signup">
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Email Address</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <Label>Confirm Password</Label>
-                  <Input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={showSignupPassword ? "text" : "password"}
+                        placeholder="Create a password (min. 6 characters)"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowSignupPassword(!showSignupPassword)
+                        }
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showSignupPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-                <Button className="w-full" disabled={loading}>
-                  {loading ? 'Creating account...' : 'Sign Up'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-        <CardFooter className="justify-center text-sm">
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="ml-1 underline"
-          >
-            {isLogin ? 'Sign up' : 'Log in'}
-          </button>
-        </CardFooter>
-      </Card>
+                  <Button className="w-full" disabled={loading}>
+                    {loading ? "Creating account..." : "Create Account"}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+
+          <CardFooter className="justify-center text-sm text-muted-foreground">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError("");
+              }}
+              className="ml-1 text-primary hover:underline"
+            >
+              {isLogin ? "Sign up" : "Sign in"}
+            </button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
-  )
+  );
 }

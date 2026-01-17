@@ -4,17 +4,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Home,
-  FileText,
-  Plus,
   Settings,
   Users,
   BarChart3,
-  Printer,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/toast/useToast";
 import { useNavigate, useLocation } from "react-router-dom";
 
 interface SidebarProps {
@@ -31,7 +27,6 @@ interface NavItem {
 
 export default function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const { show } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,53 +38,16 @@ export default function Sidebar({ className }: SidebarProps) {
       onClick: () => navigate("/dashboard"),
     },
     {
-      title: "Print Queue",
-      icon: Printer,
-      onClick: () =>
-        show({
-          title: "Print Queue",
-          variant: "info",
-          description: "Print queue management coming soon!",
-        }),
-    },
-    {
       title: "Analytics",
       icon: BarChart3,
-      onClick: () =>
-        show({
-          title: "Analytics",
-          variant: "info",
-          description: "Analytics dashboard coming soon!",
-        }),
+      path: "/analytics",
+      onClick: () => navigate("/analytics"),
     },
     {
       title: "Customers",
       icon: Users,
-      onClick: () =>
-        show({
-          title: "Customers",
-          variant: "info",
-          description: "Customer management coming soon!",
-        }),
-    },
-  ];
-
-  const createNavItems: NavItem[] = [
-    {
-      title: "New Print Job",
-      icon: Plus,
-      onClick: () =>
-        show({
-          title: "New Print Job",
-          variant: "info",
-          description: "Create new print job coming soon!",
-        }),
-    },
-    {
-      title: "New Page",
-      icon: FileText,
-      path: "/create-page",
-      onClick: () => navigate("/create-page"),
+      path: "/customers",
+      onClick: () => navigate("/customers"),
     },
   ];
 
@@ -97,12 +55,8 @@ export default function Sidebar({ className }: SidebarProps) {
     {
       title: "Settings",
       icon: Settings,
-      onClick: () =>
-        show({
-          title: "Settings",
-          variant: "info",
-          description: "Settings panel coming soon!",
-        }),
+      path: "/settings",
+      onClick: () => navigate("/settings"),
     },
   ];
 
@@ -166,20 +120,6 @@ export default function Sidebar({ className }: SidebarProps) {
               </h3>
             )}
             {mainNavItems.map((item, index) => (
-              <NavButton key={index} item={item} />
-            ))}
-          </div>
-
-          <Separator />
-
-          {/* Create Section */}
-          <div className="space-y-1">
-            {!collapsed && (
-              <h3 className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                Create
-              </h3>
-            )}
-            {createNavItems.map((item, index) => (
               <NavButton key={index} item={item} />
             ))}
           </div>
