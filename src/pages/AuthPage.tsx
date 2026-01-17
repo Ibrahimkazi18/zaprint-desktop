@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Printer, Users, Star, TrendingUp } from "lucide-react";
+import { useToast } from "@/components/toast/useToast";
 
 export default function AuthPage() {
   const { login, signup } = useAuth();

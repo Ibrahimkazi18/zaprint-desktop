@@ -24,7 +24,18 @@ import {
   ArrowRight,
   ArrowLeft,
   DollarSign,
+  Clock,
 } from "lucide-react";
+
+const DAYS_OF_WEEK = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const COMMON_SERVICES = [
   "Black & White Printing",
@@ -79,12 +90,24 @@ export default function ShopOnboarding() {
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [nonWorkingDays, setNonWorkingDays] = useState<string[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [servicePrices, setServicePrices] = useState<Record<string, number>>(
     {}
   );
+
+  const formatTime = (time: string) => {
+    if (!time) return "";
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,6 +116,12 @@ export default function ShopOnboarding() {
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  const toggleNonWorkingDay = (day: string) => {
+    setNonWorkingDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
   };
 
   const toggleService = (service: string) => {
@@ -122,6 +151,18 @@ export default function ShopOnboarding() {
     }
     if (!location.trim()) {
       setError("Shop location is required");
+      return false;
+    }
+    if (!startTime.trim()) {
+      setError("Start time is required");
+      return false;
+    }
+    if (!endTime.trim()) {
+      setError("End time is required");
+      return false;
+    }
+    if (startTime >= endTime) {
+      setError("End time must be after start time");
       return false;
     }
     setError("");
@@ -201,6 +242,9 @@ export default function ShopOnboarding() {
       phone,
       location,
       description,
+      startTime,
+      endTime,
+      nonWorkingDays,
       imagePreview,
       services: selectedServices,
       resources: selectedResources,
@@ -306,6 +350,72 @@ export default function ShopOnboarding() {
         <p className="text-xs text-muted-foreground">
           Optional - helps customers understand what makes your shop special
         </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="text-lg font-semibold flex items-center space-x-2">
+          <Clock className="h-5 w-5" />
+          <span>Operating Hours</span>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="start-time" className="flex items-center space-x-2">
+              <span>Start Time</span>
+              <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="start-time"
+              type="time"
+              placeholder="09:00"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              e.g. 09:00 for 9:00 AM, 13:00 for 1:00 PM
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="end-time" className="flex items-center space-x-2">
+              <span>End Time</span>
+              <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="end-time"
+              type="time"
+              placeholder="18:00"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              e.g. 18:00 for 6:00 PM, 21:00 for 9:00 PM
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Label>Non Working Days</Label>
+          <p className="text-xs text-muted-foreground">
+            Select the days the shop will be closed
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {DAYS_OF_WEEK.map((day) => (
+              <div key={day} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`day-${day}`}
+                  checked={nonWorkingDays.includes(day)}
+                  onCheckedChange={() => toggleNonWorkingDay(day)}
+                />
+                <label
+                  htmlFor={`day-${day}`}
+                  className="text-sm font-medium cursor-pointer flex-1"
+                >
+                  {day}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -495,6 +605,20 @@ export default function ShopOnboarding() {
                 <p className="text-sm text-muted-foreground">{description}</p>
               </div>
             )}
+            <div>
+              <h4 className="font-medium mb-2 flex items-center space-x-2">
+                <Clock className="h-4 w-4" />
+                <span>Operating Hours</span>
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {formatTime(startTime)} - {formatTime(endTime)}
+              </p>
+              {nonWorkingDays.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Closed on: {nonWorkingDays.join(", ")}
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
