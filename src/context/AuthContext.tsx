@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { supabase } from "@/auth/supabase"
+import { SupabaseClient } from "@supabase/supabase-js"
 
 interface AuthContextType {
   user: any | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string) => Promise<void>
+  signup: (email: string, password: string, name: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -51,23 +52,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } 
   }, [])
 
+  const upsertProfile = async (
+    supabase: SupabaseClient,
+    user: any,
+    role: "customer" | "shop" = "customer"
+  ) => {
+    // Check if profile exists
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (existingProfile) return existingProfile;
+
+    // Create profile if first time
+    const { data, error } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.user_metadata?.full_name || "",
+        role,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  };
 
   const login = async (email: string, password: string) => {
+    const profile = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (!profile.data) {
+      throw new Error("Profile not found");
+    }
+
+    if(profile.data.role !== "shop") {
+      throw new Error("Not a shop account");
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
+
     if (error) throw error
+    if (!data.user) throw new Error("User not found");
+
     await window.auth.saveSession(data.session)
     setUser(data.user)
   }
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, name: string) => {
+    const role = "shop"
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { name }
+      }
     })
     if (error) throw error
+
+    await upsertProfile(
+      supabase,
+      data.user,
+      role
+    );
+
     await window.auth.saveSession(data.session)
     setUser(data.user)
   }

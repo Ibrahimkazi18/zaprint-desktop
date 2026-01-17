@@ -27,11 +27,14 @@ export default function AuthPage() {
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('')
+  const [signupName, setSignupName] = useState('')
+  const [signupPassword, setSignupPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showSignupPassword, setShowSignupPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const { show } = useToast()
 
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -73,8 +76,15 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-      await signup(signupEmail.trim(), signupPassword);
-      navigate("/onboarding");
+      await signup(signupEmail.trim(), signupPassword, signupName.trim())
+
+      show({
+        title: 'Account created',
+        description: 'Welcome to Zaprint 🎉',
+        variant: 'success',
+      })
+
+      navigate('/onboarding')
     } catch (err: any) {
       setError(err?.message || "Unable to create account. Please try again.");
     } finally {
@@ -252,73 +262,67 @@ export default function AuthPage() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email Address</Label>
+            {/* SIGNUP */}
+            <TabsContent value="signup">
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+               <div>
+                  <Label>Name</Label>
+                  <Input
+                    value={signupName}
+                    onChange={(e) => setSignupName(e.target.value)}
+                    required
+                  />
+                </div>
+
+
+                <div>
+                  <Label>Password</Label>
+                  <div className="relative">
                     <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
+                      type={showSignupPassword ? 'text' : 'password'}
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
                       required
                     />
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        type={showSignupPassword ? "text" : "password"}
-                        placeholder="Create a password (min. 6 characters)"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowSignupPassword(!showSignupPassword)
-                        }
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showSignupPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                      className="absolute right-3 top-3"
+                    >
+                      {showSignupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
-                      </button>
-                    </div>
+                <div>
+                  <Label>Confirm Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3"
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
+                </div>
 
                   <Button className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create Account"}
