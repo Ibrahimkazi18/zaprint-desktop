@@ -22,6 +22,7 @@ export default function AuthPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false)
 
   const [signupEmail, setSignupEmail] = useState('')
+  const [signupName, setSignupName] = useState('')
   const [signupPassword, setSignupPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showSignupPassword, setShowSignupPassword] = useState(false)
@@ -95,7 +96,7 @@ export default function AuthPage() {
     setLoading(true)
 
     try {
-      await signup(signupEmail.trim(), signupPassword)
+      await signup(signupEmail.trim(), signupPassword, signupName.trim())
 
       show({
         title: 'Account created',
@@ -185,24 +186,54 @@ export default function AuthPage() {
                   />
                 </div>
 
-                <div>
-                  <Label>Password</Label>
+               <div>
+                  <Label>Name</Label>
                   <Input
-                    type={showSignupPassword ? 'text' : 'password'}
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
+                    value={signupName}
+                    onChange={(e) => setSignupName(e.target.value)}
                     required
                   />
                 </div>
 
+
+                <div>
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showSignupPassword ? 'text' : 'password'}
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                      className="absolute right-3 top-3"
+                    >
+                      {showSignupPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <Label>Confirm Password</Label>
-                  <Input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3"
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <Button className="w-full" disabled={loading}>
