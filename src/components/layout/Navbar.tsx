@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +10,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sun, Moon, Settings, User, LogOut } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Settings,
+  User,
+  LogOut,
+  Store,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import fetchMyShop from "@/backend/shops/fetchMyShop";
+import fetchShopStatus from "@/backend/shops/fetchShopStatus";
+import updateShopStatus from "@/backend/shops/shopStatus";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -21,6 +34,88 @@ interface NavbarProps {
 export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [shopStatus, setShopStatus] = useState<
+    "open" | "closed" | "error" | null
+  >(null);
+  const [shopData, setShopData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch shop data and status
+  useEffect(() => {
+    const fetchShopData = async () => {
+      try {
+        if (!user) return;
+
+        const shop = await fetchMyShop();
+        setShopData(shop);
+
+        const status = await fetchShopStatus(shop.id);
+        setShopStatus(status.status);
+      } catch (error) {
+        console.error("Error fetching shop data:", error);
+        setShopStatus("error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShopData();
+  }, [user]);
+
+  const handleStatusToggle = async () => {
+    if (!shopData || shopStatus === "error") return;
+
+    try {
+      const newStatus = shopStatus === "open" ? "closed" : "open";
+
+      // Only allow manual closing, opening requires printer connection (UI placeholder)
+      if (newStatus === "open") {
+        // TODO: Check printer connection before allowing open
+        alert(
+          "Shop can only be opened when printer is connected. This feature will be implemented later.",
+        );
+        return;
+      }
+
+      await updateShopStatus(shopData.id, newStatus);
+      setShopStatus(newStatus);
+    } catch (error) {
+      console.error("Error updating shop status:", error);
+    }
+  };
+
+  const getStatusBadge = () => {
+    if (loading) return <Badge variant="secondary">Loading...</Badge>;
+
+    switch (shopStatus) {
+      case "open":
+        return (
+          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+            <Wifi className="h-3 w-3 mr-1" />
+            Open
+          </Badge>
+        );
+      case "closed":
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            <WifiOff className="h-3 w-3 mr-1" />
+            Closed
+          </Badge>
+        );
+      case "error":
+        return (
+          <Badge variant="destructive">
+            <WifiOff className="h-3 w-3 mr-1" />
+            Error
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -28,7 +123,7 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
   };
 
   const handleSettings = () => {
-    console.log("Settings clicked");
+    navigate("/settings");
   };
 
   return (
@@ -36,6 +131,23 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="text-xl font-bold">Zaprint Dashboard</h1>
+          {shopData && (
+            <div className="flex items-center space-x-2">
+              <Store className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {shopData.shop_name}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleStatusToggle}
+                disabled={loading}
+                className="h-6 px-2"
+              >
+                {getStatusBadge()}
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center space-x-3">
