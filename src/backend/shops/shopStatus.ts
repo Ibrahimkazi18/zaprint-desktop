@@ -1,9 +1,12 @@
 import { supabase } from "@/auth/supabase"
 
-export default async function completeOnboarding(shopId: string) {
+export default async function updateShopStatus(
+  shopId: string,
+  status: "open" | "closed" | "error"
+) {
   const { error } = await supabase
     .from("shops")
-    .update({ is_onboarded: true })
+    .update({ status })
     .eq("id", shopId)
 
   if (error) throw error

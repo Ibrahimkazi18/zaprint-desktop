@@ -270,6 +270,7 @@ export default function AuthPage() {
                   <Label>Email</Label>
                   <Input
                     value={signupEmail}
+                    placeholder="Enter your email"
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
                   />
@@ -279,6 +280,7 @@ export default function AuthPage() {
                   <Label>Name</Label>
                   <Input
                     value={signupName}
+                    placeholder="Enter Your Name"
                     onChange={(e) => setSignupName(e.target.value)}
                     required
                   />
@@ -291,6 +293,7 @@ export default function AuthPage() {
                     <Input
                       type={showSignupPassword ? 'text' : 'password'}
                       value={signupPassword}
+                      placeholder="Enter Password"
                       onChange={(e) => setSignupPassword(e.target.value)}
                       required
                     />
@@ -311,6 +314,7 @@ export default function AuthPage() {
                     <Input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
+                      placeholder="Confirm Password"
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                     />
