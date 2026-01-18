@@ -9,6 +9,7 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Printer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -36,6 +37,12 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Home,
       path: "/dashboard",
       onClick: () => navigate("/dashboard"),
+    },
+    {
+      title: "Printers",
+      icon: Printer,
+      path: "/printers",
+      onClick: () => navigate("/printers"),
     },
     {
       title: "Analytics",
@@ -76,7 +83,7 @@ export default function Sidebar({ className }: SidebarProps) {
         className={cn(
           "w-full justify-start h-10 px-3 transition-colors",
           collapsed && "px-2 justify-center",
-          isActive && "bg-accent text-accent-foreground"
+          isActive && "bg-accent text-accent-foreground",
         )}
         onClick={item.onClick}
       >
@@ -96,7 +103,7 @@ export default function Sidebar({ className }: SidebarProps) {
       className={cn(
         "flex flex-col border-r bg-card/50 transition-all duration-300",
         collapsed ? "w-16" : "w-64",
-        className
+        className,
       )}
     >
       {/* Sidebar Header */}

@@ -12,3 +12,15 @@ export interface PrintJob {
   estimatedTime: string
   createdAt?: string
 }
+
+export interface Printer {
+  id: string
+  shop_id: string
+  printer_name: string
+  printer_type: string
+  supported_services: string[]
+  supported_sizes: string[]
+  status: 'online' | 'offline' | 'error'
+  last_heartbeat?: string
+  created_at?: string
+}
