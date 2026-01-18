@@ -11,6 +11,8 @@ import Analytics from "./pages/Analytics";
 import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import Queue from "./pages/Queue";
+import RegisterPrinter from "./pages/RegisterPrinter";
+
 
 import { Toaster } from "react-hot-toast";
 
@@ -67,6 +69,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Queue />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/register-printer"
+          element={
+            <ProtectedRoute>
+              <RegisterPrinter />
             </ProtectedRoute>
           }
         />

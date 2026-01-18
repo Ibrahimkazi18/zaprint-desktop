@@ -12,6 +12,7 @@ import {
 import { Sun, Moon, Settings, User, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import connectMockPrinter from "@/backend/printers/mockPrinter";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -39,6 +40,14 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
         </div>
 
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => connectMockPrinter("mock-printer-001")}
+            className="border px-3 py-1 rounded"
+          >
+            Connect (Mock)
+          </button>
+
+
           {/* Theme Toggle */}
           <Button
             variant="ghost"

@@ -53,6 +53,12 @@ export default function Sidebar({ className }: SidebarProps) {
 
   const settingsNavItems: NavItem[] = [
     {
+      title: "Register Printer",
+      icon: Settings,
+      path: "/register-printer",
+      onClick: () => navigate("/register-printer"),
+    },
+    {
       title: "Settings",
       icon: Settings,
       path: "/settings",

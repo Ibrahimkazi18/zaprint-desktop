@@ -31,9 +31,13 @@ import {
 } from "lucide-react";
 import { PrintJob } from "@/types";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useShopDashboard } from "@/hooks/useShopDashboard";
+import connectMockPrinter from "@/backend/printers/mockPrinter";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+
+  const { shop, printers, loading } = useShopDashboard()
 
   // Mock queue data with more realistic content
   const [queue, setQueue] = useState<PrintJob[]>([
@@ -145,8 +149,13 @@ export default function Dashboard() {
     // In real app, this would fetch from API
   };
 
+  if (loading) return <div>Loading dashboard...</div>
+
   return (
     <DashboardLayout>
+      {loading ? (
+      <div className="p-6">Loading dashboard...</div>
+    ) : (
       <div className="container mx-auto px-6 py-8">
         {/* Enhanced Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
@@ -259,6 +268,52 @@ export default function Dashboard() {
               </div>
               <Clock className="h-8 w-8 text-orange-600" />
             </div>
+          </div>
+        </div>
+
+        <Separator className="my-8" />
+
+        <div className="p-6 space-y-6">
+          <h1 className="text-2xl font-bold">{shop.shop_name}</h1>
+
+          <div>
+            <span>Status: </span>
+            <strong>{shop.status}</strong>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold">Printers</h2>
+
+            {printers.length === 0 && (
+              <p>No printers registered yet.</p>
+            )}
+
+            <ul className="space-y-2">
+              {printers.map(printer => (
+                <li
+                  key={printer.id}
+                  className="border p-3 rounded flex justify-between"
+                >
+                  <div>
+                    <div className="font-medium">{printer.printer_name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {printer.printer_type}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span>{printer.status}</span>
+                  </div>
+
+                  <button
+                    onClick={() => connectMockPrinter(printer.id)}
+                    className="border px-3 py-1 rounded"
+                  >
+                    Connect (Mock)
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
@@ -455,6 +510,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+    )}
     </DashboardLayout>
   );
 }
