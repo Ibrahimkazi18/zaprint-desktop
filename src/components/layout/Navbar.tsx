@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import fetchMyShop from "@/backend/shops/fetchMyShop";
 import fetchShopStatus from "@/backend/shops/fetchShopStatus";
 import updateShopStatus from "@/backend/shops/shopStatus";
+import connectMockPrinter from "@/backend/printers/mockPrinter";
 
 interface NavbarProps {
   darkMode: boolean;
