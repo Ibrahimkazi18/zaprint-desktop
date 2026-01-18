@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
 import {
   RefreshCw,
   TrendingUp,
@@ -37,7 +37,7 @@ import connectMockPrinter from "@/backend/printers/mockPrinter";
 export default function Dashboard() {
   const navigate = useNavigate();
 
-  const { shop, printers, loading } = useShopDashboard()
+  const { shop, printers, loading } = useShopDashboard();
 
   // Mock queue data with more realistic content
   const [queue, setQueue] = useState<PrintJob[]>([
@@ -149,16 +149,65 @@ export default function Dashboard() {
     // In real app, this would fetch from API
   };
 
-  if (loading) return <div>Loading dashboard...</div>
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
-      {loading ? (
-      <div className="p-6">Loading dashboard...</div>
-    ) : (
       <div className="container mx-auto px-6 py-8">
         {/* Enhanced Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+          {/* Shop Status Card */}
+          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Shop Status
+                </h3>
+                <div className="flex items-center space-x-2 mt-2">
+                  {printers.some((p) => p.status === "online") ? (
+                    <>
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <p className="text-2xl font-bold text-green-600">Open</p>
+                    </>
+                  ) : printers.some((p) => p.status === "error") ? (
+                    <>
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <p className="text-2xl font-bold text-red-600">Error</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                      <p className="text-2xl font-bold text-yellow-600">
+                        Closed
+                      </p>
+                    </>
+                  )}
+                </div>
+                <p
+                  className="text-sm text-muted-foreground mt-1"
+                  title="Shop is open if at least one printer is online"
+                >
+                  {printers.filter((p) => p.status === "online").length} of{" "}
+                  {printers.length} printers online
+                </p>
+              </div>
+              <Printer className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </div>
+
           <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -204,21 +253,6 @@ export default function Dashboard() {
               <Star className="h-8 w-8 text-muted-foreground" />
             </div>
           </div>
-
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Queue Time
-                </h3>
-                <p className="text-3xl font-bold mt-2">78m</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Estimated total
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </div>
         </div>
 
         {/* Financial Overview */}
@@ -249,9 +283,11 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold mt-2">
                   ₹{monthlyEarnings.toLocaleString()}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">This month</p>
+                <p className="text-sm text-green-600 mt-1">
+                  +8% from last month
+                </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-blue-600" />
+              <DollarSign className="h-8 w-8 text-green-600" />
             </div>
           </div>
 
@@ -264,253 +300,255 @@ export default function Dashboard() {
                 <p className="text-2xl font-bold mt-2">
                   ₹{pendingPayments.toLocaleString()}
                 </p>
-                <p className="text-sm text-orange-600 mt-1">3 customers</p>
+                <p className="text-sm text-yellow-600 mt-1">
+                  3 pending invoices
+                </p>
               </div>
-              <Clock className="h-8 w-8 text-orange-600" />
+              <Clock className="h-8 w-8 text-yellow-600" />
             </div>
           </div>
         </div>
 
-        <Separator className="my-8" />
-
-        <div className="p-6 space-y-6">
-          <h1 className="text-2xl font-bold">{shop.shop_name}</h1>
-
-          <div>
-            <span>Status: </span>
-            <strong>{shop.status}</strong>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-semibold">Printers</h2>
-
-            {printers.length === 0 && (
-              <p>No printers registered yet.</p>
-            )}
-
-            <ul className="space-y-2">
-              {printers.map(printer => (
-                <li
-                  key={printer.id}
-                  className="border p-3 rounded flex justify-between"
-                >
+        {/* Main Content Grid */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Print Queue */}
+          <div className="lg:col-span-2">
+            <div className="rounded-lg border dark:border-slate-700 bg-card shadow-sm">
+              <div className="p-6 pb-0">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <div className="font-medium">{printer.printer_name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {printer.printer_type}
-                    </div>
+                    <h2 className="text-xl font-semibold">Print Queue</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Current jobs in progress and waiting
+                    </p>
                   </div>
-
-                  <div>
-                    <span>{printer.status}</span>
-                  </div>
-
-                  <button
-                    onClick={() => connectMockPrinter(printer.id)}
-                    className="border px-3 py-1 rounded"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchQueue}
+                    className="flex items-center space-x-2"
                   >
-                    Connect (Mock)
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Refresh</span>
+                  </Button>
+                </div>
+              </div>
 
-        <Separator className="my-8" />
-
-        {/* Queue Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Current Print Queue</h2>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" onClick={fetchQueue}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
-              <Button onClick={() => navigate("/queue")}>View All Jobs</Button>
+              <div className="px-6 pb-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Job Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead>ETA</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {queue.map((job) => (
+                      <TableRow key={job.id}>
+                        <TableCell className="font-medium">
+                          {job.customerName}
+                        </TableCell>
+                        <TableCell>{job.jobType}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              job.status === "Printing"
+                                ? "default"
+                                : job.status === "Completed"
+                                  ? "secondary"
+                                  : "outline"
+                            }
+                          >
+                            {job.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Job Details - {job.id}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Complete information for this print job
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Customer
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.customerName}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Job Type
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.jobType}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Pages
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.pages} pages × {job.copies} copies
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Color Mode
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.colorMode}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Paper Size
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.paperSize}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Binding
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.binding || "None"}
+                                    </p>
+                                  </div>
+                                </div>
+                                {job.notes && (
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      Notes
+                                    </Label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {job.notes}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {job.estimatedTime}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            Total Queued: {queue.length} jobs | Estimated Total Wait: 78 mins
-          </div>
-
-          {queue.length === 0 ? (
-            <div className="text-center py-12">
-              <Printer className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg text-muted-foreground">No jobs in queue</p>
-              <p className="text-sm text-muted-foreground">Time to relax! ☕</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Job ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Est. Time</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {queue.map((job, index) => (
-                  <TableRow
-                    key={job.id}
-                    className="hover:bg-muted/50 dark:border-slate-700 transition-colors"
-                  >
-                    <TableCell className="font-medium">#{index + 1}</TableCell>
-                    <TableCell>{job.id}</TableCell>
-                    <TableCell>{job.customerName}</TableCell>
-                    <TableCell>{job.jobType}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          job.status === "Printing"
-                            ? "default"
-                            : job.status === "Queued"
-                              ? "secondary"
-                              : "outline"
-                        }
-                      >
-                        {job.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{job.estimatedTime}</TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
+          {/* Sidebar */}
+          <div className="space-y-8">
+            {/* Printer Status */}
+            <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Printer Status</h3>
+              <div className="space-y-3">
+                {printers.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">
+                      No printers registered
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/register-printer")}
+                      className="mt-2"
+                    >
+                      Add Printer
+                    </Button>
+                  </div>
+                ) : (
+                  printers.map((printer: any) => (
+                    <div
+                      key={printer.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">
+                          {printer.printer_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {printer.printer_type}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge
+                          variant={
+                            printer.status === "online"
+                              ? "default"
+                              : printer.status === "error"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {printer.status}
+                        </Badge>
+                        {printer.status === "offline" && (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="border dark:border-slate-700 border-input hover:bg-accent"
+                            onClick={() => connectMockPrinter(printer.id)}
+                            className="text-xs px-2 py-1 h-6"
                           >
-                            View Details
+                            Connect
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle className="text-foreground">
-                              Job Details: {job.id}
-                            </DialogTitle>
-                            <DialogDescription>
-                              Complete information for this print job.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 pt-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Customer
-                                </p>
-                                <p className="text-foreground">
-                                  {job.customerName}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Job Type
-                                </p>
-                                <p className="text-foreground">{job.jobType}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Color Mode
-                                </p>
-                                <p className="text-foreground">
-                                  {job.colorMode}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Paper Size
-                                </p>
-                                <p className="text-foreground">
-                                  {job.paperSize}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Pages
-                                </p>
-                                <p className="text-foreground">{job.pages}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Copies
-                                </p>
-                                <p className="text-foreground">{job.copies}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Binding
-                                </p>
-                                <p className="text-foreground">
-                                  {job.binding || "None"}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Est. Time
-                                </p>
-                                <p className="text-foreground">
-                                  {job.estimatedTime}
-                                </p>
-                              </div>
-                            </div>
-                            {job.notes && (
-                              <div>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  Special Notes
-                                </p>
-                                <p className="text-foreground">{job.notes}</p>
-                              </div>
-                            )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-
-        <Separator className="my-8" />
-
-        {/* Recent Activity */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Recent Activity</h2>
-          <div className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 rounded-lg border dark:border-slate-700 bg-card"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      activity.type === "success"
-                        ? "bg-green-500"
-                        : activity.type === "warning"
-                          ? "bg-orange-500"
-                          : "bg-blue-500"
-                    }`}
-                  />
-                  <span className="text-sm">{activity.action}</span>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {activity.time}
-                </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            ))}
+            </div>
+
+            {/* Recent Activity */}
+            <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                {recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start space-x-3">
+                    <div
+                      className={`w-2 h-2 rounded-full mt-2 ${
+                        activity.type === "success"
+                          ? "bg-green-500"
+                          : activity.type === "warning"
+                            ? "bg-yellow-500"
+                            : "bg-blue-500"
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{activity.action}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    )}
     </DashboardLayout>
   );
 }

@@ -12,7 +12,7 @@ import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import Queue from "./pages/Queue";
 import RegisterPrinter from "./pages/RegisterPrinter";
-
+import Printers from "./pages/Printers";
 
 import { Toaster } from "react-hot-toast";
 
@@ -80,6 +80,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/printers"
+          element={
+            <ProtectedRoute>
+              <Printers />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
@@ -92,5 +100,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Toaster />
       <App />
     </AuthProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
