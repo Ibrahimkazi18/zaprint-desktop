@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Printer, Users, Star, TrendingUp } from "lucide-react";
 import { useToast } from "@/components/toast/useToast";
+import fetchMyShop from "@/backend/shops/fetchMyShop";
 
 export default function AuthPage() {
   const { login, signup } = useAuth();
@@ -47,6 +48,13 @@ export default function AuthPage() {
 
     try {
       await login(loginEmail.trim(), loginPassword);
+
+      const shop = await fetchMyShop();
+      if (!shop?.is_onboarded) {
+        navigate("/onboarding");
+        return;
+      }
+
       navigate("/dashboard");
     } catch (err: any) {
       setError("Invalid email or password. Please try again.");
