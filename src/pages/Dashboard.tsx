@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -28,6 +35,10 @@ import {
   FileText,
   Printer,
   DollarSign,
+  Activity,
+  Zap,
+  Target,
+  ArrowUpRight,
 } from "lucide-react";
 import { PrintJob } from "@/types";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -152,12 +163,12 @@ export default function Dashboard() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading dashboard...</p>
-            </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6"></div>
+            <p className="text-lg text-muted-foreground">
+              Loading your dashboard...
+            </p>
           </div>
         </div>
       </DashboardLayout>
@@ -166,161 +177,201 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-8">
+      <div className="space-y-8">
+        {/* Welcome Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
+            <p className="text-muted-foreground mt-2">
+              Here's what's happening with your print shop today.
+            </p>
+          </div>
+          <Button variant="gradient" size="lg" className="shadow-lg">
+            <Activity className="mr-2 h-5 w-5" />
+            View Analytics
+          </Button>
+        </div>
+
         {/* Enhanced Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Shop Status Card */}
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Shop Status
-                </h3>
-                <div className="flex items-center space-x-2 mt-2">
-                  {printers.some((p) => p.status === "online") ? (
-                    <>
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      <p className="text-2xl font-bold text-green-600">Open</p>
-                    </>
-                  ) : printers.some((p) => p.status === "error") ? (
-                    <>
-                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      <p className="text-2xl font-bold text-red-600">Error</p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                      <p className="text-2xl font-bold text-yellow-600">
-                        Closed
-                      </p>
-                    </>
-                  )}
+          <Card className="relative overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Shop Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center space-x-3 mb-2">
+                    {printers.some((p) => p.status === "online") ? (
+                      <>
+                        <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <p className="text-2xl font-bold text-emerald-600">
+                          Online
+                        </p>
+                      </>
+                    ) : printers.some((p) => p.status === "error") ? (
+                      <>
+                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                        <p className="text-2xl font-bold text-red-600">Error</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <p className="text-2xl font-bold text-amber-600">
+                          Offline
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {printers.filter((p) => p.status === "online").length} of{" "}
+                    {printers.length} printers active
+                  </p>
                 </div>
-                <p
-                  className="text-sm text-muted-foreground mt-1"
-                  title="Shop is open if at least one printer is online"
-                >
-                  {printers.filter((p) => p.status === "online").length} of{" "}
-                  {printers.length} printers online
-                </p>
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Printer className="h-6 w-6 text-primary" />
+                </div>
               </div>
-              <Printer className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Today's Jobs
-                </h3>
-                <p className="text-3xl font-bold mt-2">12</p>
-                <p className="text-sm text-green-600 mt-1 flex items-center">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  +3 from yesterday
-                </p>
+          <Card className="relative overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Today's Jobs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">12</p>
+                  <div className="flex items-center text-sm text-emerald-600 mt-1">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    +3 from yesterday
+                  </div>
+                </div>
+                <div className="p-3 bg-blue-500/10 rounded-full">
+                  <FileText className="h-6 w-6 text-blue-500" />
+                </div>
               </div>
-              <FileText className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Active Customers
-                </h3>
-                <p className="text-3xl font-bold mt-2">45</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Ready for more
-                </p>
+          <Card className="relative overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Customers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">45</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Ready for service
+                  </p>
+                </div>
+                <div className="p-3 bg-purple-500/10 rounded-full">
+                  <Users className="h-6 w-6 text-purple-500" />
+                </div>
               </div>
-              <Users className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Shop Rating
-                </h3>
-                <p className="text-3xl font-bold mt-2">4.8 ★</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  120 reviews
-                </p>
+          <Card className="relative overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Shop Rating
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">4.8 ★</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    120 reviews
+                  </p>
+                </div>
+                <div className="p-3 bg-amber-500/10 rounded-full">
+                  <Star className="h-6 w-6 text-amber-500" />
+                </div>
               </div>
-              <Star className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Financial Overview */}
-        <div className="grid gap-6 md:grid-cols-3 mb-12">
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Today's Earnings
-                </h3>
-                <p className="text-2xl font-bold mt-2">
-                  ₹{todayEarnings.toLocaleString()}
-                </p>
-                <p className="text-sm text-green-600 mt-1">
-                  +12% from yesterday
-                </p>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5"></div>
+            <CardHeader className="relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Today's Earnings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <p className="text-3xl font-bold text-emerald-600">
+                ₹{todayEarnings.toLocaleString()}
+              </p>
+              <div className="flex items-center text-sm text-emerald-600 mt-2">
+                <ArrowUpRight className="h-4 w-4 mr-1" />
+                +12% from yesterday
               </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Monthly Revenue
-                </h3>
-                <p className="text-2xl font-bold mt-2">
-                  ₹{monthlyEarnings.toLocaleString()}
-                </p>
-                <p className="text-sm text-green-600 mt-1">
-                  +8% from last month
-                </p>
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-blue-600/5"></div>
+            <CardHeader className="relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                <Target className="h-4 w-4 mr-2" />
+                Monthly Revenue
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <p className="text-3xl font-bold text-blue-600">
+                ₹{monthlyEarnings.toLocaleString()}
+              </p>
+              <div className="flex items-center text-sm text-blue-600 mt-2">
+                <ArrowUpRight className="h-4 w-4 mr-1" />
+                +8% from last month
               </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Pending Payments
-                </h3>
-                <p className="text-2xl font-bold mt-2">
-                  ₹{pendingPayments.toLocaleString()}
-                </p>
-                <p className="text-sm text-yellow-600 mt-1">
-                  3 pending invoices
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
-            </div>
-          </div>
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-amber-600/5"></div>
+            <CardHeader className="relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                <Clock className="h-4 w-4 mr-2" />
+                Pending Payments
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
+              <p className="text-3xl font-bold text-amber-600">
+                ₹{pendingPayments.toLocaleString()}
+              </p>
+              <p className="text-sm text-amber-600 mt-2">3 pending invoices</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content Grid */}
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Print Queue */}
           <div className="lg:col-span-2">
-            <div className="rounded-lg border dark:border-slate-700 bg-card shadow-sm">
-              <div className="p-6 pb-0">
-                <div className="flex items-center justify-between mb-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold">Print Queue</h2>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <CardTitle className="text-xl">Print Queue</CardTitle>
+                    <CardDescription>
                       Current jobs in progress and waiting
-                    </p>
+                    </CardDescription>
                   </div>
                   <Button
                     variant="outline"
@@ -332,9 +383,8 @@ export default function Dashboard() {
                     <span>Refresh</span>
                   </Button>
                 </div>
-              </div>
-
-              <div className="px-6 pb-6">
+              </CardHeader>
+              <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -347,7 +397,7 @@ export default function Dashboard() {
                   </TableHeader>
                   <TableBody>
                     {queue.map((job) => (
-                      <TableRow key={job.id}>
+                      <TableRow key={job.id} className="hover:bg-muted/50">
                         <TableCell className="font-medium">
                           {job.customerName}
                         </TableCell>
@@ -358,7 +408,7 @@ export default function Dashboard() {
                               job.status === "Printing"
                                 ? "default"
                                 : job.status === "Completed"
-                                  ? "secondary"
+                                  ? "success"
                                   : "outline"
                             }
                           >
@@ -372,7 +422,7 @@ export default function Dashboard() {
                                 View Details
                               </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="max-w-md">
                               <DialogHeader>
                                 <DialogTitle>
                                   Job Details - {job.id}
@@ -453,99 +503,115 @@ export default function Dashboard() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Printer Status */}
-            <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Printer Status</h3>
-              <div className="space-y-3">
-                {printers.length === 0 ? (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground">
-                      No printers registered
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate("/register-printer")}
-                      className="mt-2"
-                    >
-                      Add Printer
-                    </Button>
-                  </div>
-                ) : (
-                  printers.map((printer: any) => (
-                    <div
-                      key={printer.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">
-                          {printer.printer_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {printer.printer_type}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Zap className="h-5 w-5 mr-2 text-primary" />
+                  Printer Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {printers.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                        <Printer className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          No printers registered
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge
-                          variant={
-                            printer.status === "online"
-                              ? "default"
-                              : printer.status === "error"
-                                ? "destructive"
-                                : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {printer.status}
-                        </Badge>
-                        {printer.status === "offline" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => connectMockPrinter(printer.id)}
-                            className="text-xs px-2 py-1 h-6"
-                          >
-                            Connect
-                          </Button>
-                        )}
-                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/register-printer")}
+                      >
+                        Add Your First Printer
+                      </Button>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
+                  ) : (
+                    printers.map((printer: any) => (
+                      <div
+                        key={printer.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">
+                            {printer.printer_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {printer.printer_type}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge
+                            variant={
+                              printer.status === "online"
+                                ? "success"
+                                : printer.status === "error"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
+                          >
+                            {printer.status}
+                          </Badge>
+                          {printer.status === "offline" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => connectMockPrinter(printer.id)}
+                              className="text-xs px-3 py-1 h-7"
+                            >
+                              Connect
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Recent Activity */}
-            <div className="rounded-lg border dark:border-slate-700 bg-card p-6 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div
-                      className={`w-2 h-2 rounded-full mt-2 ${
-                        activity.type === "success"
-                          ? "bg-green-500"
-                          : activity.type === "warning"
-                            ? "bg-yellow-500"
-                            : "bg-blue-500"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.time}
-                      </p>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="h-5 w-5 mr-2 text-primary" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div
+                        className={`w-2 h-2 rounded-full mt-2 ${
+                          activity.type === "success"
+                            ? "bg-emerald-500"
+                            : activity.type === "warning"
+                              ? "bg-amber-500"
+                              : "bg-blue-500"
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-relaxed">
+                          {activity.action}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.time}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
