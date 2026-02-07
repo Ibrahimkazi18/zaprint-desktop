@@ -86,8 +86,6 @@ export function usePrinterMonitoring(shopId?: string) {
       setLoading(true);
       setError(null);
 
-
-
       console.log("Url: ", supabaseUrl, "Key:", supabaseAnonKey)
 
       const accessToken = await getAccessToken();
@@ -147,8 +145,8 @@ export function usePrinterMonitoring(shopId?: string) {
       const result = await window.printerAPI.startMonitoring({
         shopId,
         accessToken,
-        supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-        supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY
+        supabaseUrl: supabaseUrl,
+        supabaseKey: supabaseAnonKey
       });
 
       if (result.success) {

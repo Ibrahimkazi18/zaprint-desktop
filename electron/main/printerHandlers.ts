@@ -4,19 +4,18 @@ import { printerService, AppPrinter } from './printer/PrinterService';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Supabase client cache
-const supabaseClients = new Map<string, SupabaseClient>();
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL 
+const SUPABASE_SERVICE_ROLE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-// Initialize Supabase client with provided credentials
-function getSupabaseClient(url: string, key: string): SupabaseClient {
-  const cacheKey = `${url}:${key}`;
-  
-  if (!supabaseClients.has(cacheKey)) {
-    const client = createClient(url, key);
-    supabaseClients.set(cacheKey, client);
-  }
-  
-  return supabaseClients.get(cacheKey)!;
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment');
 }
+
+// Single Supabase client using service role
+const supabase: SupabaseClient = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY
+);
 
 let monitoringActive = false;
 
@@ -31,6 +30,12 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
       console.log('[IPC] Detecting system printers...');
       const printers = await printerService.detectSystemPrinters();
       console.log(`[IPC] Found ${printers.length} system printers`);
+      
+      // Log each printer found
+      printers.forEach(p => {
+        console.log(`  - ${p.name} (${p.status})`);
+      });
+      
       return { success: true, printers };
     } catch (error: any) {
       console.error('[IPC] Error detecting printers:', error);
@@ -59,24 +64,22 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
 
       console.log('[IPC] Starting printer monitoring for shop:', shopId);
 
-      // Initialize Supabase client with provided credentials
-      const client = getSupabaseClient(supabaseUrl, supabaseKey);
-
-      // Set auth token for Supabase
-      if (accessToken) {
-        await client.auth.setSession({
-          access_token: accessToken,
-          refresh_token: '' // Will be handled by client
-        });
-      }
-
       // Fetch registered printers from database
-      const { data: registeredPrinters, error } = await client
+      console.log('[IPC] Fetching printers from database...');
+      console.log('[IPC] Shop ID:', shopId);
+      
+      const { data: registeredPrinters, error } = await supabase
         .from('shop_printers')
         .select('*')
         .eq('shop_id', shopId);
 
+      console.log('[IPC] Database query result:');
+      console.log('[IPC]   - Error:', error);
+      console.log('[IPC]   - Data:', registeredPrinters);
+      console.log('[IPC]   - Count:', registeredPrinters?.length || 0);
+
       if (error) {
+        console.error('[IPC] Database error details:', error);
         throw new Error(`Failed to fetch printers: ${error.message}`);
       }
 
@@ -89,14 +92,33 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
         };
       }
 
-      // Start monitoring
+      console.log(`[IPC] Found ${registeredPrinters.length} registered printers in database`);
+
+      // IMMEDIATE SYNC - Do first detection right away
+      console.log('[IPC] Performing immediate printer detection...');
+      const systemPrinters = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Immediate detection found ${systemPrinters.length} system printers`);
+      
+      const initialPrinters = printerService.mapToAppPrinters(
+        systemPrinters,
+        registeredPrinters as AppPrinter[]
+      );
+
+      // Update database immediately
+      await updatePrintersInDatabase(initialPrinters);
+      
+      // Send initial status to renderer
+      mainWindow.webContents.send('printer:status-changed', initialPrinters);
+      console.log('[IPC] Initial printer status sent to renderer');
+
+      // Start monitoring for future changes
       printerService.startMonitoring(
         registeredPrinters as AppPrinter[],
         async (updatedPrinters) => {
-          console.log('[IPC] Printer status changed, updating database...');
+          console.log('[IPC] Printer status changed during monitoring, updating database...');
           
           // Update database
-          await updatePrintersInDatabase(client, updatedPrinters);
+          await updatePrintersInDatabase(updatedPrinters);
           
           // Notify renderer process
           mainWindow.webContents.send('printer:status-changed', updatedPrinters);
@@ -109,7 +131,7 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
       return { 
         success: true, 
         message: 'Monitoring started',
-        printers: registeredPrinters 
+        printers: initialPrinters  // Return the synced printers
       };
     } catch (error: any) {
       console.error('[IPC] Error starting monitoring:', error);
@@ -135,18 +157,8 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
     try {
       console.log('[IPC] Manual sync requested for shop:', shopId);
 
-      // Initialize Supabase client
-      const client = getSupabaseClient(supabaseUrl, supabaseKey);
-
-      if (accessToken) {
-        await client.auth.setSession({
-          access_token: accessToken,
-          refresh_token: ''
-        });
-      }
-
       // Fetch registered printers
-      const { data: registeredPrinters, error: fetchError } = await client
+      const { data: registeredPrinters, error: fetchError } = await supabase
         .from('shop_printers')
         .select('*')
         .eq('shop_id', shopId);
@@ -157,8 +169,11 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
         return { success: true, printers: [] };
       }
 
+      console.log(`[IPC] Syncing ${registeredPrinters.length} printers...`);
+
       // Detect system printers
       const systemPrinters = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Found ${systemPrinters.length} system printers`);
 
       // Map to app printers
       const updatedPrinters = printerService.mapToAppPrinters(
@@ -166,8 +181,13 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
         registeredPrinters as AppPrinter[]
       );
 
+      // Log the status of each printer
+      updatedPrinters.forEach(p => {
+        console.log(`  - ${p.printer_name}: ${p.status}`);
+      });
+
       // Update database
-      await updatePrintersInDatabase(client, updatedPrinters);
+      await updatePrintersInDatabase(updatedPrinters);
 
       return { success: true, printers: updatedPrinters };
     } catch (error: any) {
@@ -180,29 +200,29 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
 /**
  * Update multiple printers in database
  */
-async function updatePrintersInDatabase(client: SupabaseClient, printers: AppPrinter[]) {
+async function updatePrintersInDatabase(printers: AppPrinter[]) {
   try {
-    const updates = printers.map(printer => ({
-      id: printer.id,
-      status: printer.status,
-      last_heartbeat: printer.last_heartbeat
-    }));
-
-    for (const update of updates) {
-      const { error } = await client
+    console.log(`[DB] Updating ${printers.length} printers in database...`);
+    
+    for (const printer of printers) {
+      console.log(`[DB] Updating ${printer.printer_name}: ${printer.status}`);
+      
+      const { error } = await supabase
         .from('shop_printers')
         .update({
-          status: update.status,
-          last_heartbeat: update.last_heartbeat
+          status: printer.status,
+          last_heartbeat: printer.last_heartbeat
         })
-        .eq('id', update.id);
+        .eq('id', printer.id);
 
       if (error) {
-        console.error(`[DB] Error updating printer ${update.id}:`, error);
+        console.error(`[DB] Error updating printer ${printer.printer_name}:`, error);
+      } else {
+        console.log(`[DB] ✓ Updated ${printer.printer_name} to ${printer.status}`);
       }
     }
 
-    console.log(`[DB] Updated ${updates.length} printers`);
+    console.log(`[DB] ✅ Successfully updated all ${printers.length} printers`);
   } catch (error) {
     console.error('[DB] Error updating printers:', error);
   }

@@ -11814,15 +11814,12 @@ function shouldShowDeprecationWarning() {
   return parseInt(versionMatch[1], 10) <= 18;
 }
 if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
-const supabaseClients = /* @__PURE__ */ new Map();
-function getSupabaseClient(url, key) {
-  const cacheKey = `${url}:${key}`;
-  if (!supabaseClients.has(cacheKey)) {
-    const client = createClient(url, key);
-    supabaseClients.set(cacheKey, client);
-  }
-  return supabaseClients.get(cacheKey);
-}
+const SUPABASE_URL = "https://mrqsiucmkonrfmikecxm.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ycXNpdWNta29ucmZtaWtlY3htIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIxMDYzMSwiZXhwIjoyMDgxNzg2NjMxfQ.h8AX6ZXrrvsLmkqKjTbRqp7plcr33brduvJcd-8u11U";
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY
+);
 let monitoringActive = false;
 function setupPrinterHandlers(mainWindow2) {
   electron.ipcMain.handle("printer:detect-system", async () => {
@@ -11830,6 +11827,9 @@ function setupPrinterHandlers(mainWindow2) {
       console.log("[IPC] Detecting system printers...");
       const printers = await printerService.detectSystemPrinters();
       console.log(`[IPC] Found ${printers.length} system printers`);
+      printers.forEach((p) => {
+        console.log(`  - ${p.name} (${p.status})`);
+      });
       return { success: true, printers };
     } catch (error) {
       console.error("[IPC] Error detecting printers:", error);
@@ -11852,16 +11852,15 @@ function setupPrinterHandlers(mainWindow2) {
         return { success: true, message: "Already monitoring" };
       }
       console.log("[IPC] Starting printer monitoring for shop:", shopId);
-      const client = getSupabaseClient(supabaseUrl, supabaseKey);
-      if (accessToken) {
-        await client.auth.setSession({
-          access_token: accessToken,
-          refresh_token: ""
-          // Will be handled by client
-        });
-      }
-      const { data: registeredPrinters, error } = await client.from("shop_printers").select("*").eq("shop_id", shopId);
+      console.log("[IPC] Fetching printers from database...");
+      console.log("[IPC] Shop ID:", shopId);
+      const { data: registeredPrinters, error } = await supabase.from("shop_printers").select("*").eq("shop_id", shopId);
+      console.log("[IPC] Database query result:");
+      console.log("[IPC]   - Error:", error);
+      console.log("[IPC]   - Data:", registeredPrinters);
+      console.log("[IPC]   - Count:", (registeredPrinters == null ? void 0 : registeredPrinters.length) || 0);
       if (error) {
+        console.error("[IPC] Database error details:", error);
         throw new Error(`Failed to fetch printers: ${error.message}`);
       }
       if (!registeredPrinters || registeredPrinters.length === 0) {
@@ -11872,11 +11871,22 @@ function setupPrinterHandlers(mainWindow2) {
           printers: []
         };
       }
+      console.log(`[IPC] Found ${registeredPrinters.length} registered printers in database`);
+      console.log("[IPC] Performing immediate printer detection...");
+      const systemPrinters = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Immediate detection found ${systemPrinters.length} system printers`);
+      const initialPrinters = printerService.mapToAppPrinters(
+        systemPrinters,
+        registeredPrinters
+      );
+      await updatePrintersInDatabase(initialPrinters);
+      mainWindow2.webContents.send("printer:status-changed", initialPrinters);
+      console.log("[IPC] Initial printer status sent to renderer");
       printerService.startMonitoring(
         registeredPrinters,
         async (updatedPrinters) => {
-          console.log("[IPC] Printer status changed, updating database...");
-          await updatePrintersInDatabase(client, updatedPrinters);
+          console.log("[IPC] Printer status changed during monitoring, updating database...");
+          await updatePrintersInDatabase(updatedPrinters);
           mainWindow2.webContents.send("printer:status-changed", updatedPrinters);
         },
         1e4
@@ -11886,7 +11896,8 @@ function setupPrinterHandlers(mainWindow2) {
       return {
         success: true,
         message: "Monitoring started",
-        printers: registeredPrinters
+        printers: initialPrinters
+        // Return the synced printers
       };
     } catch (error) {
       console.error("[IPC] Error starting monitoring:", error);
@@ -11907,24 +11918,22 @@ function setupPrinterHandlers(mainWindow2) {
   electron.ipcMain.handle("printer:sync-status", async (_, { shopId, accessToken, supabaseUrl, supabaseKey }) => {
     try {
       console.log("[IPC] Manual sync requested for shop:", shopId);
-      const client = getSupabaseClient(supabaseUrl, supabaseKey);
-      if (accessToken) {
-        await client.auth.setSession({
-          access_token: accessToken,
-          refresh_token: ""
-        });
-      }
-      const { data: registeredPrinters, error: fetchError } = await client.from("shop_printers").select("*").eq("shop_id", shopId);
+      const { data: registeredPrinters, error: fetchError } = await supabase.from("shop_printers").select("*").eq("shop_id", shopId);
       if (fetchError) throw fetchError;
       if (!registeredPrinters || registeredPrinters.length === 0) {
         return { success: true, printers: [] };
       }
+      console.log(`[IPC] Syncing ${registeredPrinters.length} printers...`);
       const systemPrinters = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Found ${systemPrinters.length} system printers`);
       const updatedPrinters = printerService.mapToAppPrinters(
         systemPrinters,
         registeredPrinters
       );
-      await updatePrintersInDatabase(client, updatedPrinters);
+      updatedPrinters.forEach((p) => {
+        console.log(`  - ${p.printer_name}: ${p.status}`);
+      });
+      await updatePrintersInDatabase(updatedPrinters);
       return { success: true, printers: updatedPrinters };
     } catch (error) {
       console.error("[IPC] Error syncing printer status:", error);
@@ -11932,23 +11941,22 @@ function setupPrinterHandlers(mainWindow2) {
     }
   });
 }
-async function updatePrintersInDatabase(client, printers) {
+async function updatePrintersInDatabase(printers) {
   try {
-    const updates = printers.map((printer) => ({
-      id: printer.id,
-      status: printer.status,
-      last_heartbeat: printer.last_heartbeat
-    }));
-    for (const update of updates) {
-      const { error } = await client.from("shop_printers").update({
-        status: update.status,
-        last_heartbeat: update.last_heartbeat
-      }).eq("id", update.id);
+    console.log(`[DB] Updating ${printers.length} printers in database...`);
+    for (const printer of printers) {
+      console.log(`[DB] Updating ${printer.printer_name}: ${printer.status}`);
+      const { error } = await supabase.from("shop_printers").update({
+        status: printer.status,
+        last_heartbeat: printer.last_heartbeat
+      }).eq("id", printer.id);
       if (error) {
-        console.error(`[DB] Error updating printer ${update.id}:`, error);
+        console.error(`[DB] Error updating printer ${printer.printer_name}:`, error);
+      } else {
+        console.log(`[DB] ✓ Updated ${printer.printer_name} to ${printer.status}`);
       }
     }
-    console.log(`[DB] Updated ${updates.length} printers`);
+    console.log(`[DB] ✅ Successfully updated all ${printers.length} printers`);
   } catch (error) {
     console.error("[DB] Error updating printers:", error);
   }
