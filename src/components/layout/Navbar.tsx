@@ -18,6 +18,8 @@ import {
   Store,
   Wifi,
   WifiOff,
+  Bell,
+  Search,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -43,7 +45,12 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
   };
 
   const getStatusBadge = () => {
-    if (loading) return <Badge variant="secondary">Loading...</Badge>;
+    if (loading)
+      return (
+        <Badge variant="secondary" className="animate-pulse">
+          Loading...
+        </Badge>
+      );
 
     // Shop is open if at least one printer is online
     const hasOnlinePrinter = printers.some((p: any) => p.status === "online");
@@ -53,16 +60,20 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
       return (
         <Badge
           variant="default"
-          className="bg-green-500 hover:bg-green-600"
+          className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg dark:shadow-emerald-500/25"
           title="Shop is open - at least one printer is online"
         >
           <Wifi className="h-3 w-3 mr-1" />
-          Open
+          Online
         </Badge>
       );
     } else if (hasErrorPrinter) {
       return (
-        <Badge variant="destructive" title="Shop has printer errors">
+        <Badge
+          variant="destructive"
+          title="Shop has printer errors"
+          className="shadow-lg dark:shadow-red-500/25"
+        >
           <WifiOff className="h-3 w-3 mr-1" />
           Error
         </Badge>
@@ -71,45 +82,78 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
       return (
         <Badge
           variant="secondary"
-          className="bg-yellow-500 hover:bg-yellow-600 text-white"
+          className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg dark:shadow-amber-500/25"
           title="Shop is closed - no printers online"
         >
           <WifiOff className="h-3 w-3 mr-1" />
-          Closed
+          Offline
         </Badge>
       );
     }
   };
 
   return (
-    <header className="border-b dark:border-slate-700 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold">Zaprint Dashboard</h1>
+    <header className="border-b border-border bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 sticky top-0 z-50 shadow-sm dark:shadow-lg dark:shadow-primary/5">
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+              <Store className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Zaprint
+            </h1>
+          </div>
+
           {shop && (
-            <div className="flex items-center space-x-2">
-              <Store className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {shop.shop_name}
-              </span>
+            <div className="flex items-center space-x-3 pl-6 border-l border-border/50">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground">
+                  {shop.shop_name}
+                </span>
+                <span className="text-xs text-muted-foreground">Dashboard</span>
+              </div>
               <div className="cursor-help">{getStatusBadge()}</div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
+          {/* Search Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 hover:bg-accent/50"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+
+          {/* Notifications */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 hover:bg-accent/50 relative"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center">
+              3
+            </span>
+          </Button>
+
           {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleDarkMode}
             aria-label="Toggle dark mode"
-            className="h-9 w-9"
+            className="h-10 w-10 hover:bg-accent/50"
           >
             {darkMode ? (
-              <Sun className="h-4 w-4" />
+              <Sun className="h-4 w-4 text-amber-500" />
             ) : (
-              <Moon className="h-4 w-4" />
+              <Moon className="h-4 w-4 text-slate-600" />
             )}
           </Button>
 
@@ -119,7 +163,7 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
             size="icon"
             onClick={handleSettings}
             aria-label="Settings"
-            className="h-9 w-9"
+            className="h-10 w-10 hover:bg-accent/50"
           >
             <Settings className="h-4 w-4" />
           </Button>
@@ -127,41 +171,61 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                <Avatar className="h-9 w-9">
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full hover:bg-accent/50"
+              >
+                <Avatar className="h-8 w-8 ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
                   <AvatarImage src={user?.avatar_url} alt={user?.email} />
-                  <AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
                     {user?.email?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user?.user_metadata?.full_name || "User"}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
+            <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal p-3">
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user?.avatar_url} alt={user?.email} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+                        {user?.email?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-semibold leading-none">
+                        {user?.user_metadata?.full_name || "User"}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground mt-1">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => console.log("Profile clicked")}>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+              <DropdownMenuItem
+                className="cursor-pointer p-3 rounded-lg"
+                onClick={() => console.log("Profile clicked")}
+              >
+                <User className="mr-3 h-4 w-4" />
+                <span>Profile Settings</span>
               </DropdownMenuItem>
               <DropdownMenuItem
+                className="cursor-pointer p-3 rounded-lg"
                 onClick={() => console.log("More options clicked")}
               >
-                <Settings className="mr-2 h-4 w-4" />
-                <span>More</span>
+                <Settings className="mr-3 h-4 w-4" />
+                <span>Preferences</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Logout</span>
+              <DropdownMenuItem
+                className="cursor-pointer p-3 rounded-lg text-destructive focus:text-destructive"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                <span>Sign Out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
