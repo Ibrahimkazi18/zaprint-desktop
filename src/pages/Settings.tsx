@@ -19,10 +19,67 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchFullShopProfile } from "@/backend/shops/fetchFullShopProfile";
 import fetchShopServices from "@/backend/shops/fetchShopServices";
 
+import updateShop from "@/backend/shops/updateShop";
+import updateServicePrice from "@/backend/shops/updateServicePrice";
+import addNewService from "@/backend/shops/addNewService";
+import deleteService from "@/backend/shops/deleteService";
+import addResource from "@/backend/shops/addResource";
+import deleteResource from "@/backend/shops/deleteResource";
+import fetchShopResources from "@/backend/shops/fetchShopResources";
+
+
 export default function Settings() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
+  const [selectedResources, setSelectedResources] = useState<string[]>([]);
+
+  const AVAILABLE_SERVICES = [
+    "Black & White Printing",
+    "Color Printing",
+    "Spiral Binding",
+    "Hard Binding",
+    "Lamination",
+    "Stapling",
+    "Folding",
+    "Cutting / Trimming",
+    "Large Format (Poster/Banner)",
+    "ID Card Printing",
+    "Scanning",
+    "Photocopy",
+    "Thesis Binding",
+    "Booklet Making",
+    "Business Card Printing",
+    "Envelope Printing",
+    "Sticker Printing",
+    "Certificate Printing",
+  ];
+
+  const AVAILABLE_RESOURCES = [
+    "A4 Paper",
+    "A3 Paper",
+    "A5 Paper",
+    "Legal Size",
+    "Letter Size",
+    "Glossy Paper",
+    "Matte Paper",
+    "Card Stock",
+    "Sticker Paper",
+    "Color Printer",
+    "B/W Printer",
+    "High-Speed Printer",
+    "Laser Printer",
+    "Inkjet Printer",
+    "Large Format Printer",
+    "Laminating Machine",
+    "Binding Machine",
+    "Paper Cutter",
+    "Scanner",
+  ];
+
 
   // Shop Profile Settings - Initialize with empty values, will be populated from API
   const [shopProfile, setShopProfile] = useState({
@@ -68,6 +125,14 @@ export default function Settings() {
         const shopServices = await fetchShopServices(shop.id);
         setServices(shopServices);
 
+        // Set selected services
+        setSelectedServices(shopServices.map((s: any) => s.service_name));
+
+        // Load resources
+        const shopResources = await fetchShopResources(shop.id);
+        setResources(shopResources);
+        setSelectedResources(shopResources.map((r: any) => r.resource_name));
+
         // Convert services to pricing settings
         const pricing: Record<string, number> = {};
         shopServices.forEach((service: any) => {
@@ -84,15 +149,46 @@ export default function Settings() {
     loadShopData();
   }, [user]);
 
-  const handleSave = (section: string) => {
-    console.log(`Saving ${section} settings...`);
-    setUnsavedChanges(false);
-    // TODO: Implement actual API calls to save settings
-    // For now, just showing success message
-    alert(
-      `${section} settings saved successfully! (Update functions will be implemented later)`,
-    );
+  const handleSaveShop = async () => {
+    try {
+      const { shop } = await fetchFullShopProfile();
+
+      await updateShop({
+        shop_id: shop.id,
+        shop_name: shopProfile.name,
+        phone: shopProfile.phone,
+        location: shopProfile.address,
+        description: shopProfile.description,
+        image_url: shopProfile.logo,
+        start_time: shopProfile.workingHours.start,
+        end_time: shopProfile.workingHours.end,
+      });
+
+      setUnsavedChanges(false);
+      alert("Shop updated successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update shop");
+    }
   };
+
+  const handleSavePricing = async () => {
+    try {
+      for (const service of services) {
+        await updateServicePrice(
+          service.id,
+          pricingSettings[service.service_name]
+        );
+      }
+
+      setUnsavedChanges(false);
+      alert("Pricing updated successfully");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update pricing");
+    }
+  };
+
 
   const handleImageUpload = (
     type: "logo",
@@ -138,11 +234,31 @@ export default function Settings() {
           </div>
         ) : (
           <Tabs defaultValue="shop" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="shop" className="flex items-center space-x-2">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger 
+                value="shop" 
+                className="flex items-center space-x-2"
+              >
                 <Store className="h-4 w-4" />
                 <span className="hidden sm:inline">Shop</span>
               </TabsTrigger>
+
+              <TabsTrigger 
+                value="resources"
+                className="flex items-center space-x-2"
+              >
+                <Store className="h-4 w-4" />
+                <span className="hidden sm:inline">Resources</span>
+              </TabsTrigger>
+
+              <TabsTrigger 
+                value="services"
+                className="flex items-center space-x-2"
+              >
+                <Store className="h-4 w-4" />
+                <span className="hidden sm:inline">Services</span>
+              </TabsTrigger>
+
               <TabsTrigger
                 value="pricing"
                 className="flex items-center space-x-2"
@@ -300,7 +416,7 @@ export default function Settings() {
                   </div>
 
                   <Button
-                    onClick={() => handleSave("shop")}
+                    onClick={handleSaveShop}
                     className="w-full md:w-auto"
                   >
                     <Save className="h-4 w-4 mr-2" />
@@ -309,6 +425,138 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Services Tab */}
+            <TabsContent value="services" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manage Services</CardTitle>
+                  <CardDescription>
+                    Select the services your shop provides
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {AVAILABLE_SERVICES.map((service) => {
+                      const isSelected = selectedServices.includes(service);
+
+                      return (
+                        <div
+                          key={service}
+                          className={`p-4 rounded-lg border cursor-pointer transition ${
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-muted"
+                          }`}
+                          onClick={async () => {
+                            if (isSelected) {
+                              // Delete
+                              const existing = services.find(
+                                (s) => s.service_name === service
+                              );
+                              if (existing) {
+                                await deleteService(existing.id);
+                                setServices((prev) =>
+                                  prev.filter((s) => s.id !== existing.id)
+                                );
+                              }
+
+                              setSelectedServices((prev) =>
+                                prev.filter((s) => s !== service)
+                              );
+                            } else {
+                              // Add
+                              const { shop } = await fetchFullShopProfile();
+                              await addNewService(shop.id, service, 0);
+
+                              const updatedServices = await fetchShopServices(shop.id);
+                              setServices(updatedServices);
+                              setSelectedServices((prev) => [...prev, service]);
+                            }
+
+                            setUnsavedChanges(true);
+                          }}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">{service}</span>
+                            {isSelected && (
+                              <Badge variant="secondary">Selected</Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Resources Tab */}
+            <TabsContent value="resources" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manage Resources</CardTitle>
+                  <CardDescription>
+                    Select the resources available in your shop
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {AVAILABLE_RESOURCES.map((resource) => {
+                      const isSelected = selectedResources.includes(resource);
+
+                      return (
+                        <div
+                          key={resource}
+                          className={`p-4 rounded-lg border cursor-pointer transition ${
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-muted"
+                          }`}
+                          onClick={async () => {
+                            if (isSelected) {
+                              const existing = resources.find(
+                                (r) => r.resource_name === resource
+                              );
+
+                              if (existing) {
+                                await deleteResource(existing.id);
+                                setResources((prev) =>
+                                  prev.filter((r) => r.id !== existing.id)
+                                );
+                              }
+
+                              setSelectedResources((prev) =>
+                                prev.filter((r) => r !== resource)
+                              );
+                            } else {
+                              const { shop } = await fetchFullShopProfile();
+                              await addResource(shop.id, resource);
+
+                              const updatedResources = await fetchShopResources(shop.id);
+                              setResources(updatedResources);
+                              setSelectedResources((prev) => [...prev, resource]);
+                            }
+
+                            setUnsavedChanges(true);
+                          }}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">{resource}</span>
+                            {isSelected && (
+                              <Badge variant="secondary">Selected</Badge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
 
             {/* Pricing Settings */}
             <TabsContent value="pricing" className="space-y-6">
@@ -343,7 +591,7 @@ export default function Settings() {
                               id={`price-${service.id}`}
                               type="number"
                               min="0"
-                              step="0.01"
+                              step="0.1"
                               value={pricingSettings[service.service_name] || 0}
                               onChange={(e) => {
                                 setPricingSettings((prev) => ({
@@ -362,7 +610,7 @@ export default function Settings() {
                   )}
 
                   <Button
-                    onClick={() => handleSave("pricing")}
+                    onClick={handleSavePricing}
                     className="w-full md:w-auto"
                     disabled={services.length === 0}
                   >
