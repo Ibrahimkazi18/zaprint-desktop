@@ -55,7 +55,7 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
   });
 
   // Start monitoring printers
-  ipcMain.handle('printer:start-monitoring', async (_, { shopId, accessToken, supabaseUrl, supabaseKey }) => {
+  ipcMain.handle('printer:start-monitoring', async (_, { shopId }) => {
     try {
       if (monitoringActive) {
         console.log('[IPC] Monitoring already active');
@@ -153,7 +153,7 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
   });
 
   // Manual printer status sync
-  ipcMain.handle('printer:sync-status', async (_, { shopId, accessToken, supabaseUrl, supabaseKey }) => {
+  ipcMain.handle('printer:sync-status', async (_, { shopId }) => {
     try {
       console.log('[IPC] Manual sync requested for shop:', shopId);
 
