@@ -18,6 +18,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
 import { fetchFullShopProfile } from "@/backend/shops/fetchFullShopProfile";
 import fetchShopServices from "@/backend/shops/fetchShopServices";
+import { useToast } from "@/components/toast/useToast";
 
 import updateShop from "@/backend/shops/updateShop";
 import updateServicePrice from "@/backend/shops/updateServicePrice";
@@ -27,9 +28,9 @@ import addResource from "@/backend/shops/addResource";
 import deleteResource from "@/backend/shops/deleteResource";
 import fetchShopResources from "@/backend/shops/fetchShopResources";
 
-
 export default function Settings() {
   const { user } = useAuth();
+  const { show: showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
@@ -79,7 +80,6 @@ export default function Settings() {
     "Paper Cutter",
     "Scanner",
   ];
-
 
   // Shop Profile Settings - Initialize with empty values, will be populated from API
   const [shopProfile, setShopProfile] = useState({
@@ -165,10 +165,18 @@ export default function Settings() {
       });
 
       setUnsavedChanges(false);
-      alert("Shop updated successfully");
+      showToast({
+        title: "Success",
+        description: "Shop updated successfully",
+        variant: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert("Failed to update shop");
+      showToast({
+        title: "Error",
+        description: "Failed to update shop",
+        variant: "error",
+      });
     }
   };
 
@@ -177,18 +185,25 @@ export default function Settings() {
       for (const service of services) {
         await updateServicePrice(
           service.id,
-          pricingSettings[service.service_name]
+          pricingSettings[service.service_name],
         );
       }
 
       setUnsavedChanges(false);
-      alert("Pricing updated successfully");
+      showToast({
+        title: "Success",
+        description: "Pricing updated successfully",
+        variant: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert("Failed to update pricing");
+      showToast({
+        title: "Error",
+        description: "Failed to update pricing",
+        variant: "error",
+      });
     }
   };
-
 
   const handleImageUpload = (
     type: "logo",
@@ -235,15 +250,12 @@ export default function Settings() {
         ) : (
           <Tabs defaultValue="shop" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger 
-                value="shop" 
-                className="flex items-center space-x-2"
-              >
+              <TabsTrigger value="shop" className="flex items-center space-x-2">
                 <Store className="h-4 w-4" />
                 <span className="hidden sm:inline">Shop</span>
               </TabsTrigger>
 
-              <TabsTrigger 
+              <TabsTrigger
                 value="resources"
                 className="flex items-center space-x-2"
               >
@@ -251,7 +263,7 @@ export default function Settings() {
                 <span className="hidden sm:inline">Resources</span>
               </TabsTrigger>
 
-              <TabsTrigger 
+              <TabsTrigger
                 value="services"
                 className="flex items-center space-x-2"
               >
@@ -415,10 +427,7 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={handleSaveShop}
-                    className="w-full md:w-auto"
-                  >
+                  <Button onClick={handleSaveShop} className="w-full md:w-auto">
                     <Save className="h-4 w-4 mr-2" />
                     Save Shop Settings
                   </Button>
@@ -453,29 +462,59 @@ export default function Settings() {
                             if (isSelected) {
                               // Delete
                               const existing = services.find(
-                                (s) => s.service_name === service
+                                (s) => s.service_name === service,
                               );
                               if (existing) {
                                 await deleteService(existing.id);
                                 setServices((prev) =>
-                                  prev.filter((s) => s.id !== existing.id)
+                                  prev.filter((s) => s.id !== existing.id),
                                 );
                               }
 
                               setSelectedServices((prev) =>
-                                prev.filter((s) => s !== service)
+                                prev.filter((s) => s !== service),
                               );
                             } else {
-                              // Add
+                              // Add with default price
                               const { shop } = await fetchFullShopProfile();
-                              await addNewService(shop.id, service, 0);
 
-                              const updatedServices = await fetchShopServices(shop.id);
+                              // Set default price based on service type (same logic as onboarding)
+                              let defaultPrice = 10; // default fallback
+                              if (
+                                service.includes("Black & White") ||
+                                service.includes("Photocopy")
+                              ) {
+                                defaultPrice = 2;
+                              } else if (service.includes("Color")) {
+                                defaultPrice = 5;
+                              } else if (service.includes("Binding")) {
+                                defaultPrice = 20;
+                              } else if (service.includes("Lamination")) {
+                                defaultPrice = 10;
+                              } else if (service.includes("Scanning")) {
+                                defaultPrice = 3;
+                              } else if (service.includes("Card")) {
+                                defaultPrice = 15;
+                              }
+
+                              await addNewService(
+                                shop.id,
+                                service,
+                                defaultPrice,
+                              );
+
+                              const updatedServices = await fetchShopServices(
+                                shop.id,
+                              );
                               setServices(updatedServices);
                               setSelectedServices((prev) => [...prev, service]);
-                            }
 
-                            setUnsavedChanges(true);
+                              // Update pricing settings with the default price
+                              setPricingSettings((prev) => ({
+                                ...prev,
+                                [service]: defaultPrice,
+                              }));
+                            }
                           }}
                         >
                           <div className="flex justify-between items-center">
@@ -518,29 +557,32 @@ export default function Settings() {
                           onClick={async () => {
                             if (isSelected) {
                               const existing = resources.find(
-                                (r) => r.resource_name === resource
+                                (r) => r.resource_name === resource,
                               );
 
                               if (existing) {
                                 await deleteResource(existing.id);
                                 setResources((prev) =>
-                                  prev.filter((r) => r.id !== existing.id)
+                                  prev.filter((r) => r.id !== existing.id),
                                 );
                               }
 
                               setSelectedResources((prev) =>
-                                prev.filter((r) => r !== resource)
+                                prev.filter((r) => r !== resource),
                               );
                             } else {
                               const { shop } = await fetchFullShopProfile();
                               await addResource(shop.id, resource);
 
-                              const updatedResources = await fetchShopResources(shop.id);
+                              const updatedResources = await fetchShopResources(
+                                shop.id,
+                              );
                               setResources(updatedResources);
-                              setSelectedResources((prev) => [...prev, resource]);
+                              setSelectedResources((prev) => [
+                                ...prev,
+                                resource,
+                              ]);
                             }
-
-                            setUnsavedChanges(true);
                           }}
                         >
                           <div className="flex justify-between items-center">
@@ -556,7 +598,6 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </TabsContent>
-
 
             {/* Pricing Settings */}
             <TabsContent value="pricing" className="space-y-6">
