@@ -560,16 +560,6 @@ export default function Dashboard() {
                           >
                             {printer.status}
                           </Badge>
-                          {printer.status === "offline" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => connectMockPrinter(printer.id)}
-                              className="text-xs px-3 py-1 h-7"
-                            >
-                              Connect
-                            </Button>
-                          )}
                         </div>
                       </div>
                     ))

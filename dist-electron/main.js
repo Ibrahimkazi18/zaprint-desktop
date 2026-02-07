@@ -11845,7 +11845,7 @@ function setupPrinterHandlers(mainWindow2) {
       return { success: false, error: error.message };
     }
   });
-  electron.ipcMain.handle("printer:start-monitoring", async (_, { shopId, accessToken, supabaseUrl, supabaseKey }) => {
+  electron.ipcMain.handle("printer:start-monitoring", async (_, { shopId }) => {
     try {
       if (monitoringActive) {
         console.log("[IPC] Monitoring already active");
@@ -11915,7 +11915,7 @@ function setupPrinterHandlers(mainWindow2) {
       return { success: false, error: error.message };
     }
   });
-  electron.ipcMain.handle("printer:sync-status", async (_, { shopId, accessToken, supabaseUrl, supabaseKey }) => {
+  electron.ipcMain.handle("printer:sync-status", async (_, { shopId }) => {
     try {
       console.log("[IPC] Manual sync requested for shop:", shopId);
       const { data: registeredPrinters, error: fetchError } = await supabase.from("shop_printers").select("*").eq("shop_id", shopId);
