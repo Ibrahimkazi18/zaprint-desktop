@@ -93,6 +93,15 @@ try {
   contextBridge.exposeInMainWorld("electron", {
     saveFile: (fileName: string, buffer: ArrayBuffer) =>
       ipcRenderer.invoke("save-file", fileName, buffer),
+
+    deleteFile: (filePath: string) =>
+      ipcRenderer.invoke("delete-file", filePath),
+
+    printFile: (job: any) =>
+      ipcRenderer.invoke("print-file", job),
+
+    setAvailablePrinters: (printers: any[]) =>
+      ipcRenderer.send("set-printers", printers)
   });
   
   console.log('🎉 Preload script loaded successfully!');

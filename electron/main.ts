@@ -1,4 +1,6 @@
 import { cleanupPrinterHandlers, setupPrinterHandlers } from "./main/printerHandlers";
+import { printFile } from "./main/printHandler";
+import { deleteFile, saveFile } from "./printing/fileManager";
 const { ipcMain, app: electronApp } = require('electron');
 const fs = require('fs');
 
@@ -7,6 +9,7 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
 let mainWindow: any = null;
+let availablePrinters: any[] = [];
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -160,17 +163,32 @@ process.on('unhandledRejection', (error) => {
 });
 
 ipcMain.handle("save-file", async (_: any, fileName: string, buffer: any) => {
-  const saveDir = path.join(process.cwd(), "print-queue");
-
-  if (!fs.existsSync(saveDir)) {
-    fs.mkdirSync(saveDir);
-  }
-
-  const savePath = path.join(saveDir, fileName);
-
-  fs.writeFileSync(savePath, Buffer.from(buffer));
-
-  console.log("✅ File saved in main process:", savePath);
-
+  const savePath = saveFile(fileName, buffer);
+  console.log("[Files] Saved file:", savePath);
   return savePath;
+});
+
+ipcMain.handle("delete-file", async (_: any, filePath: string) => {
+  deleteFile(filePath);
+  console.log("[Files] Deleted file:", filePath);
+});
+
+ipcMain.handle("print-file", async (_: any, job: any) => {
+  console.log("[IPC] print-file called", {
+    orderId: job?.orderId,
+    itemId: job?.itemId,
+    filePath: job?.filePath,
+    colorMode: job?.colorMode,
+  });
+
+  const printers = Array.isArray(job?.availablePrinters)
+    ? job.availablePrinters
+    : availablePrinters;
+
+  await printFile(job, printers);
+});
+
+ipcMain.on("set-printers", (_: any, printers: any) => {
+  availablePrinters = printers;
+  console.log("[IPC] Available printers updated:", availablePrinters.length);
 });

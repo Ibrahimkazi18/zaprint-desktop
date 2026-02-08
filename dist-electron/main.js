@@ -5,6 +5,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
 const electron = require("electron");
 const child_process = require("child_process");
 const os = require("os");
+const url = require("url");
+const fs$1 = require("fs");
+const path$1 = require("path");
 class PrinterService {
   constructor() {
     __publicField(this, "detectionInterval", null);
@@ -345,8 +348,8 @@ class FunctionsClient {
    * })
    * ```
    */
-  constructor(url, { headers = {}, customFetch, region = FunctionRegion.Any } = {}) {
-    this.url = url;
+  constructor(url2, { headers = {}, customFetch, region = FunctionRegion.Any } = {}) {
+    this.url = url2;
     this.headers = headers;
     this.region = region;
     this.fetch = resolveFetch$3(customFetch);
@@ -385,10 +388,10 @@ class FunctionsClient {
         if (!region) {
           region = this.region;
         }
-        const url = new URL(`${this.url}/${functionName}`);
+        const url2 = new URL(`${this.url}/${functionName}`);
         if (region && region !== "any") {
           _headers["x-region"] = region;
-          url.searchParams.set("forceFunctionRegion", region);
+          url2.searchParams.set("forceFunctionRegion", region);
         }
         let body;
         if (functionArgs && (headers && !Object.prototype.hasOwnProperty.call(headers, "Content-Type") || !headers)) {
@@ -418,7 +421,7 @@ class FunctionsClient {
             effectiveSignal = timeoutController.signal;
           }
         }
-        const response = yield this.fetch(url.toString(), {
+        const response = yield this.fetch(url2.toString(), {
           method: method || "POST",
           // headers priority is (high to low):
           // 1. invoke-level headers
@@ -1275,8 +1278,8 @@ var PostgrestQueryBuilder = class {
   * )
   * ```
   */
-  constructor(url, { headers = {}, schema, fetch: fetch$1 }) {
-    this.url = url;
+  constructor(url2, { headers = {}, schema, fetch: fetch$1 }) {
+    this.url = url2;
     this.headers = new Headers(headers);
     this.schema = schema;
     this.fetch = fetch$1;
@@ -1561,8 +1564,8 @@ var PostgrestClient = class PostgrestClient2 {
   * })
   * ```
   */
-  constructor(url, { headers = {}, schema, fetch: fetch$1 } = {}) {
-    this.url = url;
+  constructor(url2, { headers = {}, schema, fetch: fetch$1 } = {}) {
+    this.url = url2;
     this.headers = new Headers(headers);
     this.schemaName = schema;
     this.fetch = fetch$1;
@@ -1629,12 +1632,12 @@ var PostgrestClient = class PostgrestClient2 {
   rpc(fn, args = {}, { head: head2 = false, get: get2 = false, count } = {}) {
     var _this$fetch;
     let method;
-    const url = new URL(`${this.url}/rpc/${fn}`);
+    const url2 = new URL(`${this.url}/rpc/${fn}`);
     let body;
     if (head2 || get2) {
       method = head2 ? "HEAD" : "GET";
       Object.entries(args).filter(([_, value]) => value !== void 0).map(([name, value]) => [name, Array.isArray(value) ? `{${value.join(",")}}` : `${value}`]).forEach(([name, value]) => {
-        url.searchParams.append(name, value);
+        url2.searchParams.append(name, value);
       });
     } else {
       method = "POST";
@@ -1644,7 +1647,7 @@ var PostgrestClient = class PostgrestClient2 {
     if (count) headers.set("Prefer", `count=${count}`);
     return new PostgrestFilterBuilder({
       method,
-      url,
+      url: url2,
       headers,
       schema: this.schemaName,
       body,
@@ -1741,9 +1744,9 @@ Suggested solution: ${env.workaround}`;
    * const socket = WebSocketFactory.createWebSocket('wss://realtime.supabase.co/socket')
    * ```
    */
-  static createWebSocket(url, protocols) {
+  static createWebSocket(url2, protocols) {
     const WS = this.getWebSocketConstructor();
-    return new WS(url, protocols);
+    return new WS(url2, protocols);
   }
   /**
    * Detects whether the runtime can establish WebSocket connections.
@@ -2817,10 +2820,10 @@ class RealtimeChannel {
     this.bindings = {};
   }
   /** @internal */
-  async _fetchWithTimeout(url, options, timeout) {
+  async _fetchWithTimeout(url2, options, timeout) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
-    const response = await this.socket.fetch(url, Object.assign(Object.assign({}, options), { signal: controller.signal }));
+    const response = await this.socket.fetch(url2, Object.assign(Object.assign({}, options), { signal: controller.signal }));
     clearTimeout(id);
     return response;
   }
@@ -3619,18 +3622,18 @@ Option 2: Install and provide the "ws" package:
     this.channels.forEach((channel) => channel._trigger(CHANNEL_EVENTS.error));
   }
   /** @internal */
-  _appendParams(url, params) {
+  _appendParams(url2, params) {
     if (Object.keys(params).length === 0) {
-      return url;
+      return url2;
     }
-    const prefix = url.match(/\?/) ? "&" : "?";
+    const prefix = url2.match(/\?/) ? "&" : "?";
     const query = new URLSearchParams(params);
-    return `${url}${prefix}${query}`;
+    return `${url2}${prefix}${query}`;
   }
-  _workerObjectUrl(url) {
+  _workerObjectUrl(url2) {
     let result_url;
-    if (url) {
-      result_url = url;
+    if (url2) {
+      result_url = url2;
     } else {
       const blob = new Blob([WORKER_SCRIPT], { type: "application/javascript" });
       result_url = URL.createObjectURL(blob);
@@ -3820,15 +3823,15 @@ var IcebergError = class extends Error {
   }
 };
 function buildUrl(baseUrl, path2, query) {
-  const url = new URL(path2, baseUrl);
+  const url2 = new URL(path2, baseUrl);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== void 0) {
-        url.searchParams.set(key, value);
+        url2.searchParams.set(key, value);
       }
     }
   }
-  return url.toString();
+  return url2.toString();
 }
 async function buildAuthHeaders(auth) {
   if (!auth || auth.type === "none") {
@@ -3855,9 +3858,9 @@ function createFetchClient(options) {
       body,
       headers
     }) {
-      const url = buildUrl(options.baseUrl, path2, query);
+      const url2 = buildUrl(options.baseUrl, path2, query);
       const authHeaders = await buildAuthHeaders(options.auth);
-      const res = await fetchFn(url, {
+      const res = await fetchFn(url2, {
         method,
         headers: {
           ...body ? { "Content-Type": "application/json" } : {},
@@ -4462,29 +4465,29 @@ const _getRequestParams$1 = (method, options, parameters, body) => {
   if (options === null || options === void 0 ? void 0 : options.duplex) params.duplex = options.duplex;
   return _objectSpread2$1(_objectSpread2$1({}, params), parameters);
 };
-async function _handleRequest$1(fetcher, method, url, options, parameters, body) {
+async function _handleRequest$1(fetcher, method, url2, options, parameters, body) {
   return new Promise((resolve, reject) => {
-    fetcher(url, _getRequestParams$1(method, options, parameters, body)).then((result) => {
+    fetcher(url2, _getRequestParams$1(method, options, parameters, body)).then((result) => {
       if (!result.ok) throw result;
       if (options === null || options === void 0 ? void 0 : options.noResolveJson) return result;
       return result.json();
     }).then((data) => resolve(data)).catch((error) => handleError$1(error, reject, options));
   });
 }
-async function get(fetcher, url, options, parameters) {
-  return _handleRequest$1(fetcher, "GET", url, options, parameters);
+async function get(fetcher, url2, options, parameters) {
+  return _handleRequest$1(fetcher, "GET", url2, options, parameters);
 }
-async function post$1(fetcher, url, body, options, parameters) {
-  return _handleRequest$1(fetcher, "POST", url, options, parameters, body);
+async function post$1(fetcher, url2, body, options, parameters) {
+  return _handleRequest$1(fetcher, "POST", url2, options, parameters, body);
 }
-async function put(fetcher, url, body, options, parameters) {
-  return _handleRequest$1(fetcher, "PUT", url, options, parameters, body);
+async function put(fetcher, url2, body, options, parameters) {
+  return _handleRequest$1(fetcher, "PUT", url2, options, parameters, body);
 }
-async function head(fetcher, url, options, parameters) {
-  return _handleRequest$1(fetcher, "HEAD", url, _objectSpread2$1(_objectSpread2$1({}, options), {}, { noResolveJson: true }), parameters);
+async function head(fetcher, url2, options, parameters) {
+  return _handleRequest$1(fetcher, "HEAD", url2, _objectSpread2$1(_objectSpread2$1({}, options), {}, { noResolveJson: true }), parameters);
 }
-async function remove(fetcher, url, body, options, parameters) {
-  return _handleRequest$1(fetcher, "DELETE", url, options, parameters, body);
+async function remove(fetcher, url2, body, options, parameters) {
+  return _handleRequest$1(fetcher, "DELETE", url2, options, parameters, body);
 }
 var StreamDownloadBuilder = class {
   constructor(downloadFn, shouldThrowOnError) {
@@ -4567,9 +4570,9 @@ const DEFAULT_FILE_OPTIONS = {
   upsert: false
 };
 var StorageFileApi = class {
-  constructor(url, headers = {}, bucketId, fetch$1) {
+  constructor(url2, headers = {}, bucketId, fetch$1) {
     this.shouldThrowOnError = false;
-    this.url = url;
+    this.url = url2;
     this.headers = headers;
     this.bucketId = bucketId;
     this.fetch = resolveFetch$1$1(fetch$1);
@@ -4716,8 +4719,8 @@ var StorageFileApi = class {
     var _this3 = this;
     const cleanPath = _this3._removeEmptyFolders(path2);
     const _path = _this3._getFinalPath(cleanPath);
-    const url = new URL(_this3.url + `/object/upload/sign/${_path}`);
-    url.searchParams.set("token", token);
+    const url2 = new URL(_this3.url + `/object/upload/sign/${_path}`);
+    url2.searchParams.set("token", token);
     try {
       let body;
       const options = _objectSpread2$1({ upsert: DEFAULT_FILE_OPTIONS.upsert }, fileOptions);
@@ -4737,7 +4740,7 @@ var StorageFileApi = class {
       return {
         data: {
           path: cleanPath,
-          fullPath: (await put(_this3.fetch, url.toString(), body, { headers })).Key
+          fullPath: (await put(_this3.fetch, url2.toString(), body, { headers })).Key
         },
         error: null
       };
@@ -4787,12 +4790,12 @@ var StorageFileApi = class {
       const headers = _objectSpread2$1({}, _this4.headers);
       if (options === null || options === void 0 ? void 0 : options.upsert) headers["x-upsert"] = "true";
       const data = await post$1(_this4.fetch, `${_this4.url}/object/upload/sign/${_path}`, {}, { headers });
-      const url = new URL(_this4.url + data.url);
-      const token = url.searchParams.get("token");
+      const url2 = new URL(_this4.url + data.url);
+      const token = url2.searchParams.get("token");
       if (!token) throw new StorageError("No token returned by API");
       return {
         data: {
-          signedUrl: url.toString(),
+          signedUrl: url2.toString(),
           path: path2,
           token
         },
@@ -5433,9 +5436,9 @@ var StorageFileApi = class {
 const version$2 = "2.89.0";
 const DEFAULT_HEADERS$1$1 = { "X-Client-Info": `storage-js/${version$2}` };
 var StorageBucketApi = class {
-  constructor(url, headers = {}, fetch$1, opts) {
+  constructor(url2, headers = {}, fetch$1, opts) {
     this.shouldThrowOnError = false;
-    const baseUrl = new URL(url);
+    const baseUrl = new URL(url2);
     if (opts === null || opts === void 0 ? void 0 : opts.useNewHostname) {
       if (/supabase\.(co|in|red)$/.test(baseUrl.hostname) && !baseUrl.hostname.includes("storage.supabase.")) baseUrl.hostname = baseUrl.hostname.replace("supabase.", "storage.supabase.");
     }
@@ -5778,9 +5781,9 @@ var StorageAnalyticsClient = class {
   * const client = new StorageAnalyticsClient(url, headers)
   * ```
   */
-  constructor(url, headers = {}, fetch$1) {
+  constructor(url2, headers = {}, fetch$1) {
     this.shouldThrowOnError = false;
-    this.url = url.replace(/\/$/, "");
+    this.url = url2.replace(/\/$/, "");
     this.headers = _objectSpread2$1(_objectSpread2$1({}, DEFAULT_HEADERS$1$1), headers);
     this.fetch = resolveFetch$1$1(fetch$1);
   }
@@ -5905,9 +5908,9 @@ var StorageAnalyticsClient = class {
       if (options === null || options === void 0 ? void 0 : options.sortOrder) queryParams.set("sortOrder", options.sortOrder);
       if (options === null || options === void 0 ? void 0 : options.search) queryParams.set("search", options.search);
       const queryString = queryParams.toString();
-      const url = queryString ? `${_this2.url}/bucket?${queryString}` : `${_this2.url}/bucket`;
+      const url2 = queryString ? `${_this2.url}/bucket?${queryString}` : `${_this2.url}/bucket`;
       return {
-        data: await get(_this2.fetch, url, { headers: _this2.headers }),
+        data: await get(_this2.fetch, url2, { headers: _this2.headers }),
         error: null
       };
     } catch (error) {
@@ -6198,9 +6201,9 @@ const _getRequestParams$2 = (method, options, parameters, body) => {
   } else params.body = body;
   return _objectSpread2$1(_objectSpread2$1({}, params), parameters);
 };
-async function _handleRequest$2(fetcher, method, url, options, parameters, body) {
+async function _handleRequest$2(fetcher, method, url2, options, parameters, body) {
   return new Promise((resolve, reject) => {
-    fetcher(url, _getRequestParams$2(method, options, parameters, body)).then((result) => {
+    fetcher(url2, _getRequestParams$2(method, options, parameters, body)).then((result) => {
       if (!result.ok) throw result;
       if (options === null || options === void 0 ? void 0 : options.noResolveJson) return result;
       const contentType = result.headers.get("content-type");
@@ -6209,14 +6212,14 @@ async function _handleRequest$2(fetcher, method, url, options, parameters, body)
     }).then((data) => resolve(data)).catch((error) => handleError$2(error, reject, options));
   });
 }
-async function post(fetcher, url, body, options, parameters) {
-  return _handleRequest$2(fetcher, "POST", url, options, parameters, body);
+async function post(fetcher, url2, body, options, parameters) {
+  return _handleRequest$2(fetcher, "POST", url2, options, parameters, body);
 }
 var VectorIndexApi = class {
   /** Creates a new VectorIndexApi instance */
-  constructor(url, headers = {}, fetch$1) {
+  constructor(url2, headers = {}, fetch$1) {
     this.shouldThrowOnError = false;
-    this.url = url.replace(/\/$/, "");
+    this.url = url2.replace(/\/$/, "");
     this.headers = _objectSpread2$1(_objectSpread2$1({}, DEFAULT_HEADERS$2), headers);
     this.fetch = resolveFetch$2(fetch$1);
   }
@@ -6302,9 +6305,9 @@ var VectorIndexApi = class {
 };
 var VectorDataApi = class {
   /** Creates a new VectorDataApi instance */
-  constructor(url, headers = {}, fetch$1) {
+  constructor(url2, headers = {}, fetch$1) {
     this.shouldThrowOnError = false;
-    this.url = url.replace(/\/$/, "");
+    this.url = url2.replace(/\/$/, "");
     this.headers = _objectSpread2$1(_objectSpread2$1({}, DEFAULT_HEADERS$2), headers);
     this.fetch = resolveFetch$2(fetch$1);
   }
@@ -6409,9 +6412,9 @@ var VectorDataApi = class {
 };
 var VectorBucketApi = class {
   /** Creates a new VectorBucketApi instance */
-  constructor(url, headers = {}, fetch$1) {
+  constructor(url2, headers = {}, fetch$1) {
     this.shouldThrowOnError = false;
-    this.url = url.replace(/\/$/, "");
+    this.url = url2.replace(/\/$/, "");
     this.headers = _objectSpread2$1(_objectSpread2$1({}, DEFAULT_HEADERS$2), headers);
     this.fetch = resolveFetch$2(fetch$1);
   }
@@ -6507,8 +6510,8 @@ var StorageVectorsClient = class extends VectorBucketApi {
   * const client = new StorageVectorsClient(url, options)
   * ```
   */
-  constructor(url, options = {}) {
-    super(url, options.headers || {}, options.fetch);
+  constructor(url2, options = {}) {
+    super(url2, options.headers || {}, options.fetch);
   }
   /**
   *
@@ -6650,8 +6653,8 @@ var VectorBucketScope = class extends VectorIndexApi {
   * const bucket = supabase.storage.vectors.from('embeddings-prod')
   * ```
   */
-  constructor(url, headers, vectorBucketName, fetch$1) {
-    super(url, headers, fetch$1);
+  constructor(url2, headers, vectorBucketName, fetch$1) {
+    super(url2, headers, fetch$1);
     this.vectorBucketName = vectorBucketName;
   }
   /**
@@ -6805,8 +6808,8 @@ var VectorIndexScope = class extends VectorDataApi {
   * const index = supabase.storage.vectors.from('embeddings-prod').index('documents-openai')
   * ```
   */
-  constructor(url, headers, vectorBucketName, indexName, fetch$1) {
-    super(url, headers, fetch$1);
+  constructor(url2, headers, vectorBucketName, indexName, fetch$1) {
+    super(url2, headers, fetch$1);
     this.vectorBucketName = vectorBucketName;
     this.indexName = indexName;
   }
@@ -6978,8 +6981,8 @@ var StorageClient = class extends StorageBucketApi {
   * const avatars = storage.from('avatars')
   * ```
   */
-  constructor(url, headers = {}, fetch$1, opts) {
-    super(url, headers, fetch$1, opts);
+  constructor(url2, headers = {}, fetch$1, opts) {
+    super(url2, headers, fetch$1, opts);
   }
   /**
   * Perform file operation in a bucket.
@@ -7355,17 +7358,17 @@ const supportsLocalStorage = () => {
 };
 function parseParametersFromURL(href) {
   const result = {};
-  const url = new URL(href);
-  if (url.hash && url.hash[0] === "#") {
+  const url2 = new URL(href);
+  if (url2.hash && url2.hash[0] === "#") {
     try {
-      const hashSearchParams = new URLSearchParams(url.hash.substring(1));
+      const hashSearchParams = new URLSearchParams(url2.hash.substring(1));
       hashSearchParams.forEach((value, key) => {
         result[key] = value;
       });
     } catch (e) {
     }
   }
-  url.searchParams.forEach((value, key) => {
+  url2.searchParams.forEach((value, key) => {
     result[key] = value;
   });
   return result;
@@ -7635,7 +7638,7 @@ const _getRequestParams = (method, options, parameters, body) => {
   params.body = JSON.stringify(body);
   return Object.assign(Object.assign({}, params), parameters);
 };
-async function _request(fetcher, method, url, options) {
+async function _request(fetcher, method, url2, options) {
   var _a;
   const headers = Object.assign({}, options === null || options === void 0 ? void 0 : options.headers);
   if (!headers[API_VERSION_HEADER_NAME]) {
@@ -7649,17 +7652,17 @@ async function _request(fetcher, method, url, options) {
     qs["redirect_to"] = options.redirectTo;
   }
   const queryString = Object.keys(qs).length ? "?" + new URLSearchParams(qs).toString() : "";
-  const data = await _handleRequest(fetcher, method, url + queryString, {
+  const data = await _handleRequest(fetcher, method, url2 + queryString, {
     headers,
     noResolveJson: options === null || options === void 0 ? void 0 : options.noResolveJson
   }, {}, options === null || options === void 0 ? void 0 : options.body);
   return (options === null || options === void 0 ? void 0 : options.xform) ? options === null || options === void 0 ? void 0 : options.xform(data) : { data: Object.assign({}, data), error: null };
 }
-async function _handleRequest(fetcher, method, url, options, parameters, body) {
+async function _handleRequest(fetcher, method, url2, options, parameters, body) {
   const requestParams = _getRequestParams(method, options, parameters, body);
   let result;
   try {
-    result = await fetcher(url, Object.assign({}, requestParams));
+    result = await fetcher(url2, Object.assign({}, requestParams));
   } catch (e) {
     console.error(e);
     throw new AuthRetryableFetchError(_getErrorMessage(e), 0);
@@ -7742,8 +7745,8 @@ class GoTrueAdminApi {
    * })
    * ```
    */
-  constructor({ url = "", headers = {}, fetch: fetch2 }) {
-    this.url = url;
+  constructor({ url: url2 = "", headers = {}, fetch: fetch2 }) {
+    this.url = url2;
     this.headers = headers;
     this.fetch = resolveFetch$1(fetch2);
     this.mfa = {
@@ -9466,7 +9469,7 @@ class GoTrueClient {
           throw new Error(`@supabase/auth-js: No compatible Ethereum wallet interface on the window object (window.ethereum) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'ethereum', wallet: resolvedUserWallet }) instead.`);
         }
       }
-      const url = new URL((_a = options === null || options === void 0 ? void 0 : options.url) !== null && _a !== void 0 ? _a : window.location.href);
+      const url2 = new URL((_a = options === null || options === void 0 ? void 0 : options.url) !== null && _a !== void 0 ? _a : window.location.href);
       const accounts = await resolvedWallet.request({
         method: "eth_requestAccounts"
       }).then((accs) => accs).catch(() => {
@@ -9484,10 +9487,10 @@ class GoTrueClient {
         chainId = fromHex(chainIdHex);
       }
       const siweMessage = {
-        domain: url.host,
+        domain: url2.host,
         address,
         statement,
-        uri: url.href,
+        uri: url2.href,
         version: "1",
         chainId,
         nonce: (_c = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _c === void 0 ? void 0 : _c.nonce,
@@ -9557,13 +9560,13 @@ class GoTrueClient {
           throw new Error(`@supabase/auth-js: No compatible Solana wallet interface on the window object (window.solana) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'solana', wallet: resolvedUserWallet }) instead.`);
         }
       }
-      const url = new URL((_a = options === null || options === void 0 ? void 0 : options.url) !== null && _a !== void 0 ? _a : window.location.href);
+      const url2 = new URL((_a = options === null || options === void 0 ? void 0 : options.url) !== null && _a !== void 0 ? _a : window.location.href);
       if ("signIn" in resolvedWallet && resolvedWallet.signIn) {
         const output = await resolvedWallet.signIn(Object.assign(Object.assign(Object.assign({ issuedAt: (/* @__PURE__ */ new Date()).toISOString() }, options === null || options === void 0 ? void 0 : options.signInWithSolana), {
           // non-overridable properties
           version: "1",
-          domain: url.host,
-          uri: url.href
+          domain: url2.host,
+          uri: url2.href
         }), statement ? { statement } : null));
         let outputToProcess;
         if (Array.isArray(output) && output[0] && typeof output[0] === "object") {
@@ -9584,11 +9587,11 @@ class GoTrueClient {
           throw new Error("@supabase/auth-js: Wallet does not have a compatible signMessage() and publicKey.toBase58() API");
         }
         message = [
-          `${url.host} wants you to sign in with your Solana account:`,
+          `${url2.host} wants you to sign in with your Solana account:`,
           resolvedWallet.publicKey.toBase58(),
           ...statement ? ["", statement, ""] : [""],
           "Version: 1",
-          `URI: ${url.href}`,
+          `URI: ${url2.href}`,
           `Issued At: ${(_c = (_b = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _b === void 0 ? void 0 : _b.issuedAt) !== null && _c !== void 0 ? _c : (/* @__PURE__ */ new Date()).toISOString()}`,
           ...((_d = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _d === void 0 ? void 0 : _d.notBefore) ? [`Not Before: ${options.signInWithSolana.notBefore}`] : [],
           ...((_e = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _e === void 0 ? void 0 : _e.expirationTime) ? [`Expiration Time: ${options.signInWithSolana.expirationTime}`] : [],
@@ -10303,9 +10306,9 @@ class GoTrueClient {
         const { data: data2, error: error2 } = await this._exchangeCodeForSession(params.code);
         if (error2)
           throw error2;
-        const url = new URL(window.location.href);
-        url.searchParams.delete("code");
-        window.history.replaceState(window.history.state, "", url.toString());
+        const url2 = new URL(window.location.href);
+        url2.searchParams.delete("code");
+        window.history.replaceState(window.history.state, "", url2.toString());
         return { data: { session: data2.session, redirectType: null }, error: null };
       }
       const { provider_token, provider_refresh_token, access_token, refresh_token, expires_in, expires_at, token_type } = params;
@@ -10512,13 +10515,13 @@ class GoTrueClient {
         const { data: data2, error: error2 } = result;
         if (error2)
           throw error2;
-        const url = await this._getUrlForProvider(`${this.url}/user/identities/authorize`, credentials.provider, {
+        const url2 = await this._getUrlForProvider(`${this.url}/user/identities/authorize`, credentials.provider, {
           redirectTo: (_a2 = credentials.options) === null || _a2 === void 0 ? void 0 : _a2.redirectTo,
           scopes: (_b = credentials.options) === null || _b === void 0 ? void 0 : _b.scopes,
           queryParams: (_c = credentials.options) === null || _c === void 0 ? void 0 : _c.queryParams,
           skipBrowserRedirect: true
         });
-        return await _request(this.fetch, "GET", url, {
+        return await _request(this.fetch, "GET", url2, {
           headers: this.headers,
           jwt: (_e = (_d = data2.session) === null || _d === void 0 ? void 0 : _d.access_token) !== null && _e !== void 0 ? _e : void 0
         });
@@ -10645,16 +10648,16 @@ class GoTrueClient {
     return isValidSession;
   }
   async _handleProviderSignIn(provider, options) {
-    const url = await this._getUrlForProvider(`${this.url}/authorize`, provider, {
+    const url2 = await this._getUrlForProvider(`${this.url}/authorize`, provider, {
       redirectTo: options.redirectTo,
       scopes: options.scopes,
       queryParams: options.queryParams
     });
-    this._debug("#_handleProviderSignIn()", "provider", provider, "options", options, "url", url);
+    this._debug("#_handleProviderSignIn()", "provider", provider, "options", options, "url", url2);
     if (isBrowser() && !options.skipBrowserRedirect) {
-      window.location.assign(url);
+      window.location.assign(url2);
     }
-    return { data: { provider, url }, error: null };
+    return { data: { provider, url: url2 }, error: null };
   }
   /**
    * Recovers the session from LocalStorage and refreshes the token
@@ -11009,7 +11012,7 @@ class GoTrueClient {
    * @param options.scopes A space-separated list of scopes granted to the OAuth application.
    * @param options.queryParams An object of key-value pairs containing query parameters granted to the OAuth application.
    */
-  async _getUrlForProvider(url, provider, options) {
+  async _getUrlForProvider(url2, provider, options) {
     const urlParams = [`provider=${encodeURIComponent(provider)}`];
     if (options === null || options === void 0 ? void 0 : options.redirectTo) {
       urlParams.push(`redirect_to=${encodeURIComponent(options.redirectTo)}`);
@@ -11032,7 +11035,7 @@ class GoTrueClient {
     if (options === null || options === void 0 ? void 0 : options.skipBrowserRedirect) {
       urlParams.push(`skip_http_redirect=${options.skipBrowserRedirect}`);
     }
-    return `${url}?${urlParams.join("&")}`;
+    return `${url2}?${urlParams.join("&")}`;
   }
   async _unenroll(params) {
     try {
@@ -11566,8 +11569,8 @@ const fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
     return fetch$1(input, _objectSpread2(_objectSpread2({}, init), {}, { headers }));
   };
 };
-function ensureTrailingSlash(url) {
-  return url.endsWith("/") ? url : url + "/";
+function ensureTrailingSlash(url2) {
+  return url2.endsWith("/") ? url2 : url2 + "/";
 }
 function applySettingDefaults(options, defaults) {
   var _DEFAULT_GLOBAL_OPTIO, _globalOptions$header;
@@ -11965,11 +11968,115 @@ function cleanupPrinterHandlers() {
   printerService.stopMonitoring();
   monitoringActive = false;
 }
+async function printFile(job, fallbackPrinters = []) {
+  if (!(job == null ? void 0 : job.filePath)) {
+    throw new Error("Missing filePath for print job");
+  }
+  const appPrinters = job.availablePrinters && job.availablePrinters.length > 0 ? job.availablePrinters : fallbackPrinters;
+  console.log("[Print] Job started", {
+    orderId: job.orderId,
+    itemId: job.itemId,
+    filePath: job.filePath,
+    colorMode: job.colorMode
+  });
+  logAvailablePrinters(appPrinters);
+  const requestedMode = normalizeMode(job.colorMode);
+  const targetPrinter = selectPrinter(appPrinters, requestedMode);
+  if (!targetPrinter) {
+    const label = requestedMode ? requestedMode : "any";
+    throw new Error(`No online ${label} printer available`);
+  }
+  const systemPrinters = await printerService.detectSystemPrinters();
+  logSystemPrinters(systemPrinters);
+  const systemMatch = systemPrinters.find(
+    (printer) => printer.name.toLowerCase() === targetPrinter.printer_name.toLowerCase()
+  );
+  if (!systemMatch || systemMatch.status !== "online") {
+    throw new Error(
+      `Printer not available on system: ${targetPrinter.printer_name}`
+    );
+  }
+  console.log("[Print] Selected printer:", targetPrinter.printer_name);
+  const win = new electron.BrowserWindow({
+    show: false
+  });
+  try {
+    const fileUrl = url.pathToFileURL(job.filePath).toString();
+    await win.loadURL(fileUrl);
+    await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
+    console.log("[Print] Job finished:", job.filePath);
+  } finally {
+    win.close();
+  }
+}
+function normalizeMode(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized.includes("bw") || normalized.includes("b&w")) return "bw";
+  if (normalized.includes("black")) return "bw";
+  if (normalized.includes("color")) return "color";
+  return "";
+}
+function selectPrinter(printers, requestedMode) {
+  return printers.find((printer) => {
+    const isOnline = String(printer.status).toLowerCase() === "online";
+    if (!isOnline) return false;
+    if (!requestedMode) return true;
+    const printerMode = normalizeMode(printer.printer_type);
+    return printerMode === requestedMode;
+  });
+}
+function logAvailablePrinters(printers) {
+  console.log("[Print] Available app printers:", printers.length);
+  printers.forEach((printer) => {
+    console.log(
+      `[Print] - ${printer.printer_name} (${printer.printer_type}, ${printer.status})`
+    );
+  });
+}
+function logSystemPrinters(printers) {
+  console.log("[Print] System printers detected:", printers.length);
+  printers.forEach((printer) => {
+    console.log(`[Print] - ${printer.name} (${printer.status})`);
+  });
+}
+function printWebContents(win, deviceName, copies) {
+  return new Promise((resolve, reject) => {
+    win.webContents.print(
+      {
+        silent: true,
+        deviceName,
+        copies
+      },
+      (success, failureReason) => {
+        if (!success) {
+          reject(new Error(failureReason || "Print failed"));
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}
+function saveFile(fileName, buffer) {
+  const folder = path$1.join(process.cwd(), "print-queue");
+  if (!fs$1.existsSync(folder)) {
+    fs$1.mkdirSync(folder);
+  }
+  const filePath = path$1.join(folder, fileName);
+  fs$1.writeFileSync(filePath, Buffer.from(buffer));
+  return filePath;
+}
+function deleteFile(filePath) {
+  if (fs$1.existsSync(filePath)) {
+    fs$1.unlinkSync(filePath);
+  }
+}
 const { ipcMain, app: electronApp } = require("electron");
 const fs = require("fs");
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 let mainWindow = null;
+let availablePrinters = [];
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 async function createWindow() {
   try {
@@ -12087,12 +12194,25 @@ process.on("unhandledRejection", (error) => {
   console.error("Unhandled Rejection:", error);
 });
 ipcMain.handle("save-file", async (_, fileName, buffer) => {
-  const saveDir = path.join(process.cwd(), "print-queue");
-  if (!fs.existsSync(saveDir)) {
-    fs.mkdirSync(saveDir);
-  }
-  const savePath = path.join(saveDir, fileName);
-  fs.writeFileSync(savePath, Buffer.from(buffer));
-  console.log("✅ File saved in main process:", savePath);
+  const savePath = saveFile(fileName, buffer);
+  console.log("[Files] Saved file:", savePath);
   return savePath;
+});
+ipcMain.handle("delete-file", async (_, filePath) => {
+  deleteFile(filePath);
+  console.log("[Files] Deleted file:", filePath);
+});
+ipcMain.handle("print-file", async (_, job) => {
+  console.log("[IPC] print-file called", {
+    orderId: job == null ? void 0 : job.orderId,
+    itemId: job == null ? void 0 : job.itemId,
+    filePath: job == null ? void 0 : job.filePath,
+    colorMode: job == null ? void 0 : job.colorMode
+  });
+  const printers = Array.isArray(job == null ? void 0 : job.availablePrinters) ? job.availablePrinters : availablePrinters;
+  await printFile(job, printers);
+});
+ipcMain.on("set-printers", (_, printers) => {
+  availablePrinters = printers;
+  console.log("[IPC] Available printers updated:", availablePrinters.length);
 });

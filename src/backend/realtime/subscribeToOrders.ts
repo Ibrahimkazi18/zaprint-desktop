@@ -1,6 +1,7 @@
 import { supabase } from "@/auth/supabase";
+import { updateOrderStatus } from "../orders/updateOrderStatus";
 
-export function subscribeToOrders(shopId: string) {
+export function subscribeToOrders(shopId: string, addToQueue: (item: any) => void) {
   console.log("Subscribing to orders for shop ID:", shopId);
 
   const channel = supabase
@@ -14,35 +15,11 @@ export function subscribeToOrders(shopId: string) {
         filter: `shop_id=eq.${shopId}`,
       },
       async (payload) => {
-        console.log("🟢 New order received:", payload.new);
+        const order = payload.new;
 
-        const orderId = payload.new.id;
+        if (order.status !== "pending") return;
 
-        // Fetch order items immediately
-        const { data: items, error } = await supabase
-          .from("order_items")
-          .select("*")
-          .eq("order_id", orderId);
-
-        if (error) {
-          console.error("Error fetching order items:", error);
-          return;
-        }
-
-        console.log("📦 Order items:", items);
-
-        // Now download files
-        for (const item of items) {
-          await downloadFile(item.file_url, item.file_name);
-        }
-
-        // Update status
-        await supabase
-            .from("orders")
-            .update({ status: "in_queue" })
-            .eq("id", orderId);
-
-        console.log("📌 Order moved to in_queue");
+        await processOrder(order.id, addToQueue);
       }
     )
     .subscribe((status) => {
@@ -70,6 +47,43 @@ async function downloadFile(fileUrl: string, fileName: string) {
     console.log("✅ File sent to main for saving");
   } catch (err) {
     console.error("Download failed:", err);
+  }
+}
+
+async function processOrder(orderId: string, addToQueue: any) {
+  const { data: items } = await supabase
+    .from("order_items")
+    .select("*")
+    .eq("order_id", orderId);
+
+  if (!items) return;
+
+  for (const item of items) {
+    const pathForDownload =
+      item.file_url.split("/documents/")[1];
+
+    const { data } = await supabase.storage
+      .from("documents")
+      .download(pathForDownload);
+
+    const arrayBuffer = await data!.arrayBuffer();
+
+    const savedPath = await window.electron.saveFile(
+      item.file_name,
+      arrayBuffer
+    );
+
+    await updateOrderStatus(orderId, "in_queue");
+
+    addToQueue({
+      orderId,
+      itemId: item.id,
+      filePath: savedPath,
+      fileUrl: pathForDownload,
+      copies: item.copies,
+      colorMode: item.color_mode,
+      pagesPerSheet: item.pages_per_sheet,
+    });
   }
 }
 

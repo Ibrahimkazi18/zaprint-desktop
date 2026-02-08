@@ -46,11 +46,13 @@ import { useShopDashboard } from "@/hooks/useShopDashboard";
 import { fetchMissedOrders, subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
 import { useEffect } from "react";
 import { supabase } from "@/auth/supabase";
+import { usePrintQueue } from "@/hooks/usePrintQueue";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const { shop, printers, loading } = useShopDashboard();
+  const { addJob: addToQueue } = usePrintQueue(printers);
 
   console.log("Shop data:", shop);
 
@@ -58,12 +60,12 @@ export default function Dashboard() {
     if (!shop?.id) return;
 
     fetchMissedOrders(shop.id);
-    const channel = subscribeToOrders(shop.id);
+    const channel = subscribeToOrders(shop.id, addToQueue);
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [shop?.id]);
+  }, [shop?.id, addToQueue]);
 
   // Mock queue data with more realistic content
   const [queue, setQueue] = useState<PrintJob[]>([
@@ -305,7 +307,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-3xl font-bold">4.8 ★</p>
+                  <p className="text-3xl font-bold">4.8 â˜…</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     120 reviews
                   </p>
@@ -330,7 +332,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-emerald-600">
-                ₹{todayEarnings.toLocaleString()}
+                â‚¹{todayEarnings.toLocaleString()}
               </p>
               <div className="flex items-center text-sm text-emerald-600 mt-2">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
@@ -349,7 +351,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-blue-600">
-                ₹{monthlyEarnings.toLocaleString()}
+                â‚¹{monthlyEarnings.toLocaleString()}
               </p>
               <div className="flex items-center text-sm text-blue-600 mt-2">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
@@ -368,7 +370,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-amber-600">
-                ₹{pendingPayments.toLocaleString()}
+                â‚¹{pendingPayments.toLocaleString()}
               </p>
               <p className="text-sm text-amber-600 mt-2">3 pending invoices</p>
             </CardContent>
@@ -469,7 +471,7 @@ export default function Dashboard() {
                                       Pages
                                     </Label>
                                     <p className="text-sm text-muted-foreground">
-                                      {job.pages} pages × {job.copies} copies
+                                      {job.pages} pages Ã— {job.copies} copies
                                     </p>
                                   </div>
                                   <div>

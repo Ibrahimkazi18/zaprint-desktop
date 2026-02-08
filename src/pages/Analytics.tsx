@@ -23,22 +23,13 @@ import {
   DollarSign,
   Users,
   FileText,
-  Clock,
-  Calendar,
   BarChart3,
-  PieChart,
   Download,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
-import fetchMyShop from "@/backend/shops/fetchMyShop";
 
 export default async function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("7d");
-
-  const shop = await fetchMyShop();
-
-  subscribeToOrders(shop?.id);
 
   // Mock analytics data
   const overviewStats = {
