@@ -158,3 +158,19 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (error) => {
   console.error('Unhandled Rejection:', error);
 });
+
+ipcMain.handle("save-file", async (_: any, fileName: string, buffer: any) => {
+  const saveDir = path.join(process.cwd(), "print-queue");
+
+  if (!fs.existsSync(saveDir)) {
+    fs.mkdirSync(saveDir);
+  }
+
+  const savePath = path.join(saveDir, fileName);
+
+  fs.writeFileSync(savePath, Buffer.from(buffer));
+
+  console.log("✅ File saved in main process:", savePath);
+
+  return savePath;
+});

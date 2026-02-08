@@ -89,6 +89,11 @@ try {
   
   contextBridge.exposeInMainWorld('electronAPI', electronAPI);
   console.log('✅ Electron API exposed to window.electronAPI');
+
+  contextBridge.exposeInMainWorld("electron", {
+    saveFile: (fileName: string, buffer: ArrayBuffer) =>
+      ipcRenderer.invoke("save-file", fileName, buffer),
+  });
   
   console.log('🎉 Preload script loaded successfully!');
 } catch (error) {

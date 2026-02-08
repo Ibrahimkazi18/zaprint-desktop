@@ -43,12 +43,26 @@ import {
 import { PrintJob } from "@/types";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import connectMockPrinter from "@/backend/printers/mockPrinter";
+import { subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
+import { useEffect } from "react";
+import { supabase } from "@/auth/supabase";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const { shop, printers, loading } = useShopDashboard();
+
+  console.log("Shop data:", shop);
+
+  useEffect(() => {
+    if (!shop?.id) return;
+
+    const channel = subscribeToOrders(shop.id);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shop?.id]);
 
   // Mock queue data with more realistic content
   const [queue, setQueue] = useState<PrintJob[]>([

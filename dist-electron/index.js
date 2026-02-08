@@ -68,6 +68,9 @@ try {
   console.log("✅ Printer API exposed to window.printerAPI");
   contextBridge.exposeInMainWorld("electronAPI", electronAPI);
   console.log("✅ Electron API exposed to window.electronAPI");
+  contextBridge.exposeInMainWorld("electron", {
+    saveFile: (fileName, buffer) => ipcRenderer.invoke("save-file", fileName, buffer)
+  });
   console.log("🎉 Preload script loaded successfully!");
 } catch (error) {
   console.error("❌ Error in preload script:", error);
