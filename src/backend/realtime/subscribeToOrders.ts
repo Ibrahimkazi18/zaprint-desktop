@@ -35,6 +35,14 @@ export function subscribeToOrders(shopId: string) {
         for (const item of items) {
           await downloadFile(item.file_url, item.file_name);
         }
+
+        // Update status
+        await supabase
+            .from("orders")
+            .update({ status: "in_queue" })
+            .eq("id", orderId);
+
+        console.log("📌 Order moved to in_queue");
       }
     )
     .subscribe((status) => {
@@ -65,3 +73,40 @@ async function downloadFile(fileUrl: string, fileName: string) {
   }
 }
 
+export async function fetchMissedOrders(shopId: string) {
+  console.log("🔎 Checking for missed orders...");
+
+  const { data: orders, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("shop_id", shopId)
+    .in("status", ["pending"])  // only those not processed
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching missed orders:", error);
+    return;
+  }
+
+  for (const order of orders) {
+    console.log("♻️ Recovering missed order:", order.id);
+
+    // Fetch items
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", order.id);
+
+    if (!items) continue;
+
+    for (const item of items) {
+      await downloadFile(item.file_url, item.file_name);
+    }
+
+    // Update status
+    await supabase
+      .from("orders")
+      .update({ status: "in_queue" })
+      .eq("id", order.id);
+  }
+}

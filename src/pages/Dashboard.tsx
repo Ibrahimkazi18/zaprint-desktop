@@ -43,7 +43,7 @@ import {
 import { PrintJob } from "@/types";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import { subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
+import { fetchMissedOrders, subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
 import { useEffect } from "react";
 import { supabase } from "@/auth/supabase";
 
@@ -57,6 +57,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!shop?.id) return;
 
+    fetchMissedOrders(shop.id);
     const channel = subscribeToOrders(shop.id);
 
     return () => {
