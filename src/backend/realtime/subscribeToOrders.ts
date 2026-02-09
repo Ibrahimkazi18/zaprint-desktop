@@ -1,7 +1,10 @@
 import { supabase } from "@/auth/supabase";
 import { updateOrderStatus } from "../orders/updateOrderStatus";
 
-export function subscribeToOrders(shopId: string, addToQueue: (item: any) => void) {
+export function subscribeToOrders(
+  shopId: string,
+  addToQueue: (item: any) => void
+) {
   console.log("Subscribing to orders for shop ID:", shopId);
 
   const channel = supabase
@@ -23,50 +26,40 @@ export function subscribeToOrders(shopId: string, addToQueue: (item: any) => voi
       }
     )
     .subscribe((status) => {
-        console.log("Realtime status:", status);
+      console.log("Realtime status:", status);
     });
 
   return channel;
 }
 
-
-async function downloadFile(fileUrl: string, fileName: string) {
-  try {
-    const pathForDownload = fileUrl.split("/documents/")[1];
-
-    const { data, error } = await supabase.storage
-      .from("documents")
-      .download(pathForDownload);
-
-    if (error) throw error;
-
-    const arrayBuffer = await data.arrayBuffer();
-
-    await window.electron.saveFile(fileName, arrayBuffer);
-
-    console.log("✅ File sent to main for saving");
-  } catch (err) {
-    console.error("Download failed:", err);
-  }
-}
-
 async function processOrder(orderId: string, addToQueue: any) {
-  const { data: items } = await supabase
+  const { data: items, error } = await supabase
     .from("order_items")
     .select("*")
     .eq("order_id", orderId);
 
-  if (!items) return;
+  if (error) {
+    console.error("Failed to fetch order items:", error);
+    return;
+  }
+
+  if (!items || items.length === 0) return;
+
+  const totalItems = items.length;
 
   for (const item of items) {
-    const pathForDownload =
-      item.file_url.split("/documents/")[1];
+    const pathForDownload = item.file_url.split("/documents/")[1];
 
-    const { data } = await supabase.storage
+    const { data, error: downloadError } = await supabase.storage
       .from("documents")
       .download(pathForDownload);
 
-    const arrayBuffer = await data!.arrayBuffer();
+    if (downloadError || !data) {
+      console.error("Download failed:", downloadError);
+      continue;
+    }
+
+    const arrayBuffer = await data.arrayBuffer();
 
     const savedPath = await window.electron.saveFile(
       item.file_name,
@@ -80,6 +73,7 @@ async function processOrder(orderId: string, addToQueue: any) {
       itemId: item.id,
       filePath: savedPath,
       fileUrl: pathForDownload,
+      orderItemCount: totalItems,
       copies: item.copies,
       colorMode: item.color_mode,
       pagesPerSheet: item.pages_per_sheet,
@@ -87,14 +81,17 @@ async function processOrder(orderId: string, addToQueue: any) {
   }
 }
 
-export async function fetchMissedOrders(shopId: string) {
-  console.log("🔎 Checking for missed orders...");
+export async function fetchMissedOrders(
+  shopId: string,
+  addToQueue: (item: any) => void
+) {
+  console.log("Checking for missed orders...");
 
   const { data: orders, error } = await supabase
     .from("orders")
     .select("*")
     .eq("shop_id", shopId)
-    .in("status", ["pending"])  // only those not processed
+    .in("status", ["pending"]) // only those not processed
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -103,24 +100,7 @@ export async function fetchMissedOrders(shopId: string) {
   }
 
   for (const order of orders) {
-    console.log("♻️ Recovering missed order:", order.id);
-
-    // Fetch items
-    const { data: items } = await supabase
-      .from("order_items")
-      .select("*")
-      .eq("order_id", order.id);
-
-    if (!items) continue;
-
-    for (const item of items) {
-      await downloadFile(item.file_url, item.file_name);
-    }
-
-    // Update status
-    await supabase
-      .from("orders")
-      .update({ status: "in_queue" })
-      .eq("id", order.id);
+    console.log("Recovering missed order:", order.id);
+    await processOrder(order.id, addToQueue);
   }
 }

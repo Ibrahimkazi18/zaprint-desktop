@@ -59,7 +59,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!shop?.id) return;
 
-    fetchMissedOrders(shop.id);
+    fetchMissedOrders(shop.id, addToQueue);
     const channel = subscribeToOrders(shop.id, addToQueue);
 
     return () => {

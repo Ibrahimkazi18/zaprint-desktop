@@ -59,7 +59,7 @@ export class PrinterService {
   private detectWindowsPrinters(): SystemPrinter[] {
     try {
       // Use PowerShell to get printer information
-      const command = `powershell -Command "Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | ConvertTo-Json"`;
+      const command = `powershell -Command "Get-Printer | Select-Object Name, PrinterStatus, WorkOffline, DriverName, PortName | ConvertTo-Json"`;
       const output = execSync(command, { 
         encoding: 'utf-8',
         windowsHide: true 
@@ -88,7 +88,7 @@ export class PrinterService {
       return printers.map((printer: any) => ({
         name: printer.Name,
         isDefault: printer.Name === defaultPrinter,
-        status: this.mapWindowsStatus(printer.PrinterStatus),
+        status: this.mapWindowsStatus(printer.PrinterStatus, printer.WorkOffline),
         driver: printer.DriverName,
         port: printer.PortName
       }));
@@ -184,16 +184,37 @@ export class PrinterService {
   /**
    * Map Windows printer status to our standard status
    */
-  private mapWindowsStatus(status: number): 'online' | 'offline' | 'error' {
+  private mapWindowsStatus(
+    status: number | string,
+    workOffline?: boolean
+  ): 'online' | 'offline' | 'error' {
     // Windows PrinterStatus enumeration
-    // 1 = Other, 2 = Unknown, 3 = Idle, 4 = Printing, 5 = Warmup
+    // 0 = Unknown, 1 = Other, 2 = Unknown, 3 = Idle, 4 = Printing, 5 = Warmup
     // 6 = Stopped, 7 = Offline
-    
-    if (status === 3 || status === 4 || status === 5) {
-      return 'online';
-    } else if (status === 6 || status === 7) {
-      return 'offline';
+    if (workOffline === true) return 'offline';
+
+    const numeric =
+      typeof status === 'number' ? status : Number(status);
+
+    if (!Number.isNaN(numeric)) {
+      if (numeric === 3 || numeric === 4 || numeric === 5) {
+        return 'online';
+      }
+      if (numeric === 6 || numeric === 7) {
+        return 'offline';
+      }
+      if (numeric === 0 || numeric === 1 || numeric === 2) {
+        return 'online';
+      }
     }
+
+    const text = String(status).toLowerCase();
+    if (text.includes('offline') || text.includes('stopped')) return 'offline';
+    if (text.includes('idle') || text.includes('printing') || text.includes('warm')) {
+      return 'online';
+    }
+    if (text.includes('unknown') || text.includes('other')) return 'online';
+
     return 'error';
   }
 
