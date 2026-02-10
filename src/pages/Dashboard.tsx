@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,14 +39,17 @@ import {
   Zap,
   Target,
   ArrowUpRight,
+  List,
 } from "lucide-react";
-import { PrintJob } from "@/types";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import { fetchMissedOrders, subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
-import { useEffect } from "react";
+import {
+  fetchMissedOrders,
+  subscribeToOrders,
+} from "@/backend/realtime/subscribeToOrders";
 import { supabase } from "@/auth/supabase";
 import { usePrintQueue } from "@/hooks/usePrintQueue";
+import { printQueueManager, PrintQueueJob } from "@/print/printQueueManager";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -54,7 +57,8 @@ export default function Dashboard() {
   const { shop, printers, loading } = useShopDashboard();
   const { addJob: addToQueue } = usePrintQueue(printers);
 
-  console.log("Shop data:", shop);
+  // Dynamic print queue state
+  const [queue, setQueue] = useState<PrintQueueJob[]>([]);
 
   useEffect(() => {
     if (!shop?.id) return;
@@ -65,76 +69,24 @@ export default function Dashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [shop?.id, addToQueue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop?.id]);
 
-  // Mock queue data with more realistic content
-  const [queue, setQueue] = useState<PrintJob[]>([
-    {
-      id: "job-001",
-      customerName: "John Doe",
-      jobType: "Document Print",
-      status: "Printing",
-      pages: 10,
-      copies: 2,
-      colorMode: "Color",
-      paperSize: "A4",
-      binding: "None",
-      notes: "Urgent delivery",
-      estimatedTime: "5 mins",
-    },
-    {
-      id: "job-002",
-      customerName: "Jane Smith",
-      jobType: "Poster Print",
-      status: "Queued",
-      pages: 1,
-      copies: 5,
-      colorMode: "Color",
-      paperSize: "A3",
-      binding: "None",
-      notes: "High quality gloss",
-      estimatedTime: "20 mins",
-    },
-    {
-      id: "job-003",
-      customerName: "Alex Johnson",
-      jobType: "Thesis Binding",
-      status: "Queued",
-      pages: 150,
-      copies: 1,
-      colorMode: "B&W",
-      paperSize: "A4",
-      binding: "Spiral",
-      notes: "Include cover page",
-      estimatedTime: "30 mins",
-    },
-    {
-      id: "job-004",
-      customerName: "Sarah Wilson",
-      jobType: "Assignment Print",
-      status: "Queued",
-      pages: 25,
-      copies: 1,
-      colorMode: "B&W",
-      paperSize: "A4",
-      binding: "Stapled",
-      notes: "Double sided",
-      estimatedTime: "8 mins",
-    },
-    {
-      id: "job-005",
-      customerName: "Mike Chen",
-      jobType: "ID Card Print",
-      status: "Queued",
-      pages: 1,
-      copies: 10,
-      colorMode: "Color",
-      paperSize: "Card",
-      binding: "None",
-      notes: "Laminated finish",
-      estimatedTime: "15 mins",
-    },
-  ]);
+  // Poll print queue for updates
+  useEffect(() => {
+    const updateQueue = () => {
+      const currentQueue = printQueueManager.getQueueSnapshot();
+      setQueue(currentQueue);
+    };
+
+    // Initial update
+    updateQueue();
+
+    // Poll every 2 seconds for queue updates
+    const interval = setInterval(updateQueue, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Mock recent activity data
   const recentActivity = [
@@ -172,9 +124,10 @@ export default function Dashboard() {
   const pendingPayments = 1200;
 
   const fetchQueue = async () => {
-    // Simulate API call without toast
-    console.log("Refreshing queue...");
-    // In real app, this would fetch from API
+    // Refresh queue from manager
+    const currentQueue = printQueueManager.getQueueSnapshot();
+    setQueue(currentQueue);
+    console.log("Queue refreshed:", currentQueue.length, "jobs");
   };
 
   if (loading) {
@@ -307,7 +260,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-3xl font-bold">4.8 â˜…</p>
+                  <p className="text-3xl font-bold">4.8</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     120 reviews
                   </p>
@@ -332,7 +285,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-emerald-600">
-                â‚¹{todayEarnings.toLocaleString()}
+                {todayEarnings.toLocaleString()}
               </p>
               <div className="flex items-center text-sm text-emerald-600 mt-2">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
@@ -351,7 +304,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-blue-600">
-                â‚¹{monthlyEarnings.toLocaleString()}
+                {monthlyEarnings.toLocaleString()}
               </p>
               <div className="flex items-center text-sm text-blue-600 mt-2">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
@@ -370,7 +323,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-amber-600">
-                â‚¹{pendingPayments.toLocaleString()}
+                {pendingPayments.toLocaleString()}
               </p>
               <p className="text-sm text-amber-600 mt-2">3 pending invoices</p>
             </CardContent>
@@ -387,7 +340,9 @@ export default function Dashboard() {
                   <div>
                     <CardTitle className="text-xl">Print Queue</CardTitle>
                     <CardDescription>
-                      Current jobs in progress and waiting
+                      {queue.length > 0
+                        ? `${queue.length} job${queue.length !== 1 ? "s" : ""} in queue`
+                        : "No active print jobs"}
                     </CardDescription>
                   </div>
                   <Button
@@ -402,124 +357,153 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Job Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Details</TableHead>
-                      <TableHead>ETA</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {queue.map((job) => (
-                      <TableRow key={job.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium">
-                          {job.customerName}
-                        </TableCell>
-                        <TableCell>{job.jobType}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              job.status === "Printing"
-                                ? "default"
-                                : job.status === "Completed"
-                                  ? "success"
-                                  : "outline"
-                            }
-                          >
-                            {job.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                View Details
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md">
-                              <DialogHeader>
-                                <DialogTitle>
-                                  Job Details - {job.id}
-                                </DialogTitle>
-                                <DialogDescription>
-                                  Complete information for this print job
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Customer
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.customerName}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Job Type
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.jobType}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Pages
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.pages} pages Ã— {job.copies} copies
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Color Mode
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.colorMode}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Paper Size
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.paperSize}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Binding
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.binding || "None"}
-                                    </p>
-                                  </div>
-                                </div>
-                                {job.notes && (
-                                  <div>
-                                    <Label className="text-sm font-medium">
-                                      Notes
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                      {job.notes}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {job.estimatedTime}
-                        </TableCell>
+                {queue.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="p-4 bg-muted/50 rounded-lg mb-4 inline-block">
+                      <List className="h-12 w-12 text-muted-foreground mx-auto" />
+                    </div>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">
+                      No print jobs in queue
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Print jobs will appear here when orders are received
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Item ID</TableHead>
+                        <TableHead>Copies</TableHead>
+                        <TableHead>Color Mode</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Details</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {queue.map((job, index) => (
+                        <TableRow
+                          key={`${job.orderId}-${job.itemId}`}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell className="font-medium">
+                            {job.orderId.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell>{job.itemId.slice(0, 8)}...</TableCell>
+                          <TableCell>{job.copies}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                job.colorMode === "color"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {job.colorMode === "color" ? "Color" : "B&W"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={index === 0 ? "default" : "outline"}
+                            >
+                              {index === 0 ? "Processing" : "Queued"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  View Details
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Job Details</DialogTitle>
+                                  <DialogDescription>
+                                    Complete information for this print job
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Order ID
+                                      </Label>
+                                      <p className="text-sm text-muted-foreground break-all">
+                                        {job.orderId}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Item ID
+                                      </Label>
+                                      <p className="text-sm text-muted-foreground break-all">
+                                        {job.itemId}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Copies
+                                      </Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        {job.copies}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Color Mode
+                                      </Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        {job.colorMode === "color"
+                                          ? "Color"
+                                          : "Black & White"}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Pages Per Sheet
+                                      </Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        {job.pagesPerSheet}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Position
+                                      </Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        #{index + 1} in queue
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">
+                                      File Path
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground break-all">
+                                      {job.filePath}
+                                    </p>
+                                  </div>
+                                  {job.storagePath && (
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        Storage Path
+                                      </Label>
+                                      <p className="text-xs text-muted-foreground break-all">
+                                        {job.storagePath}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </div>

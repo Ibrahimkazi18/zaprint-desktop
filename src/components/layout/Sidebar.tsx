@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Printer,
-  List,
   Plus,
   Activity,
 } from "lucide-react";
@@ -42,14 +41,6 @@ export default function Sidebar({ className }: SidebarProps) {
       path: "/dashboard",
       onClick: () => navigate("/dashboard"),
       color: "text-blue-500",
-    },
-    {
-      title: "Print Queue",
-      icon: List,
-      path: "/queue",
-      onClick: () => navigate("/queue"),
-      color: "text-purple-500",
-      badge: "12",
     },
     {
       title: "Printers",
