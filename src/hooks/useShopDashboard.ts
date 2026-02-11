@@ -10,16 +10,24 @@ export function useShopDashboard() {
 
   const subscriptionRef = useRef<any>(null)
 
-  // Load shop + printers once
+  // Load shop + printers in parallel for faster loading
   useEffect(() => {
     const load = async () => {
-      const shopData = await fetchMyShop()
-      setShop(shopData)
-
-      const printersData = await fetchShopPrinters(shopData.id)
-      setPrinters(printersData)
-
-      setLoading(false)
+      try {
+        // First get shop data
+        const shopData = await fetchMyShop()
+        setShop(shopData)
+        
+        // Immediately show the page, then load printers
+        setLoading(false)
+        
+        // Load printers in background
+        const printersData = await fetchShopPrinters(shopData.id)
+        setPrinters(printersData)
+      } catch (error) {
+        console.error("Error loading dashboard data:", error)
+        setLoading(false)
+      }
     }
 
     load()

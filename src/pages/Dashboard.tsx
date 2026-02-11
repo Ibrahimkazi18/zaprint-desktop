@@ -64,10 +64,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (!shop?.id) return;
 
-    fetchMissedOrders(shop.id, addToQueue);
+    // Defer fetchMissedOrders to not block initial render
+    const timer = setTimeout(() => {
+      fetchMissedOrders(shop.id, addToQueue);
+    }, 100);
+
     const channel = subscribeToOrders(shop.id, addToQueue);
 
     return () => {
+      clearTimeout(timer);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,34 +95,34 @@ export default function Dashboard() {
   }, []);
 
   // Mock recent activity data
-  const recentActivity = [
-    {
-      action: "Job-001 completed successfully",
-      time: "2 mins ago",
-      type: "success",
-    },
-    {
-      action: "New customer Sarah Wilson registered",
-      time: "15 mins ago",
-      type: "info",
-    },
-    {
-      action: "Payment received for Job-045",
-      time: "32 mins ago",
-      type: "success",
-    },
-    {
-      action: "Printer maintenance scheduled",
-      time: "1 hour ago",
-      type: "warning",
-    },
-    { action: "Monthly report generated", time: "2 hours ago", type: "info" },
-    {
-      action: "New review: 5 stars from Alex J.",
-      time: "3 hours ago",
-      type: "success",
-    },
-  ];
+  // const recentActivity = [
+  //   {
+  //     action: "Job-001 completed successfully",
+  //     time: "2 mins ago",
+  //     type: "success",
+  //   },
+  //   {
+  //     action: "New customer Sarah Wilson registered",
+  //     time: "15 mins ago",
+  //     type: "info",
+  //   },
+  //   {
+  //     action: "Payment received for Job-045",
+  //     time: "32 mins ago",
+  //     type: "success",
+  //   },
+  //   {
+  //     action: "Printer maintenance scheduled",
+  //     time: "1 hour ago",
+  //     type: "warning",
+  //   },
+  //   { action: "Monthly report generated", time: "2 hours ago", type: "info" },
+  //   {
+  //     action: "New review: 5 stars from Alex J.",
+  //     time: "3 hours ago",
+  //     type: "success",
+  //   },
+  // ];
 
   // Mock financial data
   const todayEarnings = 2450;
@@ -568,7 +573,7 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                {/* <div className="space-y-4">
                   {recentActivity.map((activity, index) => (
                     <div key={index} className="flex items-start space-x-3">
                       <div
@@ -590,7 +595,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           </div>
