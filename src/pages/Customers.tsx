@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -41,6 +41,7 @@ import {
   FileText,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageSkeleton from "@/components/ui/page-skeleton";
 
 interface Customer {
   id: string;
@@ -59,6 +60,21 @@ interface Customer {
 export default function Customers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <PageSkeleton showStats={true} showTable={true} />
+      </DashboardLayout>
+    );
+  }
 
   // Mock customer data
   const customers: Customer[] = [

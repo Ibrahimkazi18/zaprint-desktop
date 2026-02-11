@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -27,9 +27,25 @@ import {
   Download,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import PageSkeleton from "@/components/ui/page-skeleton";
 
-export default async function Analytics() {
+export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("7d");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <PageSkeleton showStats={true} showTable={true} />
+      </DashboardLayout>
+    );
+  }
 
   // Mock analytics data
   const overviewStats = {

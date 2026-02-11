@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { fetchFullShopProfile } from "@/backend/shops/fetchFullShopProfile";
 import fetchShopServices from "@/backend/shops/fetchShopServices";
 import { useToast } from "@/components/toast/useToast";
+import PageSkeleton from "@/components/ui/page-skeleton";
 
 import updateShop from "@/backend/shops/updateShop";
 import updateServicePrice from "@/backend/shops/updateServicePrice";
@@ -241,12 +242,7 @@ export default function Settings() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading settings...</p>
-            </div>
-          </div>
+          <PageSkeleton showForm={true} />
         ) : (
           <Tabs defaultValue="shop" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">

@@ -97,12 +97,10 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Store className="h-4 w-4 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              Zaprint
-            </h1>
+            <h1 className="text-2xl font-bold text-primary">Zaprint</h1>
           </div>
 
           {shop && (

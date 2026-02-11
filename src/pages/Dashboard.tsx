@@ -50,6 +50,7 @@ import {
 import { supabase } from "@/auth/supabase";
 import { usePrintQueue } from "@/hooks/usePrintQueue";
 import { printQueueManager, PrintQueueJob } from "@/print/printQueueManager";
+import DashboardSkeleton from "@/components/ui/dashboard-skeleton";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -133,14 +134,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-6"></div>
-            <p className="text-lg text-muted-foreground">
-              Loading your dashboard...
-            </p>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </DashboardLayout>
     );
   }
@@ -156,10 +150,6 @@ export default function Dashboard() {
               Here's what's happening with your print shop today.
             </p>
           </div>
-          <Button variant="gradient" size="lg" className="shadow-lg">
-            <Activity className="mr-2 h-5 w-5" />
-            View Analytics
-          </Button>
         </div>
 
         {/* Enhanced Stats Grid */}

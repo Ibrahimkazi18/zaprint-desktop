@@ -29,11 +29,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
       <div className="flex min-h-[calc(100vh-73px)]">
         <Sidebar />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background/50 to-muted/20 p-6">
+        <main className="flex-1 overflow-auto bg-background p-6">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

@@ -35,24 +35,24 @@
 
 /* Dark mode - Premium & Modern */
 .dark {
-  --background: #0f0f23;
+  --background: #0a0a0a;
   --foreground: #f1f5f9;
-  --card: #1e1e2e;
+  --card: #1a1a1a;
   --card-foreground: #f1f5f9;
-  --popover: #1e1e2e;
+  --popover: #1a1a1a;
   --popover-foreground: #f1f5f9;
   --primary: #3b82f6;
   --primary-foreground: #f8fafc;
-  --secondary: #262640;
+  --secondary: #1f1f1f;
   --secondary-foreground: #cbd5e1;
-  --muted: #262640;
+  --muted: #1f1f1f;
   --muted-foreground: #94a3b8;
-  --accent: #313244;
+  --accent: #262626;
   --accent-foreground: #f1f5f9;
   --destructive: #f87171;
   --destructive-foreground: #0f172a;
-  --border: #313244;
-  --input: #313244;
+  --border: #262626;
+  --input: #262626;
   --ring: #3b82f6;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
@@ -116,9 +116,9 @@
 }
 
 .dark .glass-card {
-  background: rgba(30, 30, 46, 0.8);
+  background: rgba(26, 26, 26, 0.8);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(38, 38, 38, 0.5);
 }
 
 /* Gradient backgrounds */
@@ -127,7 +127,7 @@
 }
 
 .dark .gradient-bg {
-  background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+  background: var(--primary);
 }
 
 /* Status colors */

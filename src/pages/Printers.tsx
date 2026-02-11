@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -36,6 +35,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
 import { usePrinterMonitoring } from "@/hooks/usePrinterMonitoring";
 import { Printer } from "@/types";
+import PrintersSkeleton from "@/components/ui/printers-skeleton";
 
 // Visual status mapping
 const getStatusConfig = (status: Printer["status"]) => {
@@ -44,17 +44,17 @@ const getStatusConfig = (status: Printer["status"]) => {
       return {
         icon: Wifi,
         color: "bg-green-500",
-        textColor: "text-green-700",
-        bgColor: "bg-green-50",
+        textColor: "text-green-700 dark:text-green-400",
+        bgColor: "bg-green-50 dark:bg-green-950/30",
         label: "Online",
         variant: "default" as const,
       };
     case "offline":
       return {
         icon: WifiOff,
-        color: "bg-yellow-500",
-        textColor: "text-yellow-700",
-        bgColor: "bg-yellow-50",
+        color: "bg-amber-500",
+        textColor: "text-amber-700 dark:text-amber-400",
+        bgColor: "bg-amber-50 dark:bg-amber-950/30",
         label: "Offline",
         variant: "secondary" as const,
       };
@@ -62,8 +62,8 @@ const getStatusConfig = (status: Printer["status"]) => {
       return {
         icon: AlertTriangle,
         color: "bg-red-500",
-        textColor: "text-red-700",
-        bgColor: "bg-red-50",
+        textColor: "text-red-700 dark:text-red-400",
+        bgColor: "bg-red-50 dark:bg-red-950/30",
         label: "Error",
         variant: "destructive" as const,
       };
@@ -71,8 +71,8 @@ const getStatusConfig = (status: Printer["status"]) => {
       return {
         icon: WifiOff,
         color: "bg-gray-500",
-        textColor: "text-gray-700",
-        bgColor: "bg-gray-50",
+        textColor: "text-gray-700 dark:text-gray-400",
+        bgColor: "bg-gray-50 dark:bg-gray-950/30",
         label: "Unknown",
         variant: "secondary" as const,
       };
@@ -93,8 +93,12 @@ const getPrinterTypeLabel = (type: string) => {
 
 export default function Printers() {
   const navigate = useNavigate();
-  const { shop, printers: registeredPrinters, loading: dashboardLoading } = useShopDashboard();
-  
+  const {
+    shop,
+    printers: registeredPrinters,
+    loading: dashboardLoading,
+  } = useShopDashboard();
+
   // Initialize printer monitoring
   const {
     printers: monitoredPrinters,
@@ -107,7 +111,8 @@ export default function Printers() {
   } = usePrinterMonitoring(shop?.id);
 
   // Use monitored printers if available, otherwise fallback to registered printers
-  const printers = monitoredPrinters.length > 0 ? monitoredPrinters : registeredPrinters;
+  const printers =
+    monitoredPrinters.length > 0 ? monitoredPrinters : registeredPrinters;
   const loading = dashboardLoading || monitoringLoading;
 
   const handleEditPrinter = (printer: Printer) => {
@@ -134,21 +139,14 @@ export default function Printers() {
   };
 
   // Calculate stats
-  const onlineCount = printers.filter(p => p.status === 'online').length;
-  const offlineCount = printers.filter(p => p.status === 'offline').length;
-  const errorCount = printers.filter(p => p.status === 'error').length;
+  const onlineCount = printers.filter((p) => p.status === "online").length;
+  const offlineCount = printers.filter((p) => p.status === "offline").length;
+  const errorCount = printers.filter((p) => p.status === "error").length;
 
   if (loading && printers.length === 0) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading printers...</p>
-            </div>
-          </div>
-        </div>
+        <PrintersSkeleton />
       </DashboardLayout>
     );
   }
@@ -172,12 +170,14 @@ export default function Printers() {
                 <span>Live Monitoring</span>
               </Badge>
             )}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleRefreshStatus}
               disabled={loading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Sync Status
             </Button>
             <Button onClick={() => navigate("/register-printer")}>
@@ -194,8 +194,12 @@ export default function Printers() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
                 <div>
-                  <p className="font-medium text-destructive">Monitoring Error</p>
-                  <p className="text-sm text-muted-foreground">{monitoringError}</p>
+                  <p className="font-medium text-destructive">
+                    Monitoring Error
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {monitoringError}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -217,16 +221,20 @@ export default function Printers() {
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   Online
                 </CardDescription>
-                <CardTitle className="text-3xl text-green-600">{onlineCount}</CardTitle>
+                <CardTitle className="text-3xl text-green-600 dark:text-green-400">
+                  {onlineCount}
+                </CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                   Offline
                 </CardDescription>
-                <CardTitle className="text-3xl text-yellow-600">{offlineCount}</CardTitle>
+                <CardTitle className="text-3xl text-amber-600 dark:text-amber-400">
+                  {offlineCount}
+                </CardTitle>
               </CardHeader>
             </Card>
             <Card>
@@ -235,7 +243,9 @@ export default function Printers() {
                   <div className="w-2 h-2 rounded-full bg-red-500"></div>
                   Errors
                 </CardDescription>
-                <CardTitle className="text-3xl text-red-600">{errorCount}</CardTitle>
+                <CardTitle className="text-3xl text-red-600 dark:text-red-400">
+                  {errorCount}
+                </CardTitle>
               </CardHeader>
             </Card>
           </div>
@@ -243,22 +253,27 @@ export default function Printers() {
 
         {/* System Printers Debug Info (Optional) */}
         {systemPrinters.length > 0 && (
-          <Card className="mb-6 bg-blue-50/50 border-blue-200">
+          <Card className="mb-6 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">System Printers Detected</CardTitle>
+                  <CardTitle className="text-lg">
+                    System Printers Detected
+                  </CardTitle>
                   <CardDescription>
-                    {systemPrinters.length} printer(s) found in your operating system
+                    {systemPrinters.length} printer(s) found in your operating
+                    system
                   </CardDescription>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleDetectPrinters}
                   disabled={loading}
                 >
-                  <RefreshCw className={`h-3 w-3 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-3 w-3 mr-2 ${loading ? "animate-spin" : ""}`}
+                  />
                   Detect Again
                 </Button>
               </div>
@@ -268,12 +283,14 @@ export default function Printers() {
                 {systemPrinters.map((printer, idx) => (
                   <div
                     key={idx}
-                    className="bg-white rounded-lg p-3 border border-blue-100"
+                    className="bg-white dark:bg-card rounded-lg p-3 border border-blue-100 dark:border-blue-900"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <p className="font-medium text-sm">{printer.name}</p>
-                      <Badge 
-                        variant={printer.status === 'online' ? 'default' : 'secondary'}
+                      <Badge
+                        variant={
+                          printer.status === "online" ? "default" : "secondary"
+                        }
                         className="text-xs"
                       >
                         {printer.status}
@@ -353,7 +370,7 @@ export default function Printers() {
                       <div className="flex items-center space-x-2">
                         <div
                           className={`w-2 h-2 rounded-full ${statusConfig.color} ${
-                            printer.status === 'online' ? 'animate-pulse' : ''
+                            printer.status === "online" ? "animate-pulse" : ""
                           }`}
                         ></div>
                         <span
@@ -369,7 +386,10 @@ export default function Printers() {
                       </div>
                       {printer.last_heartbeat && (
                         <p className="text-xs text-muted-foreground mt-2">
-                          Last checked: {new Date(printer.last_heartbeat).toLocaleTimeString()}
+                          Last checked:{" "}
+                          {new Date(
+                            printer.last_heartbeat,
+                          ).toLocaleTimeString()}
                         </p>
                       )}
                     </div>
@@ -423,7 +443,7 @@ export default function Printers() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleTestPrinter(printer)}
-                        disabled={printer.status !== 'online'}
+                        disabled={printer.status !== "online"}
                         className="flex-1"
                       >
                         <TestTube className="h-3 w-3 mr-1" />
