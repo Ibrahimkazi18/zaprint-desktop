@@ -119,7 +119,11 @@ async function createWindow() {
       await mainWindow.loadURL('http://localhost:5173');
       mainWindow.webContents.openDevTools();
     } else {
-      await mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+      // In production, files are in the same directory structure
+      const indexPath = path.join(__dirname, '../dist/index.html');
+      console.log('Loading index from:', indexPath);
+      console.log('Index exists:', require('fs').existsSync(indexPath));
+      await mainWindow.loadFile(indexPath);
     }
 
     mainWindow.on('closed', () => {

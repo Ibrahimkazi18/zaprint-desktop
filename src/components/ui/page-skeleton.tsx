@@ -2,14 +2,12 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "./card";
 
 interface PageSkeletonProps {
-  title?: string;
   showStats?: boolean;
   showTable?: boolean;
   showForm?: boolean;
 }
 
 const PageSkeleton = ({
-  title = "Loading...",
   showStats = false,
   showTable = false,
   showForm = false,

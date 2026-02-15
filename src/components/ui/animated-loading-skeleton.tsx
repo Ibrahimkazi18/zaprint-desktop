@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 
 // Interface for grid configuration structure
@@ -63,7 +63,7 @@ const AnimatedLoadingSkeleton = () => {
       transition: {
         duration: shuffledPositions.length * 2,
         repeat: Infinity, // Loop animation infinitely
-        ease: [0.4, 0, 0.2, 1], // Ease function for smooth animation
+        ease: "easeInOut" as const, // Ease function for smooth animation
         times: shuffledPositions.map(
           (_, i) => i / (shuffledPositions.length - 1),
         ),
@@ -114,7 +114,7 @@ const AnimatedLoadingSkeleton = () => {
       transition: {
         duration: 1,
         repeat: Infinity,
-        ease: "easeInOut", // Smooth pulsation
+        ease: "easeInOut" as const, // Smooth pulsation
       },
     },
   };

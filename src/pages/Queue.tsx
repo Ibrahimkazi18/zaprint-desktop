@@ -220,11 +220,11 @@ export default function Queue() {
     console.log("Refreshing queue...");
   };
 
-  const updateJobStatus = (jobId: string, newStatus: string) => {
+  const updateJobStatus = (jobId: string, newStatus: PrintJob["status"]) => {
     setQueue((prev) =>
       prev.map((job) =>
-        job.id === jobId ? { ...job, status: newStatus } : job
-      )
+        job.id === jobId ? { ...job, status: newStatus } : job,
+      ),
     );
   };
 

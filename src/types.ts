@@ -2,7 +2,7 @@ export interface PrintJob {
   id: string
   customerName: string
   jobType: string
-  status: 'Queued' | 'Printing' | 'Completed' | 'Cancelled'
+  status: 'Queued' | 'Printing' | 'Completed' | 'Cancelled' | 'Paused' | 'Failed'
   pages: number
   copies: number
   colorMode: 'Color' | 'B&W'

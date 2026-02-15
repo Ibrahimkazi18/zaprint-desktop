@@ -206,10 +206,7 @@ export default function Settings() {
     }
   };
 
-  const handleImageUpload = (
-    type: "logo",
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -306,7 +303,7 @@ export default function Settings() {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => handleImageUpload("logo", e)}
+                          onChange={(e) => handleImageUpload(e)}
                         />
                       </Label>
                       <p className="text-xs text-muted-foreground mt-2">
