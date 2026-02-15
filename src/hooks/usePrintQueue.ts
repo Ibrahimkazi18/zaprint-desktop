@@ -17,6 +17,7 @@ type SystemPrinter = {
 export function usePrintQueue(printers: AppPrinter[] = []) {
   const [systemPrinters, setSystemPrinters] = useState<SystemPrinter[]>([]);
 
+  // Defer system printer detection to avoid blocking initial render
   useEffect(() => {
     if (!window?.printerAPI?.detectSystemPrinters) return;
 
@@ -31,7 +32,9 @@ export function usePrintQueue(printers: AppPrinter[] = []) {
       }
     };
 
-    void detect();
+    // Defer detection by 2 seconds to not block dashboard load
+    const timer = setTimeout(detect, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

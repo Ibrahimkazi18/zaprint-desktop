@@ -5,7 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   Home,
   Settings,
-  Users,
   BarChart3,
   ChevronLeft,
   ChevronRight,
@@ -55,13 +54,6 @@ export default function Sidebar({ className }: SidebarProps) {
       path: "/analytics",
       onClick: () => navigate("/analytics"),
       color: "text-orange-500",
-    },
-    {
-      title: "Customers",
-      icon: Users,
-      path: "/customers",
-      onClick: () => navigate("/customers"),
-      color: "text-pink-500",
     },
   ];
 

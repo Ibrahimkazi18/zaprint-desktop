@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,18 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sun,
-  Moon,
-  Settings,
-  User,
-  LogOut,
-  Store,
-  Wifi,
-  WifiOff,
-  Bell,
-  Search,
-} from "lucide-react";
+import { LogOut, Store, Wifi, WifiOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
@@ -38,10 +28,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
   const handleLogout = () => {
     logout();
     navigate("/");
-  };
-
-  const handleSettings = () => {
-    navigate("/settings");
   };
 
   const getStatusBadge = () => {
@@ -116,55 +102,13 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Search Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 hover:bg-accent/50"
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-
-          {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 hover:bg-accent/50 relative"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center">
-              3
-            </span>
-          </Button>
-
+        <div className="flex items-center space-x-3">
           {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleDarkMode}
-            aria-label="Toggle dark mode"
-            className="h-10 w-10 hover:bg-accent/50"
-          >
-            {darkMode ? (
-              <Sun className="h-4 w-4 text-amber-500" />
-            ) : (
-              <Moon className="h-4 w-4 text-slate-600" />
-            )}
-          </Button>
-
-          {/* Settings */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSettings}
-            aria-label="Settings"
-            className="h-10 w-10 hover:bg-accent/50"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          <ThemeToggle
+            isDark={darkMode}
+            onToggle={toggleDarkMode}
+            className="shadow-sm"
+          />
 
           {/* Profile Dropdown */}
           <DropdownMenu>
@@ -202,21 +146,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="cursor-pointer p-3 rounded-lg"
-                onClick={() => console.log("Profile clicked")}
-              >
-                <User className="mr-3 h-4 w-4" />
-                <span>Profile Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer p-3 rounded-lg"
-                onClick={() => console.log("More options clicked")}
-              >
-                <Settings className="mr-3 h-4 w-4" />
-                <span>Preferences</span>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer p-3 rounded-lg text-destructive focus:text-destructive"

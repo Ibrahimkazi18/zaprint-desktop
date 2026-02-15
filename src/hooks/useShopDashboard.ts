@@ -14,16 +14,15 @@ export function useShopDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        // First get shop data
+        // Get shop data first (required for printers)
         const shopData = await fetchMyShop()
         setShop(shopData)
         
-        // Immediately show the page, then load printers
+        // Exit loading state immediately to show UI
         setLoading(false)
         
-        // Load printers in background
-        const printersData = await fetchShopPrinters(shopData.id)
-        setPrinters(printersData)
+        // Load printers asynchronously without blocking
+        fetchShopPrinters(shopData.id).then(setPrinters).catch(console.error)
       } catch (error) {
         console.error("Error loading dashboard data:", error)
         setLoading(false)

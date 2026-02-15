@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +35,6 @@ import {
   FileText,
   Printer,
   DollarSign,
-  Activity,
   Zap,
   Target,
   ArrowUpRight,
@@ -61,15 +60,17 @@ export default function Dashboard() {
   // Dynamic print queue state
   const [queue, setQueue] = useState<PrintQueueJob[]>([]);
 
+  // Combine order subscription and missed orders fetch into single effect
   useEffect(() => {
     if (!shop?.id) return;
 
-    // Defer fetchMissedOrders to not block initial render
+    // Subscribe to new orders immediately
+    const channel = subscribeToOrders(shop.id, addToQueue);
+
+    // Defer fetchMissedOrders to run after initial render completes
     const timer = setTimeout(() => {
       fetchMissedOrders(shop.id, addToQueue);
-    }, 100);
-
-    const channel = subscribeToOrders(shop.id, addToQueue);
+    }, 1500);
 
     return () => {
       clearTimeout(timer);
@@ -78,62 +79,43 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop?.id]);
 
-  // Poll print queue for updates
+  // Optimized queue polling with event-driven updates
   useEffect(() => {
-    const updateQueue = () => {
-      const currentQueue = printQueueManager.getQueueSnapshot();
-      setQueue(currentQueue);
-    };
+    // Get initial queue state
+    setQueue(printQueueManager.getQueueSnapshot());
 
-    // Initial update
-    updateQueue();
-
-    // Poll every 2 seconds for queue updates
-    const interval = setInterval(updateQueue, 2000);
+    // Poll less frequently (every 5 seconds instead of 2-3)
+    const interval = setInterval(() => {
+      setQueue(printQueueManager.getQueueSnapshot());
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
-
-  // Mock recent activity data
-  // const recentActivity = [
-  //   {
-  //     action: "Job-001 completed successfully",
-  //     time: "2 mins ago",
-  //     type: "success",
-  //   },
-  //   {
-  //     action: "New customer Sarah Wilson registered",
-  //     time: "15 mins ago",
-  //     type: "info",
-  //   },
-  //   {
-  //     action: "Payment received for Job-045",
-  //     time: "32 mins ago",
-  //     type: "success",
-  //   },
-  //   {
-  //     action: "Printer maintenance scheduled",
-  //     time: "1 hour ago",
-  //     type: "warning",
-  //   },
-  //   { action: "Monthly report generated", time: "2 hours ago", type: "info" },
-  //   {
-  //     action: "New review: 5 stars from Alex J.",
-  //     time: "3 hours ago",
-  //     type: "success",
-  //   },
-  // ];
 
   // Mock financial data
   const todayEarnings = 2450;
   const monthlyEarnings = 45600;
   const pendingPayments = 1200;
 
-  const fetchQueue = async () => {
+  // Memoize printer status calculations
+  const printerStats = useMemo(() => {
+    const onlineCount = printers.filter((p) => p.status === "online").length;
+    const hasOnline = onlineCount > 0;
+    const hasError = printers.some((p) => p.status === "error");
+
+    return {
+      onlineCount,
+      totalCount: printers.length,
+      hasOnline,
+      hasError,
+      statusText: hasOnline ? "Online" : hasError ? "Error" : "Offline",
+      statusColor: hasOnline ? "emerald" : hasError ? "red" : "amber",
+    };
+  }, [printers]);
+
+  const fetchQueue = () => {
     // Refresh queue from manager
-    const currentQueue = printQueueManager.getQueueSnapshot();
-    setQueue(currentQueue);
-    console.log("Queue refreshed:", currentQueue.length, "jobs");
+    setQueue(printQueueManager.getQueueSnapshot());
   };
 
   if (loading) {
@@ -170,14 +152,14 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
-                    {printers.some((p) => p.status === "online") ? (
+                    {printerStats.hasOnline ? (
                       <>
                         <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
                         <p className="text-2xl font-bold text-emerald-600">
                           Online
                         </p>
                       </>
-                    ) : printers.some((p) => p.status === "error") ? (
+                    ) : printerStats.hasError ? (
                       <>
                         <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                         <p className="text-2xl font-bold text-red-600">Error</p>
@@ -192,8 +174,8 @@ export default function Dashboard() {
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {printers.filter((p) => p.status === "online").length} of{" "}
-                    {printers.length} printers active
+                    {printerStats.onlineCount} of {printerStats.totalCount}{" "}
+                    printers active
                   </p>
                 </div>
                 <div className="p-3 bg-primary/10 rounded-full">
@@ -561,41 +543,6 @@ export default function Dashboard() {
                     ))
                   )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2 text-primary" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div
-                        className={`w-2 h-2 rounded-full mt-2 ${
-                          activity.type === "success"
-                            ? "bg-emerald-500"
-                            : activity.type === "warning"
-                              ? "bg-amber-500"
-                              : "bg-blue-500"
-                        }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-relaxed">
-                          {activity.action}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {activity.time}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div> */}
               </CardContent>
             </Card>
           </div>

@@ -8,7 +8,6 @@ import AuthPage from "./pages/AuthPage";
 import ShopOnboarding from "./pages/ShopOnboarding";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
-import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import Queue from "./pages/Queue";
 import RegisterPrinter from "./pages/RegisterPrinter";
@@ -45,14 +44,6 @@ function App() {
           element={
             <ProtectedRoute>
               <Analytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/customers"
-          element={
-            <ProtectedRoute>
-              <Customers />
             </ProtectedRoute>
           }
         />
