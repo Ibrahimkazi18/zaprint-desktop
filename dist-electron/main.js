@@ -31,6 +31,7 @@ Option 2: Install and provide the "ws" package:
 `:"",y=`${p} wants you to sign in with your Ethereum account:
 ${f}
 
+<<<<<<< HEAD
 ${g}`;let v=`URI: ${d}
 Version: ${h}
 Chain ID: ${t}${a?`
@@ -43,3 +44,3942 @@ Resources:`;for(const w of c){if(!w||typeof w!="string")throw new Error(`@supaba
 - ${w}`}v+=m}return`${y}
 ${v}`}class A extends Error{constructor({message:e,code:t,cause:s,name:n}){var i;super(e,{cause:s}),this.__isWebAuthnError=!0,this.name=(i=n??(s instanceof Error?s.name:void 0))!==null&&i!==void 0?i:"Unknown Error",this.code=t}}class Ue extends A{constructor(e,t){super({code:"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",cause:t,message:e}),this.name="WebAuthnUnknownError",this.originalError=t}}function on({error:r,options:e}){var t,s,n;const{publicKey:i}=e;if(!i)throw Error("options was missing required publicKey property");if(r.name==="AbortError"){if(e.signal instanceof AbortSignal)return new A({message:"Registration ceremony was sent an abort signal",code:"ERROR_CEREMONY_ABORTED",cause:r})}else if(r.name==="ConstraintError"){if(((t=i.authenticatorSelection)===null||t===void 0?void 0:t.requireResidentKey)===!0)return new A({message:"Discoverable credentials were required but no available authenticator supported it",code:"ERROR_AUTHENTICATOR_MISSING_DISCOVERABLE_CREDENTIAL_SUPPORT",cause:r});if(e.mediation==="conditional"&&((s=i.authenticatorSelection)===null||s===void 0?void 0:s.userVerification)==="required")return new A({message:"User verification was required during automatic registration but it could not be performed",code:"ERROR_AUTO_REGISTER_USER_VERIFICATION_FAILURE",cause:r});if(((n=i.authenticatorSelection)===null||n===void 0?void 0:n.userVerification)==="required")return new A({message:"User verification was required but no available authenticator supported it",code:"ERROR_AUTHENTICATOR_MISSING_USER_VERIFICATION_SUPPORT",cause:r})}else{if(r.name==="InvalidStateError")return new A({message:"The authenticator was previously registered",code:"ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",cause:r});if(r.name==="NotAllowedError")return new A({message:r.message,code:"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",cause:r});if(r.name==="NotSupportedError")return i.pubKeyCredParams.filter(o=>o.type==="public-key").length===0?new A({message:'No entry in pubKeyCredParams was of type "public-key"',code:"ERROR_MALFORMED_PUBKEYCREDPARAMS",cause:r}):new A({message:"No available authenticator supported any of the specified pubKeyCredParams algorithms",code:"ERROR_AUTHENTICATOR_NO_SUPPORTED_PUBKEYCREDPARAMS_ALG",cause:r});if(r.name==="SecurityError"){const a=window.location.hostname;if(tr(a)){if(i.rp.id!==a)return new A({message:`The RP ID "${i.rp.id}" is invalid for this domain`,code:"ERROR_INVALID_RP_ID",cause:r})}else return new A({message:`${window.location.hostname} is an invalid domain`,code:"ERROR_INVALID_DOMAIN",cause:r})}else if(r.name==="TypeError"){if(i.user.id.byteLength<1||i.user.id.byteLength>64)return new A({message:"User ID was not between 1 and 64 characters",code:"ERROR_INVALID_USER_ID_LENGTH",cause:r})}else if(r.name==="UnknownError")return new A({message:"The authenticator was unable to process the specified options, or could not create a new credential",code:"ERROR_AUTHENTICATOR_GENERAL_ERROR",cause:r})}return new A({message:"a Non-Webauthn related error has occurred",code:"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",cause:r})}function ln({error:r,options:e}){const{publicKey:t}=e;if(!t)throw Error("options was missing required publicKey property");if(r.name==="AbortError"){if(e.signal instanceof AbortSignal)return new A({message:"Authentication ceremony was sent an abort signal",code:"ERROR_CEREMONY_ABORTED",cause:r})}else{if(r.name==="NotAllowedError")return new A({message:r.message,code:"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",cause:r});if(r.name==="SecurityError"){const s=window.location.hostname;if(tr(s)){if(t.rpId!==s)return new A({message:`The RP ID "${t.rpId}" is invalid for this domain`,code:"ERROR_INVALID_RP_ID",cause:r})}else return new A({message:`${window.location.hostname} is an invalid domain`,code:"ERROR_INVALID_DOMAIN",cause:r})}else if(r.name==="UnknownError")return new A({message:"The authenticator was unable to process the specified options, or could not create a new assertion signature",code:"ERROR_AUTHENTICATOR_GENERAL_ERROR",cause:r})}return new A({message:"a Non-Webauthn related error has occurred",code:"ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",cause:r})}class cn{createNewAbortSignal(){if(this.controller){const t=new Error("Cancelling existing WebAuthn API call for new one");t.name="AbortError",this.controller.abort(t)}const e=new AbortController;return this.controller=e,e.signal}cancelCeremony(){if(this.controller){const e=new Error("Manually cancelling existing WebAuthn API call");e.name="AbortError",this.controller.abort(e),this.controller=void 0}}}const un=new cn;function hn(r){if(!r)throw new Error("Credential creation options are required");if(typeof PublicKeyCredential<"u"&&"parseCreationOptionsFromJSON"in PublicKeyCredential&&typeof PublicKeyCredential.parseCreationOptionsFromJSON=="function")return PublicKeyCredential.parseCreationOptionsFromJSON(r);const{challenge:e,user:t,excludeCredentials:s}=r,n=De(r,["challenge","user","excludeCredentials"]),i=ge(e).buffer,a=Object.assign(Object.assign({},t),{id:ge(t.id).buffer}),o=Object.assign(Object.assign({},n),{challenge:i,user:a});if(s&&s.length>0){o.excludeCredentials=new Array(s.length);for(let l=0;l<s.length;l++){const c=s[l];o.excludeCredentials[l]=Object.assign(Object.assign({},c),{id:ge(c.id).buffer,type:c.type||"public-key",transports:c.transports})}}return o}function dn(r){if(!r)throw new Error("Credential request options are required");if(typeof PublicKeyCredential<"u"&&"parseRequestOptionsFromJSON"in PublicKeyCredential&&typeof PublicKeyCredential.parseRequestOptionsFromJSON=="function")return PublicKeyCredential.parseRequestOptionsFromJSON(r);const{challenge:e,allowCredentials:t}=r,s=De(r,["challenge","allowCredentials"]),n=ge(e).buffer,i=Object.assign(Object.assign({},s),{challenge:n});if(t&&t.length>0){i.allowCredentials=new Array(t.length);for(let a=0;a<t.length;a++){const o=t[a];i.allowCredentials[a]=Object.assign(Object.assign({},o),{id:ge(o.id).buffer,type:o.type||"public-key",transports:o.transports})}}return i}function fn(r){var e;if("toJSON"in r&&typeof r.toJSON=="function")return r.toJSON();const t=r;return{id:r.id,rawId:r.id,response:{attestationObject:ee(new Uint8Array(r.response.attestationObject)),clientDataJSON:ee(new Uint8Array(r.response.clientDataJSON))},type:"public-key",clientExtensionResults:r.getClientExtensionResults(),authenticatorAttachment:(e=t.authenticatorAttachment)!==null&&e!==void 0?e:void 0}}function pn(r){var e;if("toJSON"in r&&typeof r.toJSON=="function")return r.toJSON();const t=r,s=r.getClientExtensionResults(),n=r.response;return{id:r.id,rawId:r.id,response:{authenticatorData:ee(new Uint8Array(n.authenticatorData)),clientDataJSON:ee(new Uint8Array(n.clientDataJSON)),signature:ee(new Uint8Array(n.signature)),userHandle:n.userHandle?ee(new Uint8Array(n.userHandle)):void 0},type:"public-key",clientExtensionResults:s,authenticatorAttachment:(e=t.authenticatorAttachment)!==null&&e!==void 0?e:void 0}}function tr(r){return r==="localhost"||/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i.test(r)}function Ut(){var r,e;return!!(j()&&"PublicKeyCredential"in window&&window.PublicKeyCredential&&"credentials"in navigator&&typeof((r=navigator==null?void 0:navigator.credentials)===null||r===void 0?void 0:r.create)=="function"&&typeof((e=navigator==null?void 0:navigator.credentials)===null||e===void 0?void 0:e.get)=="function")}async function gn(r){try{const e=await navigator.credentials.create(r);return e?e instanceof PublicKeyCredential?{data:e,error:null}:{data:null,error:new Ue("Browser returned unexpected credential type",e)}:{data:null,error:new Ue("Empty credential response",e)}}catch(e){return{data:null,error:on({error:e,options:r})}}}async function wn(r){try{const e=await navigator.credentials.get(r);return e?e instanceof PublicKeyCredential?{data:e,error:null}:{data:null,error:new Ue("Browser returned unexpected credential type",e)}:{data:null,error:new Ue("Empty credential response",e)}}catch(e){return{data:null,error:ln({error:e,options:r})}}}const yn={hints:["security-key"],authenticatorSelection:{authenticatorAttachment:"cross-platform",requireResidentKey:!1,userVerification:"preferred",residentKey:"discouraged"},attestation:"direct"},_n={userVerification:"preferred",hints:["security-key"],attestation:"direct"};function Ne(...r){const e=n=>n!==null&&typeof n=="object"&&!Array.isArray(n),t=n=>n instanceof ArrayBuffer||ArrayBuffer.isView(n),s={};for(const n of r)if(n)for(const i in n){const a=n[i];if(a!==void 0)if(Array.isArray(a))s[i]=a;else if(t(a))s[i]=a;else if(e(a)){const o=s[i];e(o)?s[i]=Ne(o,a):s[i]=Ne(a)}else s[i]=a}return s}function vn(r,e){return Ne(yn,r,e||{})}function mn(r,e){return Ne(_n,r,e||{})}class bn{constructor(e){this.client=e,this.enroll=this._enroll.bind(this),this.challenge=this._challenge.bind(this),this.verify=this._verify.bind(this),this.authenticate=this._authenticate.bind(this),this.register=this._register.bind(this)}async _enroll(e){return this.client.mfa.enroll(Object.assign(Object.assign({},e),{factorType:"webauthn"}))}async _challenge({factorId:e,webauthn:t,friendlyName:s,signal:n},i){try{const{data:a,error:o}=await this.client.mfa.challenge({factorId:e,webauthn:t});if(!a)return{data:null,error:o};const l=n??un.createNewAbortSignal();if(a.webauthn.type==="create"){const{user:c}=a.webauthn.credential_options.publicKey;c.name||(c.name=`${c.id}:${s}`),c.displayName||(c.displayName=c.name)}switch(a.webauthn.type){case"create":{const c=vn(a.webauthn.credential_options.publicKey,i==null?void 0:i.create),{data:u,error:d}=await gn({publicKey:c,signal:l});return u?{data:{factorId:e,challengeId:a.id,webauthn:{type:a.webauthn.type,credential_response:u}},error:null}:{data:null,error:d}}case"request":{const c=mn(a.webauthn.credential_options.publicKey,i==null?void 0:i.request),{data:u,error:d}=await wn(Object.assign(Object.assign({},a.webauthn.credential_options),{publicKey:c,signal:l}));return u?{data:{factorId:e,challengeId:a.id,webauthn:{type:a.webauthn.type,credential_response:u}},error:null}:{data:null,error:d}}}}catch(a){return _(a)?{data:null,error:a}:{data:null,error:new Z("Unexpected error in challenge",a)}}}async _verify({challengeId:e,factorId:t,webauthn:s}){return this.client.mfa.verify({factorId:t,challengeId:e,webauthn:s})}async _authenticate({factorId:e,webauthn:{rpId:t=typeof window<"u"?window.location.hostname:void 0,rpOrigins:s=typeof window<"u"?[window.location.origin]:void 0,signal:n}={}},i){if(!t)return{data:null,error:new Ee("rpId is required for WebAuthn authentication")};try{if(!Ut())return{data:null,error:new Z("Browser does not support WebAuthn",null)};const{data:a,error:o}=await this.challenge({factorId:e,webauthn:{rpId:t,rpOrigins:s},signal:n},{request:i});if(!a)return{data:null,error:o};const{webauthn:l}=a;return this._verify({factorId:e,challengeId:a.challengeId,webauthn:{type:l.type,rpId:t,rpOrigins:s,credential_response:l.credential_response}})}catch(a){return _(a)?{data:null,error:a}:{data:null,error:new Z("Unexpected error in authenticate",a)}}}async _register({friendlyName:e,webauthn:{rpId:t=typeof window<"u"?window.location.hostname:void 0,rpOrigins:s=typeof window<"u"?[window.location.origin]:void 0,signal:n}={}},i){if(!t)return{data:null,error:new Ee("rpId is required for WebAuthn registration")};try{if(!Ut())return{data:null,error:new Z("Browser does not support WebAuthn",null)};const{data:a,error:o}=await this._enroll({friendlyName:e});if(!a)return await this.client.mfa.listFactors().then(u=>{var d;return(d=u.data)===null||d===void 0?void 0:d.all.find(h=>h.factor_type==="webauthn"&&h.friendly_name===e&&h.status!=="unverified")}).then(u=>u?this.client.mfa.unenroll({factorId:u==null?void 0:u.id}):void 0),{data:null,error:o};const{data:l,error:c}=await this._challenge({factorId:a.id,friendlyName:a.friendly_name,webauthn:{rpId:t,rpOrigins:s},signal:n},{create:i});return l?this._verify({factorId:a.id,challengeId:l.challengeId,webauthn:{rpId:t,rpOrigins:s,type:l.webauthn.type,credential_response:l.webauthn.credential_response}}):{data:null,error:c}}catch(a){return _(a)?{data:null,error:a}:{data:null,error:new Z("Unexpected error in register",a)}}}}rn();const Sn={url:ws,storageKey:ys,autoRefreshToken:!0,persistSession:!0,detectSessionInUrl:!0,headers:_s,flowType:"implicit",debug:!1,hasCustomAuthorizationHeader:!1,throwOnError:!1};async function Nt(r,e,t){return await t()}const ce={};class ke{get jwks(){var e,t;return(t=(e=ce[this.storageKey])===null||e===void 0?void 0:e.jwks)!==null&&t!==void 0?t:{keys:[]}}set jwks(e){ce[this.storageKey]=Object.assign(Object.assign({},ce[this.storageKey]),{jwks:e})}get jwks_cached_at(){var e,t;return(t=(e=ce[this.storageKey])===null||e===void 0?void 0:e.cachedAt)!==null&&t!==void 0?t:Number.MIN_SAFE_INTEGER}set jwks_cached_at(e){ce[this.storageKey]=Object.assign(Object.assign({},ce[this.storageKey]),{cachedAt:e})}constructor(e){var t,s,n;this.userStorage=null,this.memoryStorage=null,this.stateChangeEmitters=new Map,this.autoRefreshTicker=null,this.visibilityChangedCallback=null,this.refreshingDeferred=null,this.initializePromise=null,this.detectSessionInUrl=!0,this.hasCustomAuthorizationHeader=!1,this.suppressGetSessionWarning=!1,this.lockAcquired=!1,this.pendingInLock=[],this.broadcastChannel=null,this.logger=console.log;const i=Object.assign(Object.assign({},Sn),e);if(this.storageKey=i.storageKey,this.instanceID=(t=ke.nextInstanceID[this.storageKey])!==null&&t!==void 0?t:0,ke.nextInstanceID[this.storageKey]=this.instanceID+1,this.logDebugMessages=!!i.debug,typeof i.debug=="function"&&(this.logger=i.debug),this.instanceID>0&&j()){const a=`${this._logPrefix()} Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.`;console.warn(a),this.logDebugMessages&&console.trace(a)}if(this.persistSession=i.persistSession,this.autoRefreshToken=i.autoRefreshToken,this.admin=new Zs({url:i.url,headers:i.headers,fetch:i.fetch}),this.url=i.url,this.headers=i.headers,this.fetch=Qt(i.fetch),this.lock=i.lock||Nt,this.detectSessionInUrl=i.detectSessionInUrl,this.flowType=i.flowType,this.hasCustomAuthorizationHeader=i.hasCustomAuthorizationHeader,this.throwOnError=i.throwOnError,i.lock?this.lock=i.lock:this.persistSession&&j()&&(!((s=globalThis==null?void 0:globalThis.navigator)===null||s===void 0)&&s.locks)?this.lock=tn:this.lock=Nt,this.jwks||(this.jwks={keys:[]},this.jwks_cached_at=Number.MIN_SAFE_INTEGER),this.mfa={verify:this._verify.bind(this),enroll:this._enroll.bind(this),unenroll:this._unenroll.bind(this),challenge:this._challenge.bind(this),listFactors:this._listFactors.bind(this),challengeAndVerify:this._challengeAndVerify.bind(this),getAuthenticatorAssuranceLevel:this._getAuthenticatorAssuranceLevel.bind(this),webauthn:new bn(this)},this.oauth={getAuthorizationDetails:this._getAuthorizationDetails.bind(this),approveAuthorization:this._approveAuthorization.bind(this),denyAuthorization:this._denyAuthorization.bind(this),listGrants:this._listOAuthGrants.bind(this),revokeGrant:this._revokeOAuthGrant.bind(this)},this.persistSession?(i.storage?this.storage=i.storage:Xt()?this.storage=globalThis.localStorage:(this.memoryStorage={},this.storage=xt(this.memoryStorage)),i.userStorage&&(this.userStorage=i.userStorage)):(this.memoryStorage={},this.storage=xt(this.memoryStorage)),j()&&globalThis.BroadcastChannel&&this.persistSession&&this.storageKey){try{this.broadcastChannel=new globalThis.BroadcastChannel(this.storageKey)}catch(a){console.error("Failed to create a new BroadcastChannel, multi-tab state changes will not be available",a)}(n=this.broadcastChannel)===null||n===void 0||n.addEventListener("message",async a=>{this._debug("received broadcast notification from other tab or client",a),await this._notifyAllSubscribers(a.data.event,a.data.session,!1)})}this.initialize()}isThrowOnErrorEnabled(){return this.throwOnError}_returnResult(e){if(this.throwOnError&&e&&e.error)throw e.error;return e}_logPrefix(){return`GoTrueClient@${this.storageKey}:${this.instanceID} (${Gt}) ${new Date().toISOString()}`}_debug(...e){return this.logDebugMessages&&this.logger(this._logPrefix(),...e),this}async initialize(){return this.initializePromise?await this.initializePromise:(this.initializePromise=(async()=>await this._acquireLock(-1,async()=>await this._initialize()))(),await this.initializePromise)}async _initialize(){var e;try{let t={},s="none";if(j()&&(t=js(window.location.href),this._isImplicitGrantCallback(t)?s="implicit":await this._isPKCECallback(t)&&(s="pkce")),j()&&this.detectSessionInUrl&&s!=="none"){const{data:n,error:i}=await this._getSessionFromURL(t,s);if(i){if(this._debug("#_initialize()","error detecting session from URL",i),ks(i)){const l=(e=i.details)===null||e===void 0?void 0:e.code;if(l==="identity_already_exists"||l==="identity_not_found"||l==="single_identity_not_deletable")return{error:i}}return await this._removeSession(),{error:i}}const{session:a,redirectType:o}=n;return this._debug("#_initialize()","detected session in URL",a,"redirect type",o),await this._saveSession(a),setTimeout(async()=>{o==="recovery"?await this._notifyAllSubscribers("PASSWORD_RECOVERY",a):await this._notifyAllSubscribers("SIGNED_IN",a)},0),{error:null}}return await this._recoverAndRefresh(),{error:null}}catch(t){return _(t)?this._returnResult({error:t}):this._returnResult({error:new Z("Unexpected error during initialization",t)})}finally{await this._handleVisibilityChange(),this._debug("#_initialize()","end")}}async signInAnonymously(e){var t,s,n;try{const i=await b(this.fetch,"POST",`${this.url}/signup`,{headers:this.headers,body:{data:(s=(t=e==null?void 0:e.options)===null||t===void 0?void 0:t.data)!==null&&s!==void 0?s:{},gotrue_meta_security:{captcha_token:(n=e==null?void 0:e.options)===null||n===void 0?void 0:n.captchaToken}},xform:L}),{data:a,error:o}=i;if(o||!a)return this._returnResult({data:{user:null,session:null},error:o});const l=a.session,c=a.user;return a.session&&(await this._saveSession(a.session),await this._notifyAllSubscribers("SIGNED_IN",l)),this._returnResult({data:{user:c,session:l},error:null})}catch(i){if(_(i))return this._returnResult({data:{user:null,session:null},error:i});throw i}}async signUp(e){var t,s,n;try{let i;if("email"in e){const{email:u,password:d,options:h}=e;let f=null,p=null;this.flowType==="pkce"&&([f,p]=await ae(this.storage,this.storageKey)),i=await b(this.fetch,"POST",`${this.url}/signup`,{headers:this.headers,redirectTo:h==null?void 0:h.emailRedirectTo,body:{email:u,password:d,data:(t=h==null?void 0:h.data)!==null&&t!==void 0?t:{},gotrue_meta_security:{captcha_token:h==null?void 0:h.captchaToken},code_challenge:f,code_challenge_method:p},xform:L})}else if("phone"in e){const{phone:u,password:d,options:h}=e;i=await b(this.fetch,"POST",`${this.url}/signup`,{headers:this.headers,body:{phone:u,password:d,data:(s=h==null?void 0:h.data)!==null&&s!==void 0?s:{},channel:(n=h==null?void 0:h.channel)!==null&&n!==void 0?n:"sms",gotrue_meta_security:{captcha_token:h==null?void 0:h.captchaToken}},xform:L})}else throw new Ce("You must provide either an email or phone number and a password");const{data:a,error:o}=i;if(o||!a)return await $(this.storage,`${this.storageKey}-code-verifier`),this._returnResult({data:{user:null,session:null},error:o});const l=a.session,c=a.user;return a.session&&(await this._saveSession(a.session),await this._notifyAllSubscribers("SIGNED_IN",l)),this._returnResult({data:{user:c,session:l},error:null})}catch(i){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(i))return this._returnResult({data:{user:null,session:null},error:i});throw i}}async signInWithPassword(e){try{let t;if("email"in e){const{email:i,password:a,options:o}=e;t=await b(this.fetch,"POST",`${this.url}/token?grant_type=password`,{headers:this.headers,body:{email:i,password:a,gotrue_meta_security:{captcha_token:o==null?void 0:o.captchaToken}},xform:$t})}else if("phone"in e){const{phone:i,password:a,options:o}=e;t=await b(this.fetch,"POST",`${this.url}/token?grant_type=password`,{headers:this.headers,body:{phone:i,password:a,gotrue_meta_security:{captcha_token:o==null?void 0:o.captchaToken}},xform:$t})}else throw new Ce("You must provide either an email or phone number and a password");const{data:s,error:n}=t;if(n)return this._returnResult({data:{user:null,session:null},error:n});if(!s||!s.session||!s.user){const i=new ie;return this._returnResult({data:{user:null,session:null},error:i})}return s.session&&(await this._saveSession(s.session),await this._notifyAllSubscribers("SIGNED_IN",s.session)),this._returnResult({data:Object.assign({user:s.user,session:s.session},s.weak_password?{weakPassword:s.weak_password}:null),error:n})}catch(t){if(_(t))return this._returnResult({data:{user:null,session:null},error:t});throw t}}async signInWithOAuth(e){var t,s,n,i;return await this._handleProviderSignIn(e.provider,{redirectTo:(t=e.options)===null||t===void 0?void 0:t.redirectTo,scopes:(s=e.options)===null||s===void 0?void 0:s.scopes,queryParams:(n=e.options)===null||n===void 0?void 0:n.queryParams,skipBrowserRedirect:(i=e.options)===null||i===void 0?void 0:i.skipBrowserRedirect})}async exchangeCodeForSession(e){return await this.initializePromise,this._acquireLock(-1,async()=>this._exchangeCodeForSession(e))}async signInWithWeb3(e){const{chain:t}=e;switch(t){case"ethereum":return await this.signInWithEthereum(e);case"solana":return await this.signInWithSolana(e);default:throw new Error(`@supabase/auth-js: Unsupported chain "${t}"`)}}async signInWithEthereum(e){var t,s,n,i,a,o,l,c,u,d,h;let f,p;if("message"in e)f=e.message,p=e.signature;else{const{chain:g,wallet:y,statement:v,options:m}=e;let w;if(j())if(typeof y=="object")w=y;else{const W=window;if("ethereum"in W&&typeof W.ethereum=="object"&&"request"in W.ethereum&&typeof W.ethereum.request=="function")w=W.ethereum;else throw new Error("@supabase/auth-js: No compatible Ethereum wallet interface on the window object (window.ethereum) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'ethereum', wallet: resolvedUserWallet }) instead.")}else{if(typeof y!="object"||!(m!=null&&m.url))throw new Error("@supabase/auth-js: Both wallet and url must be specified in non-browser environments.");w=y}const E=new URL((t=m==null?void 0:m.url)!==null&&t!==void 0?t:window.location.href),I=await w.request({method:"eth_requestAccounts"}).then(W=>W).catch(()=>{throw new Error("@supabase/auth-js: Wallet method eth_requestAccounts is missing or invalid")});if(!I||I.length===0)throw new Error("@supabase/auth-js: No accounts available. Please ensure the wallet is connected.");const k=er(I[0]);let R=(s=m==null?void 0:m.signInWithEthereum)===null||s===void 0?void 0:s.chainId;if(!R){const W=await w.request({method:"eth_chainId"});R=sn(W)}const V={domain:E.host,address:k,statement:v,uri:E.href,version:"1",chainId:R,nonce:(n=m==null?void 0:m.signInWithEthereum)===null||n===void 0?void 0:n.nonce,issuedAt:(a=(i=m==null?void 0:m.signInWithEthereum)===null||i===void 0?void 0:i.issuedAt)!==null&&a!==void 0?a:new Date,expirationTime:(o=m==null?void 0:m.signInWithEthereum)===null||o===void 0?void 0:o.expirationTime,notBefore:(l=m==null?void 0:m.signInWithEthereum)===null||l===void 0?void 0:l.notBefore,requestId:(c=m==null?void 0:m.signInWithEthereum)===null||c===void 0?void 0:c.requestId,resources:(u=m==null?void 0:m.signInWithEthereum)===null||u===void 0?void 0:u.resources};f=an(V),p=await w.request({method:"personal_sign",params:[nn(f),k]})}try{const{data:g,error:y}=await b(this.fetch,"POST",`${this.url}/token?grant_type=web3`,{headers:this.headers,body:Object.assign({chain:"ethereum",message:f,signature:p},!((d=e.options)===null||d===void 0)&&d.captchaToken?{gotrue_meta_security:{captcha_token:(h=e.options)===null||h===void 0?void 0:h.captchaToken}}:null),xform:L});if(y)throw y;if(!g||!g.session||!g.user){const v=new ie;return this._returnResult({data:{user:null,session:null},error:v})}return g.session&&(await this._saveSession(g.session),await this._notifyAllSubscribers("SIGNED_IN",g.session)),this._returnResult({data:Object.assign({},g),error:y})}catch(g){if(_(g))return this._returnResult({data:{user:null,session:null},error:g});throw g}}async signInWithSolana(e){var t,s,n,i,a,o,l,c,u,d,h,f;let p,g;if("message"in e)p=e.message,g=e.signature;else{const{chain:y,wallet:v,statement:m,options:w}=e;let E;if(j())if(typeof v=="object")E=v;else{const k=window;if("solana"in k&&typeof k.solana=="object"&&("signIn"in k.solana&&typeof k.solana.signIn=="function"||"signMessage"in k.solana&&typeof k.solana.signMessage=="function"))E=k.solana;else throw new Error("@supabase/auth-js: No compatible Solana wallet interface on the window object (window.solana) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'solana', wallet: resolvedUserWallet }) instead.")}else{if(typeof v!="object"||!(w!=null&&w.url))throw new Error("@supabase/auth-js: Both wallet and url must be specified in non-browser environments.");E=v}const I=new URL((t=w==null?void 0:w.url)!==null&&t!==void 0?t:window.location.href);if("signIn"in E&&E.signIn){const k=await E.signIn(Object.assign(Object.assign(Object.assign({issuedAt:new Date().toISOString()},w==null?void 0:w.signInWithSolana),{version:"1",domain:I.host,uri:I.href}),m?{statement:m}:null));let R;if(Array.isArray(k)&&k[0]&&typeof k[0]=="object")R=k[0];else if(k&&typeof k=="object"&&"signedMessage"in k&&"signature"in k)R=k;else throw new Error("@supabase/auth-js: Wallet method signIn() returned unrecognized value");if("signedMessage"in R&&"signature"in R&&(typeof R.signedMessage=="string"||R.signedMessage instanceof Uint8Array)&&R.signature instanceof Uint8Array)p=typeof R.signedMessage=="string"?R.signedMessage:new TextDecoder().decode(R.signedMessage),g=R.signature;else throw new Error("@supabase/auth-js: Wallet method signIn() API returned object without signedMessage and signature fields")}else{if(!("signMessage"in E)||typeof E.signMessage!="function"||!("publicKey"in E)||typeof E!="object"||!E.publicKey||!("toBase58"in E.publicKey)||typeof E.publicKey.toBase58!="function")throw new Error("@supabase/auth-js: Wallet does not have a compatible signMessage() and publicKey.toBase58() API");p=[`${I.host} wants you to sign in with your Solana account:`,E.publicKey.toBase58(),...m?["",m,""]:[""],"Version: 1",`URI: ${I.href}`,`Issued At: ${(n=(s=w==null?void 0:w.signInWithSolana)===null||s===void 0?void 0:s.issuedAt)!==null&&n!==void 0?n:new Date().toISOString()}`,...!((i=w==null?void 0:w.signInWithSolana)===null||i===void 0)&&i.notBefore?[`Not Before: ${w.signInWithSolana.notBefore}`]:[],...!((a=w==null?void 0:w.signInWithSolana)===null||a===void 0)&&a.expirationTime?[`Expiration Time: ${w.signInWithSolana.expirationTime}`]:[],...!((o=w==null?void 0:w.signInWithSolana)===null||o===void 0)&&o.chainId?[`Chain ID: ${w.signInWithSolana.chainId}`]:[],...!((l=w==null?void 0:w.signInWithSolana)===null||l===void 0)&&l.nonce?[`Nonce: ${w.signInWithSolana.nonce}`]:[],...!((c=w==null?void 0:w.signInWithSolana)===null||c===void 0)&&c.requestId?[`Request ID: ${w.signInWithSolana.requestId}`]:[],...!((d=(u=w==null?void 0:w.signInWithSolana)===null||u===void 0?void 0:u.resources)===null||d===void 0)&&d.length?["Resources",...w.signInWithSolana.resources.map(R=>`- ${R}`)]:[]].join(`
 `);const k=await E.signMessage(new TextEncoder().encode(p),"utf8");if(!k||!(k instanceof Uint8Array))throw new Error("@supabase/auth-js: Wallet signMessage() API returned an recognized value");g=k}}try{const{data:y,error:v}=await b(this.fetch,"POST",`${this.url}/token?grant_type=web3`,{headers:this.headers,body:Object.assign({chain:"solana",message:p,signature:ee(g)},!((h=e.options)===null||h===void 0)&&h.captchaToken?{gotrue_meta_security:{captcha_token:(f=e.options)===null||f===void 0?void 0:f.captchaToken}}:null),xform:L});if(v)throw v;if(!y||!y.session||!y.user){const m=new ie;return this._returnResult({data:{user:null,session:null},error:m})}return y.session&&(await this._saveSession(y.session),await this._notifyAllSubscribers("SIGNED_IN",y.session)),this._returnResult({data:Object.assign({},y),error:v})}catch(y){if(_(y))return this._returnResult({data:{user:null,session:null},error:y});throw y}}async _exchangeCodeForSession(e){const t=await z(this.storage,`${this.storageKey}-code-verifier`),[s,n]=(t??"").split("/");try{if(!s&&this.flowType==="pkce")throw new Ts;const{data:i,error:a}=await b(this.fetch,"POST",`${this.url}/token?grant_type=pkce`,{headers:this.headers,body:{auth_code:e,code_verifier:s},xform:L});if(await $(this.storage,`${this.storageKey}-code-verifier`),a)throw a;if(!i||!i.session||!i.user){const o=new ie;return this._returnResult({data:{user:null,session:null,redirectType:null},error:o})}return i.session&&(await this._saveSession(i.session),await this._notifyAllSubscribers("SIGNED_IN",i.session)),this._returnResult({data:Object.assign(Object.assign({},i),{redirectType:n??null}),error:a})}catch(i){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(i))return this._returnResult({data:{user:null,session:null,redirectType:null},error:i});throw i}}async signInWithIdToken(e){try{const{options:t,provider:s,token:n,access_token:i,nonce:a}=e,o=await b(this.fetch,"POST",`${this.url}/token?grant_type=id_token`,{headers:this.headers,body:{provider:s,id_token:n,access_token:i,nonce:a,gotrue_meta_security:{captcha_token:t==null?void 0:t.captchaToken}},xform:L}),{data:l,error:c}=o;if(c)return this._returnResult({data:{user:null,session:null},error:c});if(!l||!l.session||!l.user){const u=new ie;return this._returnResult({data:{user:null,session:null},error:u})}return l.session&&(await this._saveSession(l.session),await this._notifyAllSubscribers("SIGNED_IN",l.session)),this._returnResult({data:l,error:c})}catch(t){if(_(t))return this._returnResult({data:{user:null,session:null},error:t});throw t}}async signInWithOtp(e){var t,s,n,i,a;try{if("email"in e){const{email:o,options:l}=e;let c=null,u=null;this.flowType==="pkce"&&([c,u]=await ae(this.storage,this.storageKey));const{error:d}=await b(this.fetch,"POST",`${this.url}/otp`,{headers:this.headers,body:{email:o,data:(t=l==null?void 0:l.data)!==null&&t!==void 0?t:{},create_user:(s=l==null?void 0:l.shouldCreateUser)!==null&&s!==void 0?s:!0,gotrue_meta_security:{captcha_token:l==null?void 0:l.captchaToken},code_challenge:c,code_challenge_method:u},redirectTo:l==null?void 0:l.emailRedirectTo});return this._returnResult({data:{user:null,session:null},error:d})}if("phone"in e){const{phone:o,options:l}=e,{data:c,error:u}=await b(this.fetch,"POST",`${this.url}/otp`,{headers:this.headers,body:{phone:o,data:(n=l==null?void 0:l.data)!==null&&n!==void 0?n:{},create_user:(i=l==null?void 0:l.shouldCreateUser)!==null&&i!==void 0?i:!0,gotrue_meta_security:{captcha_token:l==null?void 0:l.captchaToken},channel:(a=l==null?void 0:l.channel)!==null&&a!==void 0?a:"sms"}});return this._returnResult({data:{user:null,session:null,messageId:c==null?void 0:c.message_id},error:u})}throw new Ce("You must provide either an email or phone number.")}catch(o){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(o))return this._returnResult({data:{user:null,session:null},error:o});throw o}}async verifyOtp(e){var t,s;try{let n,i;"options"in e&&(n=(t=e.options)===null||t===void 0?void 0:t.redirectTo,i=(s=e.options)===null||s===void 0?void 0:s.captchaToken);const{data:a,error:o}=await b(this.fetch,"POST",`${this.url}/verify`,{headers:this.headers,body:Object.assign(Object.assign({},e),{gotrue_meta_security:{captcha_token:i}}),redirectTo:n,xform:L});if(o)throw o;if(!a)throw new Error("An error occurred on token verification.");const l=a.session,c=a.user;return l!=null&&l.access_token&&(await this._saveSession(l),await this._notifyAllSubscribers(e.type=="recovery"?"PASSWORD_RECOVERY":"SIGNED_IN",l)),this._returnResult({data:{user:c,session:l},error:null})}catch(n){if(_(n))return this._returnResult({data:{user:null,session:null},error:n});throw n}}async signInWithSSO(e){var t,s,n,i,a;try{let o=null,l=null;this.flowType==="pkce"&&([o,l]=await ae(this.storage,this.storageKey));const c=await b(this.fetch,"POST",`${this.url}/sso`,{body:Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({},"providerId"in e?{provider_id:e.providerId}:null),"domain"in e?{domain:e.domain}:null),{redirect_to:(s=(t=e.options)===null||t===void 0?void 0:t.redirectTo)!==null&&s!==void 0?s:void 0}),!((n=e==null?void 0:e.options)===null||n===void 0)&&n.captchaToken?{gotrue_meta_security:{captcha_token:e.options.captchaToken}}:null),{skip_http_redirect:!0,code_challenge:o,code_challenge_method:l}),headers:this.headers,xform:Ys});return!((i=c.data)===null||i===void 0)&&i.url&&j()&&!(!((a=e.options)===null||a===void 0)&&a.skipBrowserRedirect)&&window.location.assign(c.data.url),this._returnResult(c)}catch(o){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(o))return this._returnResult({data:null,error:o});throw o}}async reauthenticate(){return await this.initializePromise,await this._acquireLock(-1,async()=>await this._reauthenticate())}async _reauthenticate(){try{return await this._useSession(async e=>{const{data:{session:t},error:s}=e;if(s)throw s;if(!t)throw new x;const{error:n}=await b(this.fetch,"GET",`${this.url}/reauthenticate`,{headers:this.headers,jwt:t.access_token});return this._returnResult({data:{user:null,session:null},error:n})})}catch(e){if(_(e))return this._returnResult({data:{user:null,session:null},error:e});throw e}}async resend(e){try{const t=`${this.url}/resend`;if("email"in e){const{email:s,type:n,options:i}=e,{error:a}=await b(this.fetch,"POST",t,{headers:this.headers,body:{email:s,type:n,gotrue_meta_security:{captcha_token:i==null?void 0:i.captchaToken}},redirectTo:i==null?void 0:i.emailRedirectTo});return this._returnResult({data:{user:null,session:null},error:a})}else if("phone"in e){const{phone:s,type:n,options:i}=e,{data:a,error:o}=await b(this.fetch,"POST",t,{headers:this.headers,body:{phone:s,type:n,gotrue_meta_security:{captcha_token:i==null?void 0:i.captchaToken}}});return this._returnResult({data:{user:null,session:null,messageId:a==null?void 0:a.message_id},error:o})}throw new Ce("You must provide either an email or phone number and a type")}catch(t){if(_(t))return this._returnResult({data:{user:null,session:null},error:t});throw t}}async getSession(){return await this.initializePromise,await this._acquireLock(-1,async()=>this._useSession(async t=>t))}async _acquireLock(e,t){this._debug("#_acquireLock","begin",e);try{if(this.lockAcquired){const s=this.pendingInLock.length?this.pendingInLock[this.pendingInLock.length-1]:Promise.resolve(),n=(async()=>(await s,await t()))();return this.pendingInLock.push((async()=>{try{await n}catch{}})()),n}return await this.lock(`lock:${this.storageKey}`,e,async()=>{this._debug("#_acquireLock","lock acquired for storage key",this.storageKey);try{this.lockAcquired=!0;const s=t();for(this.pendingInLock.push((async()=>{try{await s}catch{}})()),await s;this.pendingInLock.length;){const n=[...this.pendingInLock];await Promise.all(n),this.pendingInLock.splice(0,n.length)}return await s}finally{this._debug("#_acquireLock","lock released for storage key",this.storageKey),this.lockAcquired=!1}})}finally{this._debug("#_acquireLock","end")}}async _useSession(e){this._debug("#_useSession","begin");try{const t=await this.__loadSession();return await e(t)}finally{this._debug("#_useSession","end")}}async __loadSession(){this._debug("#__loadSession()","begin"),this.lockAcquired||this._debug("#__loadSession()","used outside of an acquired lock!",new Error().stack);try{let e=null;const t=await z(this.storage,this.storageKey);if(this._debug("#getSession()","session from storage",t),t!==null&&(this._isValidSession(t)?e=t:(this._debug("#getSession()","session from storage is not valid"),await this._removeSession())),!e)return{data:{session:null},error:null};const s=e.expires_at?e.expires_at*1e3-Date.now()<Fe:!1;if(this._debug("#__loadSession()",`session has${s?"":" not"} expired`,"expires_at",e.expires_at),!s){if(this.userStorage){const a=await z(this.userStorage,this.storageKey+"-user");a!=null&&a.user?e.user=a.user:e.user=He()}if(this.storage.isServer&&e.user&&!e.user.__isUserNotAvailableProxy){const a={value:this.suppressGetSessionWarning};e.user=Js(e.user,a),a.value&&(this.suppressGetSessionWarning=!0)}return{data:{session:e},error:null}}const{data:n,error:i}=await this._callRefreshToken(e.refresh_token);return i?this._returnResult({data:{session:null},error:i}):this._returnResult({data:{session:n},error:null})}finally{this._debug("#__loadSession()","end")}}async getUser(e){if(e)return await this._getUser(e);await this.initializePromise;const t=await this._acquireLock(-1,async()=>await this._getUser());return t.data.user&&(this.suppressGetSessionWarning=!0),t}async _getUser(e){try{return e?await b(this.fetch,"GET",`${this.url}/user`,{headers:this.headers,jwt:e,xform:H}):await this._useSession(async t=>{var s,n,i;const{data:a,error:o}=t;if(o)throw o;return!(!((s=a.session)===null||s===void 0)&&s.access_token)&&!this.hasCustomAuthorizationHeader?{data:{user:null},error:new x}:await b(this.fetch,"GET",`${this.url}/user`,{headers:this.headers,jwt:(i=(n=a.session)===null||n===void 0?void 0:n.access_token)!==null&&i!==void 0?i:void 0,xform:H})})}catch(t){if(_(t))return Es(t)&&(await this._removeSession(),await $(this.storage,`${this.storageKey}-code-verifier`)),this._returnResult({data:{user:null},error:t});throw t}}async updateUser(e,t={}){return await this.initializePromise,await this._acquireLock(-1,async()=>await this._updateUser(e,t))}async _updateUser(e,t={}){try{return await this._useSession(async s=>{const{data:n,error:i}=s;if(i)throw i;if(!n.session)throw new x;const a=n.session;let o=null,l=null;this.flowType==="pkce"&&e.email!=null&&([o,l]=await ae(this.storage,this.storageKey));const{data:c,error:u}=await b(this.fetch,"PUT",`${this.url}/user`,{headers:this.headers,redirectTo:t==null?void 0:t.emailRedirectTo,body:Object.assign(Object.assign({},e),{code_challenge:o,code_challenge_method:l}),jwt:a.access_token,xform:H});if(u)throw u;return a.user=c.user,await this._saveSession(a),await this._notifyAllSubscribers("USER_UPDATED",a),this._returnResult({data:{user:a.user},error:null})})}catch(s){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(s))return this._returnResult({data:{user:null},error:s});throw s}}async setSession(e){return await this.initializePromise,await this._acquireLock(-1,async()=>await this._setSession(e))}async _setSession(e){try{if(!e.access_token||!e.refresh_token)throw new x;const t=Date.now()/1e3;let s=t,n=!0,i=null;const{payload:a}=Je(e.access_token);if(a.exp&&(s=a.exp,n=s<=t),n){const{data:o,error:l}=await this._callRefreshToken(e.refresh_token);if(l)return this._returnResult({data:{user:null,session:null},error:l});if(!o)return{data:{user:null,session:null},error:null};i=o}else{const{data:o,error:l}=await this._getUser(e.access_token);if(l)throw l;i={access_token:e.access_token,refresh_token:e.refresh_token,user:o.user,token_type:"bearer",expires_in:s-t,expires_at:s},await this._saveSession(i),await this._notifyAllSubscribers("SIGNED_IN",i)}return this._returnResult({data:{user:i.user,session:i},error:null})}catch(t){if(_(t))return this._returnResult({data:{session:null,user:null},error:t});throw t}}async refreshSession(e){return await this.initializePromise,await this._acquireLock(-1,async()=>await this._refreshSession(e))}async _refreshSession(e){try{return await this._useSession(async t=>{var s;if(!e){const{data:a,error:o}=t;if(o)throw o;e=(s=a.session)!==null&&s!==void 0?s:void 0}if(!(e!=null&&e.refresh_token))throw new x;const{data:n,error:i}=await this._callRefreshToken(e.refresh_token);return i?this._returnResult({data:{user:null,session:null},error:i}):n?this._returnResult({data:{user:n.user,session:n},error:null}):this._returnResult({data:{user:null,session:null},error:null})})}catch(t){if(_(t))return this._returnResult({data:{user:null,session:null},error:t});throw t}}async _getSessionFromURL(e,t){try{if(!j())throw new Ie("No browser detected.");if(e.error||e.error_description||e.error_code)throw new Ie(e.error_description||"Error in URL with unspecified error_description",{error:e.error||"unspecified_error",code:e.error_code||"unspecified_code"});switch(t){case"implicit":if(this.flowType==="pkce")throw new Tt("Not a valid PKCE flow url.");break;case"pkce":if(this.flowType==="implicit")throw new Ie("Not a valid implicit grant flow url.");break;default:}if(t==="pkce"){if(this._debug("#_initialize()","begin","is PKCE flow",!0),!e.code)throw new Tt("No code detected.");const{data:m,error:w}=await this._exchangeCodeForSession(e.code);if(w)throw w;const E=new URL(window.location.href);return E.searchParams.delete("code"),window.history.replaceState(window.history.state,"",E.toString()),{data:{session:m.session,redirectType:null},error:null}}const{provider_token:s,provider_refresh_token:n,access_token:i,refresh_token:a,expires_in:o,expires_at:l,token_type:c}=e;if(!i||!o||!a||!c)throw new Ie("No session defined in URL");const u=Math.round(Date.now()/1e3),d=parseInt(o);let h=u+d;l&&(h=parseInt(l));const f=h-u;f*1e3<=de&&console.warn(`@supabase/gotrue-js: Session as retrieved from URL expires in ${f}s, should have been closer to ${d}s`);const p=h-d;u-p>=120?console.warn("@supabase/gotrue-js: Session as retrieved from URL was issued over 120s ago, URL could be stale",p,h,u):u-p<0&&console.warn("@supabase/gotrue-js: Session as retrieved from URL was issued in the future? Check the device clock for skew",p,h,u);const{data:g,error:y}=await this._getUser(i);if(y)throw y;const v={provider_token:s,provider_refresh_token:n,access_token:i,expires_in:d,expires_at:h,refresh_token:a,token_type:c,user:g.user};return window.location.hash="",this._debug("#_getSessionFromURL()","clearing window.location.hash"),this._returnResult({data:{session:v,redirectType:e.type},error:null})}catch(s){if(_(s))return this._returnResult({data:{session:null,redirectType:null},error:s});throw s}}_isImplicitGrantCallback(e){return typeof this.detectSessionInUrl=="function"?this.detectSessionInUrl(new URL(window.location.href),e):!!(e.access_token||e.error_description)}async _isPKCECallback(e){const t=await z(this.storage,`${this.storageKey}-code-verifier`);return!!(e.code&&t)}async signOut(e={scope:"global"}){return await this.initializePromise,await this._acquireLock(-1,async()=>await this._signOut(e))}async _signOut({scope:e}={scope:"global"}){return await this._useSession(async t=>{var s;const{data:n,error:i}=t;if(i)return this._returnResult({error:i});const a=(s=n.session)===null||s===void 0?void 0:s.access_token;if(a){const{error:o}=await this.admin.signOut(a,e);if(o&&!(Ss(o)&&(o.status===404||o.status===401||o.status===403)))return this._returnResult({error:o})}return e!=="others"&&(await this._removeSession(),await $(this.storage,`${this.storageKey}-code-verifier`)),this._returnResult({error:null})})}onAuthStateChange(e){const t=$s(),s={id:t,callback:e,unsubscribe:()=>{this._debug("#unsubscribe()","state change callback with id removed",t),this.stateChangeEmitters.delete(t)}};return this._debug("#onAuthStateChange()","registered callback with id",t),this.stateChangeEmitters.set(t,s),(async()=>(await this.initializePromise,await this._acquireLock(-1,async()=>{this._emitInitialSession(t)})))(),{data:{subscription:s}}}async _emitInitialSession(e){return await this._useSession(async t=>{var s,n;try{const{data:{session:i},error:a}=t;if(a)throw a;await((s=this.stateChangeEmitters.get(e))===null||s===void 0?void 0:s.callback("INITIAL_SESSION",i)),this._debug("INITIAL_SESSION","callback id",e,"session",i)}catch(i){await((n=this.stateChangeEmitters.get(e))===null||n===void 0?void 0:n.callback("INITIAL_SESSION",null)),this._debug("INITIAL_SESSION","callback id",e,"error",i),console.error(i)}})}async resetPasswordForEmail(e,t={}){let s=null,n=null;this.flowType==="pkce"&&([s,n]=await ae(this.storage,this.storageKey,!0));try{return await b(this.fetch,"POST",`${this.url}/recover`,{body:{email:e,code_challenge:s,code_challenge_method:n,gotrue_meta_security:{captcha_token:t.captchaToken}},headers:this.headers,redirectTo:t.redirectTo})}catch(i){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(i))return this._returnResult({data:null,error:i});throw i}}async getUserIdentities(){var e;try{const{data:t,error:s}=await this.getUser();if(s)throw s;return this._returnResult({data:{identities:(e=t.user.identities)!==null&&e!==void 0?e:[]},error:null})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}}async linkIdentity(e){return"token"in e?this.linkIdentityIdToken(e):this.linkIdentityOAuth(e)}async linkIdentityOAuth(e){var t;try{const{data:s,error:n}=await this._useSession(async i=>{var a,o,l,c,u;const{data:d,error:h}=i;if(h)throw h;const f=await this._getUrlForProvider(`${this.url}/user/identities/authorize`,e.provider,{redirectTo:(a=e.options)===null||a===void 0?void 0:a.redirectTo,scopes:(o=e.options)===null||o===void 0?void 0:o.scopes,queryParams:(l=e.options)===null||l===void 0?void 0:l.queryParams,skipBrowserRedirect:!0});return await b(this.fetch,"GET",f,{headers:this.headers,jwt:(u=(c=d.session)===null||c===void 0?void 0:c.access_token)!==null&&u!==void 0?u:void 0})});if(n)throw n;return j()&&!(!((t=e.options)===null||t===void 0)&&t.skipBrowserRedirect)&&window.location.assign(s==null?void 0:s.url),this._returnResult({data:{provider:e.provider,url:s==null?void 0:s.url},error:null})}catch(s){if(_(s))return this._returnResult({data:{provider:e.provider,url:null},error:s});throw s}}async linkIdentityIdToken(e){return await this._useSession(async t=>{var s;try{const{error:n,data:{session:i}}=t;if(n)throw n;const{options:a,provider:o,token:l,access_token:c,nonce:u}=e,d=await b(this.fetch,"POST",`${this.url}/token?grant_type=id_token`,{headers:this.headers,jwt:(s=i==null?void 0:i.access_token)!==null&&s!==void 0?s:void 0,body:{provider:o,id_token:l,access_token:c,nonce:u,link_identity:!0,gotrue_meta_security:{captcha_token:a==null?void 0:a.captchaToken}},xform:L}),{data:h,error:f}=d;return f?this._returnResult({data:{user:null,session:null},error:f}):!h||!h.session||!h.user?this._returnResult({data:{user:null,session:null},error:new ie}):(h.session&&(await this._saveSession(h.session),await this._notifyAllSubscribers("USER_UPDATED",h.session)),this._returnResult({data:h,error:f}))}catch(n){if(await $(this.storage,`${this.storageKey}-code-verifier`),_(n))return this._returnResult({data:{user:null,session:null},error:n});throw n}})}async unlinkIdentity(e){try{return await this._useSession(async t=>{var s,n;const{data:i,error:a}=t;if(a)throw a;return await b(this.fetch,"DELETE",`${this.url}/user/identities/${e.identity_id}`,{headers:this.headers,jwt:(n=(s=i.session)===null||s===void 0?void 0:s.access_token)!==null&&n!==void 0?n:void 0})})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}}async _refreshAccessToken(e){const t=`#_refreshAccessToken(${e.substring(0,5)}...)`;this._debug(t,"begin");try{const s=Date.now();return await Ns(async n=>(n>0&&await Us(200*Math.pow(2,n-1)),this._debug(t,"refreshing attempt",n),await b(this.fetch,"POST",`${this.url}/token?grant_type=refresh_token`,{body:{refresh_token:e},headers:this.headers,xform:L})),(n,i)=>{const a=200*Math.pow(2,n);return i&&Ve(i)&&Date.now()+a-s<de})}catch(s){if(this._debug(t,"error",s),_(s))return this._returnResult({data:{session:null,user:null},error:s});throw s}finally{this._debug(t,"end")}}_isValidSession(e){return typeof e=="object"&&e!==null&&"access_token"in e&&"refresh_token"in e&&"expires_at"in e}async _handleProviderSignIn(e,t){const s=await this._getUrlForProvider(`${this.url}/authorize`,e,{redirectTo:t.redirectTo,scopes:t.scopes,queryParams:t.queryParams});return this._debug("#_handleProviderSignIn()","provider",e,"options",t,"url",s),j()&&!t.skipBrowserRedirect&&window.location.assign(s),{data:{provider:e,url:s},error:null}}async _recoverAndRefresh(){var e,t;const s="#_recoverAndRefresh()";this._debug(s,"begin");try{const n=await z(this.storage,this.storageKey);if(n&&this.userStorage){let a=await z(this.userStorage,this.storageKey+"-user");!this.storage.isServer&&Object.is(this.storage,this.userStorage)&&!a&&(a={user:n.user},await fe(this.userStorage,this.storageKey+"-user",a)),n.user=(e=a==null?void 0:a.user)!==null&&e!==void 0?e:He()}else if(n&&!n.user&&!n.user){const a=await z(this.storage,this.storageKey+"-user");a&&(a!=null&&a.user)?(n.user=a.user,await $(this.storage,this.storageKey+"-user"),await fe(this.storage,this.storageKey,n)):n.user=He()}if(this._debug(s,"session from storage",n),!this._isValidSession(n)){this._debug(s,"session is not valid"),n!==null&&await this._removeSession();return}const i=((t=n.expires_at)!==null&&t!==void 0?t:1/0)*1e3-Date.now()<Fe;if(this._debug(s,`session has${i?"":" not"} expired with margin of ${Fe}s`),i){if(this.autoRefreshToken&&n.refresh_token){const{error:a}=await this._callRefreshToken(n.refresh_token);a&&(console.error(a),Ve(a)||(this._debug(s,"refresh failed with a non-retryable error, removing the session",a),await this._removeSession()))}}else if(n.user&&n.user.__isUserNotAvailableProxy===!0)try{const{data:a,error:o}=await this._getUser(n.access_token);!o&&(a!=null&&a.user)?(n.user=a.user,await this._saveSession(n),await this._notifyAllSubscribers("SIGNED_IN",n)):this._debug(s,"could not get user data, skipping SIGNED_IN notification")}catch(a){console.error("Error getting user data:",a),this._debug(s,"error getting user data, skipping SIGNED_IN notification",a)}else await this._notifyAllSubscribers("SIGNED_IN",n)}catch(n){this._debug(s,"error",n),console.error(n);return}finally{this._debug(s,"end")}}async _callRefreshToken(e){var t,s;if(!e)throw new x;if(this.refreshingDeferred)return this.refreshingDeferred.promise;const n=`#_callRefreshToken(${e.substring(0,5)}...)`;this._debug(n,"begin");try{this.refreshingDeferred=new Be;const{data:i,error:a}=await this._refreshAccessToken(e);if(a)throw a;if(!i.session)throw new x;await this._saveSession(i.session),await this._notifyAllSubscribers("TOKEN_REFRESHED",i.session);const o={data:i.session,error:null};return this.refreshingDeferred.resolve(o),o}catch(i){if(this._debug(n,"error",i),_(i)){const a={data:null,error:i};return Ve(i)||await this._removeSession(),(t=this.refreshingDeferred)===null||t===void 0||t.resolve(a),a}throw(s=this.refreshingDeferred)===null||s===void 0||s.reject(i),i}finally{this.refreshingDeferred=null,this._debug(n,"end")}}async _notifyAllSubscribers(e,t,s=!0){const n=`#_notifyAllSubscribers(${e})`;this._debug(n,"begin",t,`broadcast = ${s}`);try{this.broadcastChannel&&s&&this.broadcastChannel.postMessage({event:e,session:t});const i=[],a=Array.from(this.stateChangeEmitters.values()).map(async o=>{try{await o.callback(e,t)}catch(l){i.push(l)}});if(await Promise.all(a),i.length>0){for(let o=0;o<i.length;o+=1)console.error(i[o]);throw i[0]}}finally{this._debug(n,"end")}}async _saveSession(e){this._debug("#_saveSession()",e),this.suppressGetSessionWarning=!0,await $(this.storage,`${this.storageKey}-code-verifier`);const t=Object.assign({},e),s=t.user&&t.user.__isUserNotAvailableProxy===!0;if(this.userStorage){!s&&t.user&&await fe(this.userStorage,this.storageKey+"-user",{user:t.user});const n=Object.assign({},t);delete n.user;const i=Ct(n);await fe(this.storage,this.storageKey,i)}else{const n=Ct(t);await fe(this.storage,this.storageKey,n)}}async _removeSession(){this._debug("#_removeSession()"),this.suppressGetSessionWarning=!1,await $(this.storage,this.storageKey),await $(this.storage,this.storageKey+"-code-verifier"),await $(this.storage,this.storageKey+"-user"),this.userStorage&&await $(this.userStorage,this.storageKey+"-user"),await this._notifyAllSubscribers("SIGNED_OUT",null)}_removeVisibilityChangedCallback(){this._debug("#_removeVisibilityChangedCallback()");const e=this.visibilityChangedCallback;this.visibilityChangedCallback=null;try{e&&j()&&(window!=null&&window.removeEventListener)&&window.removeEventListener("visibilitychange",e)}catch(t){console.error("removing visibilitychange callback failed",t)}}async _startAutoRefresh(){await this._stopAutoRefresh(),this._debug("#_startAutoRefresh()");const e=setInterval(()=>this._autoRefreshTokenTick(),de);this.autoRefreshTicker=e,e&&typeof e=="object"&&typeof e.unref=="function"?e.unref():typeof Deno<"u"&&typeof Deno.unrefTimer=="function"&&Deno.unrefTimer(e),setTimeout(async()=>{await this.initializePromise,await this._autoRefreshTokenTick()},0)}async _stopAutoRefresh(){this._debug("#_stopAutoRefresh()");const e=this.autoRefreshTicker;this.autoRefreshTicker=null,e&&clearInterval(e)}async startAutoRefresh(){this._removeVisibilityChangedCallback(),await this._startAutoRefresh()}async stopAutoRefresh(){this._removeVisibilityChangedCallback(),await this._stopAutoRefresh()}async _autoRefreshTokenTick(){this._debug("#_autoRefreshTokenTick()","begin");try{await this._acquireLock(0,async()=>{try{const e=Date.now();try{return await this._useSession(async t=>{const{data:{session:s}}=t;if(!s||!s.refresh_token||!s.expires_at){this._debug("#_autoRefreshTokenTick()","no session");return}const n=Math.floor((s.expires_at*1e3-e)/de);this._debug("#_autoRefreshTokenTick()",`access token expires in ${n} ticks, a tick lasts ${de}ms, refresh threshold is ${st} ticks`),n<=st&&await this._callRefreshToken(s.refresh_token)})}catch(t){console.error("Auto refresh tick failed with error. This is likely a transient error.",t)}}finally{this._debug("#_autoRefreshTokenTick()","end")}})}catch(e){if(e.isAcquireTimeout||e instanceof Zt)this._debug("auto refresh token tick lock not available");else throw e}}async _handleVisibilityChange(){if(this._debug("#_handleVisibilityChange()"),!j()||!(window!=null&&window.addEventListener))return this.autoRefreshToken&&this.startAutoRefresh(),!1;try{this.visibilityChangedCallback=async()=>await this._onVisibilityChanged(!1),window==null||window.addEventListener("visibilitychange",this.visibilityChangedCallback),await this._onVisibilityChanged(!0)}catch(e){console.error("_handleVisibilityChange",e)}}async _onVisibilityChanged(e){const t=`#_onVisibilityChanged(${e})`;this._debug(t,"visibilityState",document.visibilityState),document.visibilityState==="visible"?(this.autoRefreshToken&&this._startAutoRefresh(),e||(await this.initializePromise,await this._acquireLock(-1,async()=>{if(document.visibilityState!=="visible"){this._debug(t,"acquired the lock to recover the session, but the browser visibilityState is no longer visible, aborting");return}await this._recoverAndRefresh()}))):document.visibilityState==="hidden"&&this.autoRefreshToken&&this._stopAutoRefresh()}async _getUrlForProvider(e,t,s){const n=[`provider=${encodeURIComponent(t)}`];if(s!=null&&s.redirectTo&&n.push(`redirect_to=${encodeURIComponent(s.redirectTo)}`),s!=null&&s.scopes&&n.push(`scopes=${encodeURIComponent(s.scopes)}`),this.flowType==="pkce"){const[i,a]=await ae(this.storage,this.storageKey),o=new URLSearchParams({code_challenge:`${encodeURIComponent(i)}`,code_challenge_method:`${encodeURIComponent(a)}`});n.push(o.toString())}if(s!=null&&s.queryParams){const i=new URLSearchParams(s.queryParams);n.push(i.toString())}return s!=null&&s.skipBrowserRedirect&&n.push(`skip_http_redirect=${s.skipBrowserRedirect}`),`${e}?${n.join("&")}`}async _unenroll(e){try{return await this._useSession(async t=>{var s;const{data:n,error:i}=t;return i?this._returnResult({data:null,error:i}):await b(this.fetch,"DELETE",`${this.url}/factors/${e.factorId}`,{headers:this.headers,jwt:(s=n==null?void 0:n.session)===null||s===void 0?void 0:s.access_token})})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}}async _enroll(e){try{return await this._useSession(async t=>{var s,n;const{data:i,error:a}=t;if(a)return this._returnResult({data:null,error:a});const o=Object.assign({friendly_name:e.friendlyName,factor_type:e.factorType},e.factorType==="phone"?{phone:e.phone}:e.factorType==="totp"?{issuer:e.issuer}:{}),{data:l,error:c}=await b(this.fetch,"POST",`${this.url}/factors`,{body:o,headers:this.headers,jwt:(s=i==null?void 0:i.session)===null||s===void 0?void 0:s.access_token});return c?this._returnResult({data:null,error:c}):(e.factorType==="totp"&&l.type==="totp"&&(!((n=l==null?void 0:l.totp)===null||n===void 0)&&n.qr_code)&&(l.totp.qr_code=`data:image/svg+xml;utf-8,${l.totp.qr_code}`),this._returnResult({data:l,error:null}))})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}}async _verify(e){return this._acquireLock(-1,async()=>{try{return await this._useSession(async t=>{var s;const{data:n,error:i}=t;if(i)return this._returnResult({data:null,error:i});const a=Object.assign({challenge_id:e.challengeId},"webauthn"in e?{webauthn:Object.assign(Object.assign({},e.webauthn),{credential_response:e.webauthn.type==="create"?fn(e.webauthn.credential_response):pn(e.webauthn.credential_response)})}:{code:e.code}),{data:o,error:l}=await b(this.fetch,"POST",`${this.url}/factors/${e.factorId}/verify`,{body:a,headers:this.headers,jwt:(s=n==null?void 0:n.session)===null||s===void 0?void 0:s.access_token});return l?this._returnResult({data:null,error:l}):(await this._saveSession(Object.assign({expires_at:Math.round(Date.now()/1e3)+o.expires_in},o)),await this._notifyAllSubscribers("MFA_CHALLENGE_VERIFIED",o),this._returnResult({data:o,error:l}))})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}})}async _challenge(e){return this._acquireLock(-1,async()=>{try{return await this._useSession(async t=>{var s;const{data:n,error:i}=t;if(i)return this._returnResult({data:null,error:i});const a=await b(this.fetch,"POST",`${this.url}/factors/${e.factorId}/challenge`,{body:e,headers:this.headers,jwt:(s=n==null?void 0:n.session)===null||s===void 0?void 0:s.access_token});if(a.error)return a;const{data:o}=a;if(o.type!=="webauthn")return{data:o,error:null};switch(o.webauthn.type){case"create":return{data:Object.assign(Object.assign({},o),{webauthn:Object.assign(Object.assign({},o.webauthn),{credential_options:Object.assign(Object.assign({},o.webauthn.credential_options),{publicKey:hn(o.webauthn.credential_options.publicKey)})})}),error:null};case"request":return{data:Object.assign(Object.assign({},o),{webauthn:Object.assign(Object.assign({},o.webauthn),{credential_options:Object.assign(Object.assign({},o.webauthn.credential_options),{publicKey:dn(o.webauthn.credential_options.publicKey)})})}),error:null}}})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}})}async _challengeAndVerify(e){const{data:t,error:s}=await this._challenge({factorId:e.factorId});return s?this._returnResult({data:null,error:s}):await this._verify({factorId:e.factorId,challengeId:t.id,code:e.code})}async _listFactors(){var e;const{data:{user:t},error:s}=await this.getUser();if(s)return{data:null,error:s};const n={all:[],phone:[],totp:[],webauthn:[]};for(const i of(e=t==null?void 0:t.factors)!==null&&e!==void 0?e:[])n.all.push(i),i.status==="verified"&&n[i.factor_type].push(i);return{data:n,error:null}}async _getAuthenticatorAssuranceLevel(){var e,t;const{data:{session:s},error:n}=await this.getSession();if(n)return this._returnResult({data:null,error:n});if(!s)return{data:{currentLevel:null,nextLevel:null,currentAuthenticationMethods:[]},error:null};const{payload:i}=Je(s.access_token);let a=null;i.aal&&(a=i.aal);let o=a;((t=(e=s.user.factors)===null||e===void 0?void 0:e.filter(u=>u.status==="verified"))!==null&&t!==void 0?t:[]).length>0&&(o="aal2");const c=i.amr||[];return{data:{currentLevel:a,nextLevel:o,currentAuthenticationMethods:c},error:null}}async _getAuthorizationDetails(e){try{return await this._useSession(async t=>{const{data:{session:s},error:n}=t;return n?this._returnResult({data:null,error:n}):s?await b(this.fetch,"GET",`${this.url}/oauth/authorizations/${e}`,{headers:this.headers,jwt:s.access_token,xform:i=>({data:i,error:null})}):this._returnResult({data:null,error:new x})})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}}async _approveAuthorization(e,t){try{return await this._useSession(async s=>{const{data:{session:n},error:i}=s;if(i)return this._returnResult({data:null,error:i});if(!n)return this._returnResult({data:null,error:new x});const a=await b(this.fetch,"POST",`${this.url}/oauth/authorizations/${e}/consent`,{headers:this.headers,jwt:n.access_token,body:{action:"approve"},xform:o=>({data:o,error:null})});return a.data&&a.data.redirect_url&&j()&&!(t!=null&&t.skipBrowserRedirect)&&window.location.assign(a.data.redirect_url),a})}catch(s){if(_(s))return this._returnResult({data:null,error:s});throw s}}async _denyAuthorization(e,t){try{return await this._useSession(async s=>{const{data:{session:n},error:i}=s;if(i)return this._returnResult({data:null,error:i});if(!n)return this._returnResult({data:null,error:new x});const a=await b(this.fetch,"POST",`${this.url}/oauth/authorizations/${e}/consent`,{headers:this.headers,jwt:n.access_token,body:{action:"deny"},xform:o=>({data:o,error:null})});return a.data&&a.data.redirect_url&&j()&&!(t!=null&&t.skipBrowserRedirect)&&window.location.assign(a.data.redirect_url),a})}catch(s){if(_(s))return this._returnResult({data:null,error:s});throw s}}async _listOAuthGrants(){try{return await this._useSession(async e=>{const{data:{session:t},error:s}=e;return s?this._returnResult({data:null,error:s}):t?await b(this.fetch,"GET",`${this.url}/user/oauth/grants`,{headers:this.headers,jwt:t.access_token,xform:n=>({data:n,error:null})}):this._returnResult({data:null,error:new x})})}catch(e){if(_(e))return this._returnResult({data:null,error:e});throw e}}async _revokeOAuthGrant(e){try{return await this._useSession(async t=>{const{data:{session:s},error:n}=t;return n?this._returnResult({data:null,error:n}):s?(await b(this.fetch,"DELETE",`${this.url}/user/oauth/grants`,{headers:this.headers,jwt:s.access_token,query:{client_id:e.clientId},noResolveJson:!0}),{data:{},error:null}):this._returnResult({data:null,error:new x})})}catch(t){if(_(t))return this._returnResult({data:null,error:t});throw t}}async fetchJwk(e,t={keys:[]}){let s=t.keys.find(o=>o.kid===e);if(s)return s;const n=Date.now();if(s=this.jwks.keys.find(o=>o.kid===e),s&&this.jwks_cached_at+ms>n)return s;const{data:i,error:a}=await b(this.fetch,"GET",`${this.url}/.well-known/jwks.json`,{headers:this.headers});if(a)throw a;return!i.keys||i.keys.length===0||(this.jwks=i,this.jwks_cached_at=n,s=i.keys.find(o=>o.kid===e),!s)?null:s}async getClaims(e,t={}){try{let s=e;if(!s){const{data:f,error:p}=await this.getSession();if(p||!f.session)return this._returnResult({data:null,error:p});s=f.session.access_token}const{header:n,payload:i,signature:a,raw:{header:o,payload:l}}=Je(s);t!=null&&t.allowExpired||Ks(i.exp);const c=!n.alg||n.alg.startsWith("HS")||!n.kid||!("crypto"in globalThis&&"subtle"in globalThis.crypto)?null:await this.fetchJwk(n.kid,t!=null&&t.keys?{keys:t.keys}:t==null?void 0:t.jwks);if(!c){const{error:f}=await this.getUser(s);if(f)throw f;return{data:{claims:i,header:n,signature:a},error:null}}const u=Fs(n.alg),d=await crypto.subtle.importKey("jwk",c,u,!0,["verify"]);if(!await crypto.subtle.verify(u,d,a,Cs(`${o}.${l}`)))throw new at("Invalid JWT signature");return{data:{claims:i,header:n,signature:a},error:null}}catch(s){if(_(s))return this._returnResult({data:null,error:s});throw s}}}ke.nextInstanceID={};const En=ke,kn="2.89.0";let we="";typeof Deno<"u"?we="deno":typeof document<"u"?we="web":typeof navigator<"u"&&navigator.product==="ReactNative"?we="react-native":we="node";const Tn={"X-Client-Info":`supabase-js-${we}/${kn}`},On={headers:Tn},Pn={schema:"public"},An={autoRefreshToken:!0,persistSession:!0,detectSessionInUrl:!0,flowType:"implicit"},Rn={};function Te(r){"@babel/helpers - typeof";return Te=typeof Symbol=="function"&&typeof Symbol.iterator=="symbol"?function(e){return typeof e}:function(e){return e&&typeof Symbol=="function"&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},Te(r)}function Cn(r,e){if(Te(r)!="object"||!r)return r;var t=r[Symbol.toPrimitive];if(t!==void 0){var s=t.call(r,e);if(Te(s)!="object")return s;throw new TypeError("@@toPrimitive must return a primitive value.")}return(e==="string"?String:Number)(r)}function In(r){var e=Cn(r,"string");return Te(e)=="symbol"?e:e+""}function $n(r,e,t){return(e=In(e))in r?Object.defineProperty(r,e,{value:t,enumerable:!0,configurable:!0,writable:!0}):r[e]=t,r}function Dt(r,e){var t=Object.keys(r);if(Object.getOwnPropertySymbols){var s=Object.getOwnPropertySymbols(r);e&&(s=s.filter(function(n){return Object.getOwnPropertyDescriptor(r,n).enumerable})),t.push.apply(t,s)}return t}function P(r){for(var e=1;e<arguments.length;e++){var t=arguments[e]!=null?arguments[e]:{};e%2?Dt(Object(t),!0).forEach(function(s){$n(r,s,t[s])}):Object.getOwnPropertyDescriptors?Object.defineProperties(r,Object.getOwnPropertyDescriptors(t)):Dt(Object(t)).forEach(function(s){Object.defineProperty(r,s,Object.getOwnPropertyDescriptor(t,s))})}return r}const jn=r=>r?(...e)=>r(...e):(...e)=>fetch(...e),xn=()=>Headers,Un=(r,e,t)=>{const s=jn(t),n=xn();return async(i,a)=>{var o;const l=(o=await e())!==null&&o!==void 0?o:r;let c=new n(a==null?void 0:a.headers);return c.has("apikey")||c.set("apikey",r),c.has("Authorization")||c.set("Authorization",`Bearer ${l}`),s(i,P(P({},a),{},{headers:c}))}};function Nn(r){return r.endsWith("/")?r:r+"/"}function Dn(r,e){var t,s;const{db:n,auth:i,realtime:a,global:o}=r,{db:l,auth:c,realtime:u,global:d}=e,h={db:P(P({},l),n),auth:P(P({},c),i),realtime:P(P({},u),a),storage:{},global:P(P(P({},d),o),{},{headers:P(P({},(t=d==null?void 0:d.headers)!==null&&t!==void 0?t:{}),(s=o==null?void 0:o.headers)!==null&&s!==void 0?s:{})}),accessToken:async()=>""};return r.accessToken?h.accessToken=r.accessToken:delete h.accessToken,h}function Ln(r){const e=r==null?void 0:r.trim();if(!e)throw new Error("supabaseUrl is required.");if(!e.match(/^https?:\/\//i))throw new Error("Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.");try{return new URL(Nn(e))}catch{throw Error("Invalid supabaseUrl: Provided URL is malformed.")}}var Bn=class extends En{constructor(r){super(r)}},qn=class{constructor(r,e,t){var s,n;this.supabaseUrl=r,this.supabaseKey=e;const i=Ln(r);if(!e)throw new Error("supabaseKey is required.");this.realtimeUrl=new URL("realtime/v1",i),this.realtimeUrl.protocol=this.realtimeUrl.protocol.replace("http","ws"),this.authUrl=new URL("auth/v1",i),this.storageUrl=new URL("storage/v1",i),this.functionsUrl=new URL("functions/v1",i);const a=`sb-${i.hostname.split(".")[0]}-auth-token`,o={db:Pn,realtime:Rn,auth:P(P({},An),{},{storageKey:a}),global:On},l=Dn(t??{},o);if(this.storageKey=(s=l.auth.storageKey)!==null&&s!==void 0?s:"",this.headers=(n=l.global.headers)!==null&&n!==void 0?n:{},l.accessToken)this.accessToken=l.accessToken,this.auth=new Proxy({},{get:(u,d)=>{throw new Error(`@supabase/supabase-js: Supabase Client is configured with the accessToken option, accessing supabase.auth.${String(d)} is not possible`)}});else{var c;this.auth=this._initSupabaseAuthClient((c=l.auth)!==null&&c!==void 0?c:{},this.headers,l.global.fetch)}this.fetch=Un(e,this._getAccessToken.bind(this),l.global.fetch),this.realtime=this._initRealtimeClient(P({headers:this.headers,accessToken:this._getAccessToken.bind(this)},l.realtime)),this.accessToken&&this.accessToken().then(u=>this.realtime.setAuth(u)).catch(u=>console.warn("Failed to set initial Realtime auth token:",u)),this.rest=new _r(new URL("rest/v1",i).href,{headers:this.headers,schema:l.db.schema,fetch:this.fetch}),this.storage=new gs(this.storageUrl.href,this.headers,this.fetch,t==null?void 0:t.storage),l.accessToken||this._listenForAuthEvents()}get functions(){return new fr(this.functionsUrl.href,{headers:this.headers,customFetch:this.fetch})}from(r){return this.rest.from(r)}schema(r){return this.rest.schema(r)}rpc(r,e={},t={head:!1,get:!1,count:void 0}){return this.rest.rpc(r,e,t)}channel(r,e={config:{}}){return this.realtime.channel(r,e)}getChannels(){return this.realtime.getChannels()}removeChannel(r){return this.realtime.removeChannel(r)}removeAllChannels(){return this.realtime.removeAllChannels()}async _getAccessToken(){var r=this,e,t;if(r.accessToken)return await r.accessToken();const{data:s}=await r.auth.getSession();return(e=(t=s.session)===null||t===void 0?void 0:t.access_token)!==null&&e!==void 0?e:r.supabaseKey}_initSupabaseAuthClient({autoRefreshToken:r,persistSession:e,detectSessionInUrl:t,storage:s,userStorage:n,storageKey:i,flowType:a,lock:o,debug:l,throwOnError:c},u,d){const h={Authorization:`Bearer ${this.supabaseKey}`,apikey:`${this.supabaseKey}`};return new Bn({url:this.authUrl.href,headers:P(P({},h),u),storageKey:i,autoRefreshToken:r,persistSession:e,detectSessionInUrl:t,storage:s,userStorage:n,flowType:a,lock:o,debug:l,throwOnError:c,fetch:d,hasCustomAuthorizationHeader:Object.keys(this.headers).some(f=>f.toLowerCase()==="authorization")})}_initRealtimeClient(r){return new Ur(this.realtimeUrl.href,P(P({},r),{},{params:P(P({},{apikey:this.supabaseKey}),r==null?void 0:r.params)}))}_listenForAuthEvents(){return this.auth.onAuthStateChange((r,e)=>{this._handleTokenChanged(r,"CLIENT",e==null?void 0:e.access_token)})}_handleTokenChanged(r,e,t){(r==="TOKEN_REFRESHED"||r==="SIGNED_IN")&&this.changedAccessToken!==t?(this.changedAccessToken=t,this.realtime.setAuth(t)):r==="SIGNED_OUT"&&(this.realtime.setAuth(),e=="STORAGE"&&this.auth.signOut(),this.changedAccessToken=void 0)}};const Mn=(r,e,t)=>new qn(r,e,t);function Wn(){if(typeof window<"u"||typeof process>"u")return!1;const r=process.version;if(r==null)return!1;const e=r.match(/^v(\d+)\./);return e?parseInt(e[1],10)<=18:!1}Wn()&&console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");const Kn="https://mrqsiucmkonrfmikecxm.supabase.co",Fn="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ycXNpdWNta29ucmZtaWtlY3htIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIxMDYzMSwiZXhwIjoyMDgxNzg2NjMxfQ.h8AX6ZXrrvsLmkqKjTbRqp7plcr33brduvJcd-8u11U",ot=Mn(Kn,Fn);let je=!1;function Vn(r){ue.ipcMain.handle("printer:detect-system",async()=>{try{console.log("[IPC] Detecting system printers...");const e=await M.detectSystemPrinters();return console.log(`[IPC] Found ${e.length} system printers`),e.forEach(t=>{console.log(`  - ${t.name} (${t.status})`)}),{success:!0,printers:e}}catch(e){return console.error("[IPC] Error detecting printers:",e),{success:!1,error:e.message}}}),ue.ipcMain.handle("printer:get-status",async(e,t)=>{try{return{success:!0,status:await M.getPrinterStatus(t)}}catch(s){return console.error("[IPC] Error getting printer status:",s),{success:!1,error:s.message}}}),ue.ipcMain.handle("printer:start-monitoring",async(e,{shopId:t})=>{try{if(je)return console.log("[IPC] Monitoring already active"),{success:!0,message:"Already monitoring"};console.log("[IPC] Starting printer monitoring for shop:",t),console.log("[IPC] Fetching printers from database..."),console.log("[IPC] Shop ID:",t);const{data:s,error:n}=await ot.from("shop_printers").select("*").eq("shop_id",t);if(console.log("[IPC] Database query result:"),console.log("[IPC]   - Error:",n),console.log("[IPC]   - Data:",s),console.log("[IPC]   - Count:",(s==null?void 0:s.length)||0),n)throw console.error("[IPC] Database error details:",n),new Error(`Failed to fetch printers: ${n.message}`);if(!s||s.length===0)return console.log("[IPC] No registered printers found"),{success:!0,message:"No printers registered yet",printers:[]};console.log(`[IPC] Found ${s.length} registered printers in database`),console.log("[IPC] Performing immediate printer detection...");const i=await M.detectSystemPrinters();console.log(`[IPC] Immediate detection found ${i.length} system printers`);const a=M.mapToAppPrinters(i,s);return await ze(a),r.webContents.send("printer:status-changed",a),console.log("[IPC] Initial printer status sent to renderer"),M.startMonitoring(s,async o=>{console.log("[IPC] Printer status changed during monitoring, updating database..."),await ze(o),r.webContents.send("printer:status-changed",o)},1e4),je=!0,{success:!0,message:"Monitoring started",printers:a}}catch(s){return console.error("[IPC] Error starting monitoring:",s),{success:!1,error:s.message}}}),ue.ipcMain.handle("printer:stop-monitoring",async()=>{try{return console.log("[IPC] Stopping printer monitoring..."),M.stopMonitoring(),je=!1,{success:!0}}catch(e){return console.error("[IPC] Error stopping monitoring:",e),{success:!1,error:e.message}}}),ue.ipcMain.handle("printer:sync-status",async(e,{shopId:t})=>{try{console.log("[IPC] Manual sync requested for shop:",t);const{data:s,error:n}=await ot.from("shop_printers").select("*").eq("shop_id",t);if(n)throw n;if(!s||s.length===0)return{success:!0,printers:[]};console.log(`[IPC] Syncing ${s.length} printers...`);const i=await M.detectSystemPrinters();console.log(`[IPC] Found ${i.length} system printers`);const a=M.mapToAppPrinters(i,s);return a.forEach(o=>{console.log(`  - ${o.printer_name}: ${o.status}`)}),await ze(a),{success:!0,printers:a}}catch(s){return console.error("[IPC] Error syncing printer status:",s),{success:!1,error:s.message}}})}async function ze(r){try{console.log(`[DB] Updating ${r.length} printers in database...`);for(const e of r){console.log(`[DB] Updating ${e.printer_name}: ${e.status}`);const{error:t}=await ot.from("shop_printers").update({status:e.status,last_heartbeat:e.last_heartbeat}).eq("id",e.id);t?console.error(`[DB] Error updating printer ${e.printer_name}:`,t):console.log(`[DB] ✓ Updated ${e.printer_name} to ${e.status}`)}console.log(`[DB] ✅ Successfully updated all ${r.length} printers`)}catch(e){console.error("[DB] Error updating printers:",e)}}function rr(){M.stopMonitoring(),je=!1}async function Jn(r,e=[]){if(!(r!=null&&r.filePath))throw new Error("Missing filePath for print job");const t=r.availablePrinters&&r.availablePrinters.length>0?r.availablePrinters:e;console.log("[Print] Job started",{orderId:r.orderId,itemId:r.itemId,filePath:r.filePath,colorMode:r.colorMode}),Gn(t);const s=sr(r.colorMode),n=Hn(t,s);if(!n){const l=s||"any";throw new Error(`No online ${l} printer available`)}const i=await M.detectSystemPrinters();zn(i);const a=i.find(l=>l.name.toLowerCase()===n.printer_name.toLowerCase());if(!a||a.status!=="online")throw new Error(`Printer not available on system: ${n.printer_name}`);console.log("[Print] Selected printer:",n.printer_name);const o=new ue.BrowserWindow({show:!1});try{const l=lr.pathToFileURL(r.filePath).toString();await o.loadURL(l),await Yn(o,n.printer_name,r.copies??1),console.log("[Print] Job finished:",r.filePath)}finally{o.close()}}function sr(r){const e=String(r||"").toLowerCase();return e.includes("bw")||e.includes("b&w")||e.includes("black")?"bw":e.includes("color")?"color":""}function Hn(r,e){return r.find(t=>String(t.status).toLowerCase()==="online"?e?sr(t.printer_type)===e:!0:!1)}function Gn(r){console.log("[Print] Available app printers:",r.length),r.forEach(e=>{console.log(`[Print] - ${e.printer_name} (${e.printer_type}, ${e.status})`)})}function zn(r){console.log("[Print] System printers detected:",r.length),r.forEach(e=>{console.log(`[Print] - ${e.name} (${e.status})`)})}function Yn(r,e,t){return new Promise((s,n)=>{r.webContents.print({silent:!0,deviceName:e,copies:t},(i,a)=>{if(!i){n(new Error(a||"Print failed"));return}s()})})}function Xn(r,e){const t=pt.join(process.cwd(),"print-queue");ye.existsSync(t)||ye.mkdirSync(t);const s=pt.join(t,r);return ye.writeFileSync(s,Buffer.from(e)),s}function Qn(r){ye.existsSync(r)&&ye.unlinkSync(r)}const{ipcMain:te,app:Zn}=require("electron"),Y=require("fs"),{app:re,BrowserWindow:nr}=require("electron"),$e=require("path");let D=null,lt=[];const ei=process.env.NODE_ENV==="development"||!re.isPackaged;async function Lt(){try{const r=$e.join(__dirname,"index.js");console.log("=== PRELOAD DEBUG ==="),console.log("__dirname:",__dirname),console.log("Preload path:",r),console.log("Preload exists:",require("fs").existsSync(r)),console.log("==================="),D=new nr({width:1200,height:800,minWidth:800,minHeight:600,webPreferences:{preload:r,contextIsolation:!0,nodeIntegration:!1,sandbox:!1},show:!1});const e=()=>{const s=Zn.getPath("userData");return $e.join(s,"session.json")};if((()=>{te.handle("auth:save-session",async(s,n)=>{try{const i=e(),a=JSON.stringify(n,null,2),o=$e.dirname(i);return Y.existsSync(o)||Y.mkdirSync(o,{recursive:!0}),Y.writeFileSync(i,a,"utf8"),console.log("[Auth] Session saved successfully"),{success:!0}}catch(i){return console.error("[Auth] Error saving session:",i),{success:!1,error:i.message}}}),te.handle("auth:get-session",async()=>{try{const s=e();if(!Y.existsSync(s))return console.log("[Auth] No session file found"),null;const n=Y.readFileSync(s,"utf8"),i=JSON.parse(n);return console.log("[Auth] Session loaded successfully"),i}catch(s){return console.error("[Auth] Error loading session:",s),null}}),te.handle("auth:clear-session",async()=>{try{const s=e();return Y.existsSync(s)&&(Y.unlinkSync(s),console.log("[Auth] Session cleared successfully")),{success:!0}}catch(s){return console.error("[Auth] Error clearing session:",s),{success:!1,error:s.message}}}),console.log("[Auth] Auth handlers registered")})(),Vn(D),D.once("ready-to-show",()=>{D==null||D.show()}),ei)await D.loadURL("http://localhost:5173"),D.webContents.openDevTools();else{const s=$e.join(__dirname,"../dist/index.html");console.log("Loading index from:",s),console.log("Index exists:",require("fs").existsSync(s)),await D.loadFile(s)}D.on("closed",()=>{D=null})}catch(r){console.error("Error creating window:",r),re.quit()}}re.whenReady().then(()=>{Lt(),re.on("activate",()=>{nr.getAllWindows().length===0&&Lt()})});re.on("window-all-closed",()=>{rr(),process.platform!=="darwin"&&re.quit()});re.on("before-quit",()=>{rr()});process.on("uncaughtException",r=>{console.error("Uncaught Exception:",r)});process.on("unhandledRejection",r=>{console.error("Unhandled Rejection:",r)});te.handle("save-file",async(r,e,t)=>{const s=Xn(e,t);return console.log("[Files] Saved file:",s),s});te.handle("delete-file",async(r,e)=>{Qn(e),console.log("[Files] Deleted file:",e)});te.handle("print-file",async(r,e)=>{console.log("[IPC] print-file called",{orderId:e==null?void 0:e.orderId,itemId:e==null?void 0:e.itemId,filePath:e==null?void 0:e.filePath,colorMode:e==null?void 0:e.colorMode});const t=Array.isArray(e==null?void 0:e.availablePrinters)?e.availablePrinters:lt;await Jn(e,t)});te.on("set-printers",(r,e)=>{lt=e,console.log("[IPC] Available printers updated:",lt.length)});
+=======
+${statement}`;
+  let suffix = `URI: ${uri}
+Version: ${version2}
+Chain ID: ${chainId}${nonce ? `
+Nonce: ${nonce}` : ""}
+Issued At: ${issuedAt.toISOString()}`;
+  if (expirationTime)
+    suffix += `
+Expiration Time: ${expirationTime.toISOString()}`;
+  if (notBefore)
+    suffix += `
+Not Before: ${notBefore.toISOString()}`;
+  if (requestId)
+    suffix += `
+Request ID: ${requestId}`;
+  if (resources) {
+    let content = "\nResources:";
+    for (const resource of resources) {
+      if (!resource || typeof resource !== "string")
+        throw new Error(`@supabase/auth-js: Invalid SIWE message field "resources". Every resource must be a valid string. Provided value: ${resource}`);
+      content += `
+- ${resource}`;
+    }
+    suffix += content;
+  }
+  return `${prefix}
+${suffix}`;
+}
+class WebAuthnError extends Error {
+  constructor({ message, code, cause, name }) {
+    var _a;
+    super(message, { cause });
+    this.__isWebAuthnError = true;
+    this.name = (_a = name !== null && name !== void 0 ? name : cause instanceof Error ? cause.name : void 0) !== null && _a !== void 0 ? _a : "Unknown Error";
+    this.code = code;
+  }
+}
+class WebAuthnUnknownError extends WebAuthnError {
+  constructor(message, originalError) {
+    super({
+      code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+      cause: originalError,
+      message
+    });
+    this.name = "WebAuthnUnknownError";
+    this.originalError = originalError;
+  }
+}
+function identifyRegistrationError({ error, options }) {
+  var _a, _b, _c;
+  const { publicKey } = options;
+  if (!publicKey) {
+    throw Error("options was missing required publicKey property");
+  }
+  if (error.name === "AbortError") {
+    if (options.signal instanceof AbortSignal) {
+      return new WebAuthnError({
+        message: "Registration ceremony was sent an abort signal",
+        code: "ERROR_CEREMONY_ABORTED",
+        cause: error
+      });
+    }
+  } else if (error.name === "ConstraintError") {
+    if (((_a = publicKey.authenticatorSelection) === null || _a === void 0 ? void 0 : _a.requireResidentKey) === true) {
+      return new WebAuthnError({
+        message: "Discoverable credentials were required but no available authenticator supported it",
+        code: "ERROR_AUTHENTICATOR_MISSING_DISCOVERABLE_CREDENTIAL_SUPPORT",
+        cause: error
+      });
+    } else if (
+      // @ts-ignore: `mediation` doesn't yet exist on CredentialCreationOptions but it's possible as of Sept 2024
+      options.mediation === "conditional" && ((_b = publicKey.authenticatorSelection) === null || _b === void 0 ? void 0 : _b.userVerification) === "required"
+    ) {
+      return new WebAuthnError({
+        message: "User verification was required during automatic registration but it could not be performed",
+        code: "ERROR_AUTO_REGISTER_USER_VERIFICATION_FAILURE",
+        cause: error
+      });
+    } else if (((_c = publicKey.authenticatorSelection) === null || _c === void 0 ? void 0 : _c.userVerification) === "required") {
+      return new WebAuthnError({
+        message: "User verification was required but no available authenticator supported it",
+        code: "ERROR_AUTHENTICATOR_MISSING_USER_VERIFICATION_SUPPORT",
+        cause: error
+      });
+    }
+  } else if (error.name === "InvalidStateError") {
+    return new WebAuthnError({
+      message: "The authenticator was previously registered",
+      code: "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
+      cause: error
+    });
+  } else if (error.name === "NotAllowedError") {
+    return new WebAuthnError({
+      message: error.message,
+      code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+      cause: error
+    });
+  } else if (error.name === "NotSupportedError") {
+    const validPubKeyCredParams = publicKey.pubKeyCredParams.filter((param) => param.type === "public-key");
+    if (validPubKeyCredParams.length === 0) {
+      return new WebAuthnError({
+        message: 'No entry in pubKeyCredParams was of type "public-key"',
+        code: "ERROR_MALFORMED_PUBKEYCREDPARAMS",
+        cause: error
+      });
+    }
+    return new WebAuthnError({
+      message: "No available authenticator supported any of the specified pubKeyCredParams algorithms",
+      code: "ERROR_AUTHENTICATOR_NO_SUPPORTED_PUBKEYCREDPARAMS_ALG",
+      cause: error
+    });
+  } else if (error.name === "SecurityError") {
+    const effectiveDomain = window.location.hostname;
+    if (!isValidDomain(effectiveDomain)) {
+      return new WebAuthnError({
+        message: `${window.location.hostname} is an invalid domain`,
+        code: "ERROR_INVALID_DOMAIN",
+        cause: error
+      });
+    } else if (publicKey.rp.id !== effectiveDomain) {
+      return new WebAuthnError({
+        message: `The RP ID "${publicKey.rp.id}" is invalid for this domain`,
+        code: "ERROR_INVALID_RP_ID",
+        cause: error
+      });
+    }
+  } else if (error.name === "TypeError") {
+    if (publicKey.user.id.byteLength < 1 || publicKey.user.id.byteLength > 64) {
+      return new WebAuthnError({
+        message: "User ID was not between 1 and 64 characters",
+        code: "ERROR_INVALID_USER_ID_LENGTH",
+        cause: error
+      });
+    }
+  } else if (error.name === "UnknownError") {
+    return new WebAuthnError({
+      message: "The authenticator was unable to process the specified options, or could not create a new credential",
+      code: "ERROR_AUTHENTICATOR_GENERAL_ERROR",
+      cause: error
+    });
+  }
+  return new WebAuthnError({
+    message: "a Non-Webauthn related error has occurred",
+    code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+    cause: error
+  });
+}
+function identifyAuthenticationError({ error, options }) {
+  const { publicKey } = options;
+  if (!publicKey) {
+    throw Error("options was missing required publicKey property");
+  }
+  if (error.name === "AbortError") {
+    if (options.signal instanceof AbortSignal) {
+      return new WebAuthnError({
+        message: "Authentication ceremony was sent an abort signal",
+        code: "ERROR_CEREMONY_ABORTED",
+        cause: error
+      });
+    }
+  } else if (error.name === "NotAllowedError") {
+    return new WebAuthnError({
+      message: error.message,
+      code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+      cause: error
+    });
+  } else if (error.name === "SecurityError") {
+    const effectiveDomain = window.location.hostname;
+    if (!isValidDomain(effectiveDomain)) {
+      return new WebAuthnError({
+        message: `${window.location.hostname} is an invalid domain`,
+        code: "ERROR_INVALID_DOMAIN",
+        cause: error
+      });
+    } else if (publicKey.rpId !== effectiveDomain) {
+      return new WebAuthnError({
+        message: `The RP ID "${publicKey.rpId}" is invalid for this domain`,
+        code: "ERROR_INVALID_RP_ID",
+        cause: error
+      });
+    }
+  } else if (error.name === "UnknownError") {
+    return new WebAuthnError({
+      message: "The authenticator was unable to process the specified options, or could not create a new assertion signature",
+      code: "ERROR_AUTHENTICATOR_GENERAL_ERROR",
+      cause: error
+    });
+  }
+  return new WebAuthnError({
+    message: "a Non-Webauthn related error has occurred",
+    code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+    cause: error
+  });
+}
+class WebAuthnAbortService {
+  /**
+   * Create an abort signal for a new WebAuthn operation.
+   * Automatically cancels any existing operation.
+   *
+   * @returns {AbortSignal} Signal to pass to navigator.credentials.create() or .get()
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal MDN - AbortSignal}
+   */
+  createNewAbortSignal() {
+    if (this.controller) {
+      const abortError = new Error("Cancelling existing WebAuthn API call for new one");
+      abortError.name = "AbortError";
+      this.controller.abort(abortError);
+    }
+    const newController = new AbortController();
+    this.controller = newController;
+    return newController.signal;
+  }
+  /**
+   * Manually cancel the current WebAuthn operation.
+   * Useful for cleaning up when user cancels or navigates away.
+   *
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort MDN - AbortController.abort}
+   */
+  cancelCeremony() {
+    if (this.controller) {
+      const abortError = new Error("Manually cancelling existing WebAuthn API call");
+      abortError.name = "AbortError";
+      this.controller.abort(abortError);
+      this.controller = void 0;
+    }
+  }
+}
+const webAuthnAbortService = new WebAuthnAbortService();
+function deserializeCredentialCreationOptions(options) {
+  if (!options) {
+    throw new Error("Credential creation options are required");
+  }
+  if (typeof PublicKeyCredential !== "undefined" && "parseCreationOptionsFromJSON" in PublicKeyCredential && typeof PublicKeyCredential.parseCreationOptionsFromJSON === "function") {
+    return PublicKeyCredential.parseCreationOptionsFromJSON(
+      /** we assert the options here as typescript still doesn't know about future webauthn types */
+      options
+    );
+  }
+  const { challenge: challengeStr, user: userOpts, excludeCredentials } = options, restOptions = __rest(
+    options,
+    ["challenge", "user", "excludeCredentials"]
+  );
+  const challenge = base64UrlToUint8Array(challengeStr).buffer;
+  const user = Object.assign(Object.assign({}, userOpts), { id: base64UrlToUint8Array(userOpts.id).buffer });
+  const result = Object.assign(Object.assign({}, restOptions), {
+    challenge,
+    user
+  });
+  if (excludeCredentials && excludeCredentials.length > 0) {
+    result.excludeCredentials = new Array(excludeCredentials.length);
+    for (let i = 0; i < excludeCredentials.length; i++) {
+      const cred = excludeCredentials[i];
+      result.excludeCredentials[i] = Object.assign(Object.assign({}, cred), {
+        id: base64UrlToUint8Array(cred.id).buffer,
+        type: cred.type || "public-key",
+        // Cast transports to handle future transport types like "cable"
+        transports: cred.transports
+      });
+    }
+  }
+  return result;
+}
+function deserializeCredentialRequestOptions(options) {
+  if (!options) {
+    throw new Error("Credential request options are required");
+  }
+  if (typeof PublicKeyCredential !== "undefined" && "parseRequestOptionsFromJSON" in PublicKeyCredential && typeof PublicKeyCredential.parseRequestOptionsFromJSON === "function") {
+    return PublicKeyCredential.parseRequestOptionsFromJSON(options);
+  }
+  const { challenge: challengeStr, allowCredentials } = options, restOptions = __rest(
+    options,
+    ["challenge", "allowCredentials"]
+  );
+  const challenge = base64UrlToUint8Array(challengeStr).buffer;
+  const result = Object.assign(Object.assign({}, restOptions), { challenge });
+  if (allowCredentials && allowCredentials.length > 0) {
+    result.allowCredentials = new Array(allowCredentials.length);
+    for (let i = 0; i < allowCredentials.length; i++) {
+      const cred = allowCredentials[i];
+      result.allowCredentials[i] = Object.assign(Object.assign({}, cred), {
+        id: base64UrlToUint8Array(cred.id).buffer,
+        type: cred.type || "public-key",
+        // Cast transports to handle future transport types like "cable"
+        transports: cred.transports
+      });
+    }
+  }
+  return result;
+}
+function serializeCredentialCreationResponse(credential) {
+  var _a;
+  if ("toJSON" in credential && typeof credential.toJSON === "function") {
+    return credential.toJSON();
+  }
+  const credentialWithAttachment = credential;
+  return {
+    id: credential.id,
+    rawId: credential.id,
+    response: {
+      attestationObject: bytesToBase64URL(new Uint8Array(credential.response.attestationObject)),
+      clientDataJSON: bytesToBase64URL(new Uint8Array(credential.response.clientDataJSON))
+    },
+    type: "public-key",
+    clientExtensionResults: credential.getClientExtensionResults(),
+    // Convert null to undefined and cast to AuthenticatorAttachment type
+    authenticatorAttachment: (_a = credentialWithAttachment.authenticatorAttachment) !== null && _a !== void 0 ? _a : void 0
+  };
+}
+function serializeCredentialRequestResponse(credential) {
+  var _a;
+  if ("toJSON" in credential && typeof credential.toJSON === "function") {
+    return credential.toJSON();
+  }
+  const credentialWithAttachment = credential;
+  const clientExtensionResults = credential.getClientExtensionResults();
+  const assertionResponse = credential.response;
+  return {
+    id: credential.id,
+    rawId: credential.id,
+    // W3C spec expects rawId to match id for JSON format
+    response: {
+      authenticatorData: bytesToBase64URL(new Uint8Array(assertionResponse.authenticatorData)),
+      clientDataJSON: bytesToBase64URL(new Uint8Array(assertionResponse.clientDataJSON)),
+      signature: bytesToBase64URL(new Uint8Array(assertionResponse.signature)),
+      userHandle: assertionResponse.userHandle ? bytesToBase64URL(new Uint8Array(assertionResponse.userHandle)) : void 0
+    },
+    type: "public-key",
+    clientExtensionResults,
+    // Convert null to undefined and cast to AuthenticatorAttachment type
+    authenticatorAttachment: (_a = credentialWithAttachment.authenticatorAttachment) !== null && _a !== void 0 ? _a : void 0
+  };
+}
+function isValidDomain(hostname) {
+  return (
+    // Consider localhost valid as well since it's okay wrt Secure Contexts
+    hostname === "localhost" || /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i.test(hostname)
+  );
+}
+function browserSupportsWebAuthn() {
+  var _a, _b;
+  return !!(isBrowser() && "PublicKeyCredential" in window && window.PublicKeyCredential && "credentials" in navigator && typeof ((_a = navigator === null || navigator === void 0 ? void 0 : navigator.credentials) === null || _a === void 0 ? void 0 : _a.create) === "function" && typeof ((_b = navigator === null || navigator === void 0 ? void 0 : navigator.credentials) === null || _b === void 0 ? void 0 : _b.get) === "function");
+}
+async function createCredential(options) {
+  try {
+    const response = await navigator.credentials.create(
+      /** we assert the type here until typescript types are updated */
+      options
+    );
+    if (!response) {
+      return {
+        data: null,
+        error: new WebAuthnUnknownError("Empty credential response", response)
+      };
+    }
+    if (!(response instanceof PublicKeyCredential)) {
+      return {
+        data: null,
+        error: new WebAuthnUnknownError("Browser returned unexpected credential type", response)
+      };
+    }
+    return { data: response, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: identifyRegistrationError({
+        error: err,
+        options
+      })
+    };
+  }
+}
+async function getCredential(options) {
+  try {
+    const response = await navigator.credentials.get(
+      /** we assert the type here until typescript types are updated */
+      options
+    );
+    if (!response) {
+      return {
+        data: null,
+        error: new WebAuthnUnknownError("Empty credential response", response)
+      };
+    }
+    if (!(response instanceof PublicKeyCredential)) {
+      return {
+        data: null,
+        error: new WebAuthnUnknownError("Browser returned unexpected credential type", response)
+      };
+    }
+    return { data: response, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: identifyAuthenticationError({
+        error: err,
+        options
+      })
+    };
+  }
+}
+const DEFAULT_CREATION_OPTIONS = {
+  hints: ["security-key"],
+  authenticatorSelection: {
+    authenticatorAttachment: "cross-platform",
+    requireResidentKey: false,
+    /** set to preferred because older yubikeys don't have PIN/Biometric */
+    userVerification: "preferred",
+    residentKey: "discouraged"
+  },
+  attestation: "direct"
+};
+const DEFAULT_REQUEST_OPTIONS = {
+  /** set to preferred because older yubikeys don't have PIN/Biometric */
+  userVerification: "preferred",
+  hints: ["security-key"],
+  attestation: "direct"
+};
+function deepMerge(...sources) {
+  const isObject = (val) => val !== null && typeof val === "object" && !Array.isArray(val);
+  const isArrayBufferLike = (val) => val instanceof ArrayBuffer || ArrayBuffer.isView(val);
+  const result = {};
+  for (const source of sources) {
+    if (!source)
+      continue;
+    for (const key in source) {
+      const value = source[key];
+      if (value === void 0)
+        continue;
+      if (Array.isArray(value)) {
+        result[key] = value;
+      } else if (isArrayBufferLike(value)) {
+        result[key] = value;
+      } else if (isObject(value)) {
+        const existing = result[key];
+        if (isObject(existing)) {
+          result[key] = deepMerge(existing, value);
+        } else {
+          result[key] = deepMerge(value);
+        }
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+}
+function mergeCredentialCreationOptions(baseOptions, overrides) {
+  return deepMerge(DEFAULT_CREATION_OPTIONS, baseOptions, overrides || {});
+}
+function mergeCredentialRequestOptions(baseOptions, overrides) {
+  return deepMerge(DEFAULT_REQUEST_OPTIONS, baseOptions, overrides || {});
+}
+class WebAuthnApi {
+  constructor(client) {
+    this.client = client;
+    this.enroll = this._enroll.bind(this);
+    this.challenge = this._challenge.bind(this);
+    this.verify = this._verify.bind(this);
+    this.authenticate = this._authenticate.bind(this);
+    this.register = this._register.bind(this);
+  }
+  /**
+   * Enroll a new WebAuthn factor.
+   * Creates an unverified WebAuthn factor that must be verified with a credential.
+   *
+   * @experimental This method is experimental and may change in future releases
+   * @param {Omit<MFAEnrollWebauthnParams, 'factorType'>} params - Enrollment parameters (friendlyName required)
+   * @returns {Promise<AuthMFAEnrollWebauthnResponse>} Enrolled factor details or error
+   * @see {@link https://w3c.github.io/webauthn/#sctn-registering-a-new-credential W3C WebAuthn Spec - Registering a New Credential}
+   */
+  async _enroll(params) {
+    return this.client.mfa.enroll(Object.assign(Object.assign({}, params), { factorType: "webauthn" }));
+  }
+  /**
+   * Challenge for WebAuthn credential creation or authentication.
+   * Combines server challenge with browser credential operations.
+   * Handles both registration (create) and authentication (request) flows.
+   *
+   * @experimental This method is experimental and may change in future releases
+   * @param {MFAChallengeWebauthnParams & { friendlyName?: string; signal?: AbortSignal }} params - Challenge parameters including factorId
+   * @param {Object} overrides - Allows you to override the parameters passed to navigator.credentials
+   * @param {PublicKeyCredentialCreationOptionsFuture} overrides.create - Override options for credential creation
+   * @param {PublicKeyCredentialRequestOptionsFuture} overrides.request - Override options for credential request
+   * @returns {Promise<RequestResult>} Challenge response with credential or error
+   * @see {@link https://w3c.github.io/webauthn/#sctn-credential-creation W3C WebAuthn Spec - Credential Creation}
+   * @see {@link https://w3c.github.io/webauthn/#sctn-verifying-assertion W3C WebAuthn Spec - Verifying Assertion}
+   */
+  async _challenge({ factorId, webauthn, friendlyName, signal }, overrides) {
+    try {
+      const { data: challengeResponse, error: challengeError } = await this.client.mfa.challenge({
+        factorId,
+        webauthn
+      });
+      if (!challengeResponse) {
+        return { data: null, error: challengeError };
+      }
+      const abortSignal = signal !== null && signal !== void 0 ? signal : webAuthnAbortService.createNewAbortSignal();
+      if (challengeResponse.webauthn.type === "create") {
+        const { user } = challengeResponse.webauthn.credential_options.publicKey;
+        if (!user.name) {
+          user.name = `${user.id}:${friendlyName}`;
+        }
+        if (!user.displayName) {
+          user.displayName = user.name;
+        }
+      }
+      switch (challengeResponse.webauthn.type) {
+        case "create": {
+          const options = mergeCredentialCreationOptions(challengeResponse.webauthn.credential_options.publicKey, overrides === null || overrides === void 0 ? void 0 : overrides.create);
+          const { data, error } = await createCredential({
+            publicKey: options,
+            signal: abortSignal
+          });
+          if (data) {
+            return {
+              data: {
+                factorId,
+                challengeId: challengeResponse.id,
+                webauthn: {
+                  type: challengeResponse.webauthn.type,
+                  credential_response: data
+                }
+              },
+              error: null
+            };
+          }
+          return { data: null, error };
+        }
+        case "request": {
+          const options = mergeCredentialRequestOptions(challengeResponse.webauthn.credential_options.publicKey, overrides === null || overrides === void 0 ? void 0 : overrides.request);
+          const { data, error } = await getCredential(Object.assign(Object.assign({}, challengeResponse.webauthn.credential_options), { publicKey: options, signal: abortSignal }));
+          if (data) {
+            return {
+              data: {
+                factorId,
+                challengeId: challengeResponse.id,
+                webauthn: {
+                  type: challengeResponse.webauthn.type,
+                  credential_response: data
+                }
+              },
+              error: null
+            };
+          }
+          return { data: null, error };
+        }
+      }
+    } catch (error) {
+      if (isAuthError(error)) {
+        return { data: null, error };
+      }
+      return {
+        data: null,
+        error: new AuthUnknownError("Unexpected error in challenge", error)
+      };
+    }
+  }
+  /**
+   * Verify a WebAuthn credential with the server.
+   * Completes the WebAuthn ceremony by sending the credential to the server for verification.
+   *
+   * @experimental This method is experimental and may change in future releases
+   * @param {Object} params - Verification parameters
+   * @param {string} params.challengeId - ID of the challenge being verified
+   * @param {string} params.factorId - ID of the WebAuthn factor
+   * @param {MFAVerifyWebauthnParams<T>['webauthn']} params.webauthn - WebAuthn credential response
+   * @returns {Promise<AuthMFAVerifyResponse>} Verification result with session or error
+   * @see {@link https://w3c.github.io/webauthn/#sctn-verifying-assertion W3C WebAuthn Spec - Verifying an Authentication Assertion}
+   * */
+  async _verify({ challengeId, factorId, webauthn }) {
+    return this.client.mfa.verify({
+      factorId,
+      challengeId,
+      webauthn
+    });
+  }
+  /**
+   * Complete WebAuthn authentication flow.
+   * Performs challenge and verification in a single operation for existing credentials.
+   *
+   * @experimental This method is experimental and may change in future releases
+   * @param {Object} params - Authentication parameters
+   * @param {string} params.factorId - ID of the WebAuthn factor to authenticate with
+   * @param {Object} params.webauthn - WebAuthn configuration
+   * @param {string} params.webauthn.rpId - Relying Party ID (defaults to current hostname)
+   * @param {string[]} params.webauthn.rpOrigins - Allowed origins (defaults to current origin)
+   * @param {AbortSignal} params.webauthn.signal - Optional abort signal
+   * @param {PublicKeyCredentialRequestOptionsFuture} overrides - Override options for navigator.credentials.get
+   * @returns {Promise<RequestResult<AuthMFAVerifyResponseData, WebAuthnError | AuthError>>} Authentication result
+   * @see {@link https://w3c.github.io/webauthn/#sctn-authentication W3C WebAuthn Spec - Authentication Ceremony}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredentialRequestOptions MDN - PublicKeyCredentialRequestOptions}
+   */
+  async _authenticate({ factorId, webauthn: { rpId = typeof window !== "undefined" ? window.location.hostname : void 0, rpOrigins = typeof window !== "undefined" ? [window.location.origin] : void 0, signal } = {} }, overrides) {
+    if (!rpId) {
+      return {
+        data: null,
+        error: new AuthError("rpId is required for WebAuthn authentication")
+      };
+    }
+    try {
+      if (!browserSupportsWebAuthn()) {
+        return {
+          data: null,
+          error: new AuthUnknownError("Browser does not support WebAuthn", null)
+        };
+      }
+      const { data: challengeResponse, error: challengeError } = await this.challenge({
+        factorId,
+        webauthn: { rpId, rpOrigins },
+        signal
+      }, { request: overrides });
+      if (!challengeResponse) {
+        return { data: null, error: challengeError };
+      }
+      const { webauthn } = challengeResponse;
+      return this._verify({
+        factorId,
+        challengeId: challengeResponse.challengeId,
+        webauthn: {
+          type: webauthn.type,
+          rpId,
+          rpOrigins,
+          credential_response: webauthn.credential_response
+        }
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return { data: null, error };
+      }
+      return {
+        data: null,
+        error: new AuthUnknownError("Unexpected error in authenticate", error)
+      };
+    }
+  }
+  /**
+   * Complete WebAuthn registration flow.
+   * Performs enrollment, challenge, and verification in a single operation for new credentials.
+   *
+   * @experimental This method is experimental and may change in future releases
+   * @param {Object} params - Registration parameters
+   * @param {string} params.friendlyName - User-friendly name for the credential
+   * @param {string} params.rpId - Relying Party ID (defaults to current hostname)
+   * @param {string[]} params.rpOrigins - Allowed origins (defaults to current origin)
+   * @param {AbortSignal} params.signal - Optional abort signal
+   * @param {PublicKeyCredentialCreationOptionsFuture} overrides - Override options for navigator.credentials.create
+   * @returns {Promise<RequestResult<AuthMFAVerifyResponseData, WebAuthnError | AuthError>>} Registration result
+   * @see {@link https://w3c.github.io/webauthn/#sctn-registering-a-new-credential W3C WebAuthn Spec - Registration Ceremony}
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredentialCreationOptions MDN - PublicKeyCredentialCreationOptions}
+   */
+  async _register({ friendlyName, webauthn: { rpId = typeof window !== "undefined" ? window.location.hostname : void 0, rpOrigins = typeof window !== "undefined" ? [window.location.origin] : void 0, signal } = {} }, overrides) {
+    if (!rpId) {
+      return {
+        data: null,
+        error: new AuthError("rpId is required for WebAuthn registration")
+      };
+    }
+    try {
+      if (!browserSupportsWebAuthn()) {
+        return {
+          data: null,
+          error: new AuthUnknownError("Browser does not support WebAuthn", null)
+        };
+      }
+      const { data: factor, error: enrollError } = await this._enroll({
+        friendlyName
+      });
+      if (!factor) {
+        await this.client.mfa.listFactors().then((factors) => {
+          var _a;
+          return (_a = factors.data) === null || _a === void 0 ? void 0 : _a.all.find((v) => v.factor_type === "webauthn" && v.friendly_name === friendlyName && v.status !== "unverified");
+        }).then((factor2) => factor2 ? this.client.mfa.unenroll({ factorId: factor2 === null || factor2 === void 0 ? void 0 : factor2.id }) : void 0);
+        return { data: null, error: enrollError };
+      }
+      const { data: challengeResponse, error: challengeError } = await this._challenge({
+        factorId: factor.id,
+        friendlyName: factor.friendly_name,
+        webauthn: { rpId, rpOrigins },
+        signal
+      }, {
+        create: overrides
+      });
+      if (!challengeResponse) {
+        return { data: null, error: challengeError };
+      }
+      return this._verify({
+        factorId: factor.id,
+        challengeId: challengeResponse.challengeId,
+        webauthn: {
+          rpId,
+          rpOrigins,
+          type: challengeResponse.webauthn.type,
+          credential_response: challengeResponse.webauthn.credential_response
+        }
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return { data: null, error };
+      }
+      return {
+        data: null,
+        error: new AuthUnknownError("Unexpected error in register", error)
+      };
+    }
+  }
+}
+polyfillGlobalThis();
+const DEFAULT_OPTIONS = {
+  url: GOTRUE_URL,
+  storageKey: STORAGE_KEY,
+  autoRefreshToken: true,
+  persistSession: true,
+  detectSessionInUrl: true,
+  headers: DEFAULT_HEADERS$1,
+  flowType: "implicit",
+  debug: false,
+  hasCustomAuthorizationHeader: false,
+  throwOnError: false
+};
+async function lockNoOp(name, acquireTimeout, fn) {
+  return await fn();
+}
+const GLOBAL_JWKS = {};
+class GoTrueClient {
+  /**
+   * The JWKS used for verifying asymmetric JWTs
+   */
+  get jwks() {
+    var _a, _b;
+    return (_b = (_a = GLOBAL_JWKS[this.storageKey]) === null || _a === void 0 ? void 0 : _a.jwks) !== null && _b !== void 0 ? _b : { keys: [] };
+  }
+  set jwks(value) {
+    GLOBAL_JWKS[this.storageKey] = Object.assign(Object.assign({}, GLOBAL_JWKS[this.storageKey]), { jwks: value });
+  }
+  get jwks_cached_at() {
+    var _a, _b;
+    return (_b = (_a = GLOBAL_JWKS[this.storageKey]) === null || _a === void 0 ? void 0 : _a.cachedAt) !== null && _b !== void 0 ? _b : Number.MIN_SAFE_INTEGER;
+  }
+  set jwks_cached_at(value) {
+    GLOBAL_JWKS[this.storageKey] = Object.assign(Object.assign({}, GLOBAL_JWKS[this.storageKey]), { cachedAt: value });
+  }
+  /**
+   * Create a new client for use in the browser.
+   *
+   * @example
+   * ```ts
+   * import { GoTrueClient } from '@supabase/auth-js'
+   *
+   * const auth = new GoTrueClient({
+   *   url: 'https://xyzcompany.supabase.co/auth/v1',
+   *   headers: { apikey: 'public-anon-key' },
+   *   storageKey: 'supabase-auth',
+   * })
+   * ```
+   */
+  constructor(options) {
+    var _a, _b, _c;
+    this.userStorage = null;
+    this.memoryStorage = null;
+    this.stateChangeEmitters = /* @__PURE__ */ new Map();
+    this.autoRefreshTicker = null;
+    this.visibilityChangedCallback = null;
+    this.refreshingDeferred = null;
+    this.initializePromise = null;
+    this.detectSessionInUrl = true;
+    this.hasCustomAuthorizationHeader = false;
+    this.suppressGetSessionWarning = false;
+    this.lockAcquired = false;
+    this.pendingInLock = [];
+    this.broadcastChannel = null;
+    this.logger = console.log;
+    const settings = Object.assign(Object.assign({}, DEFAULT_OPTIONS), options);
+    this.storageKey = settings.storageKey;
+    this.instanceID = (_a = GoTrueClient.nextInstanceID[this.storageKey]) !== null && _a !== void 0 ? _a : 0;
+    GoTrueClient.nextInstanceID[this.storageKey] = this.instanceID + 1;
+    this.logDebugMessages = !!settings.debug;
+    if (typeof settings.debug === "function") {
+      this.logger = settings.debug;
+    }
+    if (this.instanceID > 0 && isBrowser()) {
+      const message = `${this._logPrefix()} Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.`;
+      console.warn(message);
+      if (this.logDebugMessages) {
+        console.trace(message);
+      }
+    }
+    this.persistSession = settings.persistSession;
+    this.autoRefreshToken = settings.autoRefreshToken;
+    this.admin = new GoTrueAdminApi({
+      url: settings.url,
+      headers: settings.headers,
+      fetch: settings.fetch
+    });
+    this.url = settings.url;
+    this.headers = settings.headers;
+    this.fetch = resolveFetch$1(settings.fetch);
+    this.lock = settings.lock || lockNoOp;
+    this.detectSessionInUrl = settings.detectSessionInUrl;
+    this.flowType = settings.flowType;
+    this.hasCustomAuthorizationHeader = settings.hasCustomAuthorizationHeader;
+    this.throwOnError = settings.throwOnError;
+    if (settings.lock) {
+      this.lock = settings.lock;
+    } else if (this.persistSession && isBrowser() && ((_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.navigator) === null || _b === void 0 ? void 0 : _b.locks)) {
+      this.lock = navigatorLock;
+    } else {
+      this.lock = lockNoOp;
+    }
+    if (!this.jwks) {
+      this.jwks = { keys: [] };
+      this.jwks_cached_at = Number.MIN_SAFE_INTEGER;
+    }
+    this.mfa = {
+      verify: this._verify.bind(this),
+      enroll: this._enroll.bind(this),
+      unenroll: this._unenroll.bind(this),
+      challenge: this._challenge.bind(this),
+      listFactors: this._listFactors.bind(this),
+      challengeAndVerify: this._challengeAndVerify.bind(this),
+      getAuthenticatorAssuranceLevel: this._getAuthenticatorAssuranceLevel.bind(this),
+      webauthn: new WebAuthnApi(this)
+    };
+    this.oauth = {
+      getAuthorizationDetails: this._getAuthorizationDetails.bind(this),
+      approveAuthorization: this._approveAuthorization.bind(this),
+      denyAuthorization: this._denyAuthorization.bind(this),
+      listGrants: this._listOAuthGrants.bind(this),
+      revokeGrant: this._revokeOAuthGrant.bind(this)
+    };
+    if (this.persistSession) {
+      if (settings.storage) {
+        this.storage = settings.storage;
+      } else {
+        if (supportsLocalStorage()) {
+          this.storage = globalThis.localStorage;
+        } else {
+          this.memoryStorage = {};
+          this.storage = memoryLocalStorageAdapter(this.memoryStorage);
+        }
+      }
+      if (settings.userStorage) {
+        this.userStorage = settings.userStorage;
+      }
+    } else {
+      this.memoryStorage = {};
+      this.storage = memoryLocalStorageAdapter(this.memoryStorage);
+    }
+    if (isBrowser() && globalThis.BroadcastChannel && this.persistSession && this.storageKey) {
+      try {
+        this.broadcastChannel = new globalThis.BroadcastChannel(this.storageKey);
+      } catch (e) {
+        console.error("Failed to create a new BroadcastChannel, multi-tab state changes will not be available", e);
+      }
+      (_c = this.broadcastChannel) === null || _c === void 0 ? void 0 : _c.addEventListener("message", async (event) => {
+        this._debug("received broadcast notification from other tab or client", event);
+        await this._notifyAllSubscribers(event.data.event, event.data.session, false);
+      });
+    }
+    this.initialize();
+  }
+  /**
+   * Returns whether error throwing mode is enabled for this client.
+   */
+  isThrowOnErrorEnabled() {
+    return this.throwOnError;
+  }
+  /**
+   * Centralizes return handling with optional error throwing. When `throwOnError` is enabled
+   * and the provided result contains a non-nullish error, the error is thrown instead of
+   * being returned. This ensures consistent behavior across all public API methods.
+   */
+  _returnResult(result) {
+    if (this.throwOnError && result && result.error) {
+      throw result.error;
+    }
+    return result;
+  }
+  _logPrefix() {
+    return `GoTrueClient@${this.storageKey}:${this.instanceID} (${version$1}) ${(/* @__PURE__ */ new Date()).toISOString()}`;
+  }
+  _debug(...args) {
+    if (this.logDebugMessages) {
+      this.logger(this._logPrefix(), ...args);
+    }
+    return this;
+  }
+  /**
+   * Initializes the client session either from the url or from storage.
+   * This method is automatically called when instantiating the client, but should also be called
+   * manually when checking for an error from an auth redirect (oauth, magiclink, password recovery, etc).
+   */
+  async initialize() {
+    if (this.initializePromise) {
+      return await this.initializePromise;
+    }
+    this.initializePromise = (async () => {
+      return await this._acquireLock(-1, async () => {
+        return await this._initialize();
+      });
+    })();
+    return await this.initializePromise;
+  }
+  /**
+   * IMPORTANT:
+   * 1. Never throw in this method, as it is called from the constructor
+   * 2. Never return a session from this method as it would be cached over
+   *    the whole lifetime of the client
+   */
+  async _initialize() {
+    var _a;
+    try {
+      let params = {};
+      let callbackUrlType = "none";
+      if (isBrowser()) {
+        params = parseParametersFromURL(window.location.href);
+        if (this._isImplicitGrantCallback(params)) {
+          callbackUrlType = "implicit";
+        } else if (await this._isPKCECallback(params)) {
+          callbackUrlType = "pkce";
+        }
+      }
+      if (isBrowser() && this.detectSessionInUrl && callbackUrlType !== "none") {
+        const { data, error } = await this._getSessionFromURL(params, callbackUrlType);
+        if (error) {
+          this._debug("#_initialize()", "error detecting session from URL", error);
+          if (isAuthImplicitGrantRedirectError(error)) {
+            const errorCode = (_a = error.details) === null || _a === void 0 ? void 0 : _a.code;
+            if (errorCode === "identity_already_exists" || errorCode === "identity_not_found" || errorCode === "single_identity_not_deletable") {
+              return { error };
+            }
+          }
+          await this._removeSession();
+          return { error };
+        }
+        const { session, redirectType } = data;
+        this._debug("#_initialize()", "detected session in URL", session, "redirect type", redirectType);
+        await this._saveSession(session);
+        setTimeout(async () => {
+          if (redirectType === "recovery") {
+            await this._notifyAllSubscribers("PASSWORD_RECOVERY", session);
+          } else {
+            await this._notifyAllSubscribers("SIGNED_IN", session);
+          }
+        }, 0);
+        return { error: null };
+      }
+      await this._recoverAndRefresh();
+      return { error: null };
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ error });
+      }
+      return this._returnResult({
+        error: new AuthUnknownError("Unexpected error during initialization", error)
+      });
+    } finally {
+      await this._handleVisibilityChange();
+      this._debug("#_initialize()", "end");
+    }
+  }
+  /**
+   * Creates a new anonymous user.
+   *
+   * @returns A session where the is_anonymous claim in the access token JWT set to true
+   */
+  async signInAnonymously(credentials) {
+    var _a, _b, _c;
+    try {
+      const res = await _request(this.fetch, "POST", `${this.url}/signup`, {
+        headers: this.headers,
+        body: {
+          data: (_b = (_a = credentials === null || credentials === void 0 ? void 0 : credentials.options) === null || _a === void 0 ? void 0 : _a.data) !== null && _b !== void 0 ? _b : {},
+          gotrue_meta_security: { captcha_token: (_c = credentials === null || credentials === void 0 ? void 0 : credentials.options) === null || _c === void 0 ? void 0 : _c.captchaToken }
+        },
+        xform: _sessionResponse
+      });
+      const { data, error } = res;
+      if (error || !data) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      const session = data.session;
+      const user = data.user;
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", session);
+      }
+      return this._returnResult({ data: { user, session }, error: null });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Creates a new user.
+   *
+   * Be aware that if a user account exists in the system you may get back an
+   * error message that attempts to hide this information from the user.
+   * This method has support for PKCE via email signups. The PKCE flow cannot be used when autoconfirm is enabled.
+   *
+   * @returns A logged-in session if the server has "autoconfirm" ON
+   * @returns A user if the server has "autoconfirm" OFF
+   */
+  async signUp(credentials) {
+    var _a, _b, _c;
+    try {
+      let res;
+      if ("email" in credentials) {
+        const { email, password, options } = credentials;
+        let codeChallenge = null;
+        let codeChallengeMethod = null;
+        if (this.flowType === "pkce") {
+          ;
+          [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
+        }
+        res = await _request(this.fetch, "POST", `${this.url}/signup`, {
+          headers: this.headers,
+          redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo,
+          body: {
+            email,
+            password,
+            data: (_a = options === null || options === void 0 ? void 0 : options.data) !== null && _a !== void 0 ? _a : {},
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
+            code_challenge: codeChallenge,
+            code_challenge_method: codeChallengeMethod
+          },
+          xform: _sessionResponse
+        });
+      } else if ("phone" in credentials) {
+        const { phone, password, options } = credentials;
+        res = await _request(this.fetch, "POST", `${this.url}/signup`, {
+          headers: this.headers,
+          body: {
+            phone,
+            password,
+            data: (_b = options === null || options === void 0 ? void 0 : options.data) !== null && _b !== void 0 ? _b : {},
+            channel: (_c = options === null || options === void 0 ? void 0 : options.channel) !== null && _c !== void 0 ? _c : "sms",
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+          },
+          xform: _sessionResponse
+        });
+      } else {
+        throw new AuthInvalidCredentialsError("You must provide either an email or phone number and a password");
+      }
+      const { data, error } = res;
+      if (error || !data) {
+        await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      const session = data.session;
+      const user = data.user;
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", session);
+      }
+      return this._returnResult({ data: { user, session }, error: null });
+    } catch (error) {
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Log in an existing user with an email and password or phone and password.
+   *
+   * Be aware that you may get back an error message that will not distinguish
+   * between the cases where the account does not exist or that the
+   * email/phone and password combination is wrong or that the account can only
+   * be accessed via social login.
+   */
+  async signInWithPassword(credentials) {
+    try {
+      let res;
+      if ("email" in credentials) {
+        const { email, password, options } = credentials;
+        res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=password`, {
+          headers: this.headers,
+          body: {
+            email,
+            password,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+          },
+          xform: _sessionResponsePassword
+        });
+      } else if ("phone" in credentials) {
+        const { phone, password, options } = credentials;
+        res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=password`, {
+          headers: this.headers,
+          body: {
+            phone,
+            password,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+          },
+          xform: _sessionResponsePassword
+        });
+      } else {
+        throw new AuthInvalidCredentialsError("You must provide either an email or phone number and a password");
+      }
+      const { data, error } = res;
+      if (error) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      } else if (!data || !data.session || !data.user) {
+        const invalidTokenError = new AuthInvalidTokenResponseError();
+        return this._returnResult({ data: { user: null, session: null }, error: invalidTokenError });
+      }
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", data.session);
+      }
+      return this._returnResult({
+        data: Object.assign({ user: data.user, session: data.session }, data.weak_password ? { weakPassword: data.weak_password } : null),
+        error
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Log in an existing user via a third-party provider.
+   * This method supports the PKCE flow.
+   */
+  async signInWithOAuth(credentials) {
+    var _a, _b, _c, _d;
+    return await this._handleProviderSignIn(credentials.provider, {
+      redirectTo: (_a = credentials.options) === null || _a === void 0 ? void 0 : _a.redirectTo,
+      scopes: (_b = credentials.options) === null || _b === void 0 ? void 0 : _b.scopes,
+      queryParams: (_c = credentials.options) === null || _c === void 0 ? void 0 : _c.queryParams,
+      skipBrowserRedirect: (_d = credentials.options) === null || _d === void 0 ? void 0 : _d.skipBrowserRedirect
+    });
+  }
+  /**
+   * Log in an existing user by exchanging an Auth Code issued during the PKCE flow.
+   */
+  async exchangeCodeForSession(authCode) {
+    await this.initializePromise;
+    return this._acquireLock(-1, async () => {
+      return this._exchangeCodeForSession(authCode);
+    });
+  }
+  /**
+   * Signs in a user by verifying a message signed by the user's private key.
+   * Supports Ethereum (via Sign-In-With-Ethereum) & Solana (Sign-In-With-Solana) standards,
+   * both of which derive from the EIP-4361 standard
+   * With slight variation on Solana's side.
+   * @reference https://eips.ethereum.org/EIPS/eip-4361
+   */
+  async signInWithWeb3(credentials) {
+    const { chain } = credentials;
+    switch (chain) {
+      case "ethereum":
+        return await this.signInWithEthereum(credentials);
+      case "solana":
+        return await this.signInWithSolana(credentials);
+      default:
+        throw new Error(`@supabase/auth-js: Unsupported chain "${chain}"`);
+    }
+  }
+  async signInWithEthereum(credentials) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+    let message;
+    let signature;
+    if ("message" in credentials) {
+      message = credentials.message;
+      signature = credentials.signature;
+    } else {
+      const { chain, wallet, statement, options } = credentials;
+      let resolvedWallet;
+      if (!isBrowser()) {
+        if (typeof wallet !== "object" || !(options === null || options === void 0 ? void 0 : options.url)) {
+          throw new Error("@supabase/auth-js: Both wallet and url must be specified in non-browser environments.");
+        }
+        resolvedWallet = wallet;
+      } else if (typeof wallet === "object") {
+        resolvedWallet = wallet;
+      } else {
+        const windowAny = window;
+        if ("ethereum" in windowAny && typeof windowAny.ethereum === "object" && "request" in windowAny.ethereum && typeof windowAny.ethereum.request === "function") {
+          resolvedWallet = windowAny.ethereum;
+        } else {
+          throw new Error(`@supabase/auth-js: No compatible Ethereum wallet interface on the window object (window.ethereum) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'ethereum', wallet: resolvedUserWallet }) instead.`);
+        }
+      }
+      const url2 = new URL((_a = options === null || options === void 0 ? void 0 : options.url) !== null && _a !== void 0 ? _a : window.location.href);
+      const accounts = await resolvedWallet.request({
+        method: "eth_requestAccounts"
+      }).then((accs) => accs).catch(() => {
+        throw new Error(`@supabase/auth-js: Wallet method eth_requestAccounts is missing or invalid`);
+      });
+      if (!accounts || accounts.length === 0) {
+        throw new Error(`@supabase/auth-js: No accounts available. Please ensure the wallet is connected.`);
+      }
+      const address = getAddress(accounts[0]);
+      let chainId = (_b = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _b === void 0 ? void 0 : _b.chainId;
+      if (!chainId) {
+        const chainIdHex = await resolvedWallet.request({
+          method: "eth_chainId"
+        });
+        chainId = fromHex(chainIdHex);
+      }
+      const siweMessage = {
+        domain: url2.host,
+        address,
+        statement,
+        uri: url2.href,
+        version: "1",
+        chainId,
+        nonce: (_c = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _c === void 0 ? void 0 : _c.nonce,
+        issuedAt: (_e = (_d = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _d === void 0 ? void 0 : _d.issuedAt) !== null && _e !== void 0 ? _e : /* @__PURE__ */ new Date(),
+        expirationTime: (_f = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _f === void 0 ? void 0 : _f.expirationTime,
+        notBefore: (_g = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _g === void 0 ? void 0 : _g.notBefore,
+        requestId: (_h = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _h === void 0 ? void 0 : _h.requestId,
+        resources: (_j = options === null || options === void 0 ? void 0 : options.signInWithEthereum) === null || _j === void 0 ? void 0 : _j.resources
+      };
+      message = createSiweMessage(siweMessage);
+      signature = await resolvedWallet.request({
+        method: "personal_sign",
+        params: [toHex(message), address]
+      });
+    }
+    try {
+      const { data, error } = await _request(this.fetch, "POST", `${this.url}/token?grant_type=web3`, {
+        headers: this.headers,
+        body: Object.assign({
+          chain: "ethereum",
+          message,
+          signature
+        }, ((_k = credentials.options) === null || _k === void 0 ? void 0 : _k.captchaToken) ? { gotrue_meta_security: { captcha_token: (_l = credentials.options) === null || _l === void 0 ? void 0 : _l.captchaToken } } : null),
+        xform: _sessionResponse
+      });
+      if (error) {
+        throw error;
+      }
+      if (!data || !data.session || !data.user) {
+        const invalidTokenError = new AuthInvalidTokenResponseError();
+        return this._returnResult({ data: { user: null, session: null }, error: invalidTokenError });
+      }
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", data.session);
+      }
+      return this._returnResult({ data: Object.assign({}, data), error });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  async signInWithSolana(credentials) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    let message;
+    let signature;
+    if ("message" in credentials) {
+      message = credentials.message;
+      signature = credentials.signature;
+    } else {
+      const { chain, wallet, statement, options } = credentials;
+      let resolvedWallet;
+      if (!isBrowser()) {
+        if (typeof wallet !== "object" || !(options === null || options === void 0 ? void 0 : options.url)) {
+          throw new Error("@supabase/auth-js: Both wallet and url must be specified in non-browser environments.");
+        }
+        resolvedWallet = wallet;
+      } else if (typeof wallet === "object") {
+        resolvedWallet = wallet;
+      } else {
+        const windowAny = window;
+        if ("solana" in windowAny && typeof windowAny.solana === "object" && ("signIn" in windowAny.solana && typeof windowAny.solana.signIn === "function" || "signMessage" in windowAny.solana && typeof windowAny.solana.signMessage === "function")) {
+          resolvedWallet = windowAny.solana;
+        } else {
+          throw new Error(`@supabase/auth-js: No compatible Solana wallet interface on the window object (window.solana) detected. Make sure the user already has a wallet installed and connected for this app. Prefer passing the wallet interface object directly to signInWithWeb3({ chain: 'solana', wallet: resolvedUserWallet }) instead.`);
+        }
+      }
+      const url2 = new URL((_a = options === null || options === void 0 ? void 0 : options.url) !== null && _a !== void 0 ? _a : window.location.href);
+      if ("signIn" in resolvedWallet && resolvedWallet.signIn) {
+        const output = await resolvedWallet.signIn(Object.assign(Object.assign(Object.assign({ issuedAt: (/* @__PURE__ */ new Date()).toISOString() }, options === null || options === void 0 ? void 0 : options.signInWithSolana), {
+          // non-overridable properties
+          version: "1",
+          domain: url2.host,
+          uri: url2.href
+        }), statement ? { statement } : null));
+        let outputToProcess;
+        if (Array.isArray(output) && output[0] && typeof output[0] === "object") {
+          outputToProcess = output[0];
+        } else if (output && typeof output === "object" && "signedMessage" in output && "signature" in output) {
+          outputToProcess = output;
+        } else {
+          throw new Error("@supabase/auth-js: Wallet method signIn() returned unrecognized value");
+        }
+        if ("signedMessage" in outputToProcess && "signature" in outputToProcess && (typeof outputToProcess.signedMessage === "string" || outputToProcess.signedMessage instanceof Uint8Array) && outputToProcess.signature instanceof Uint8Array) {
+          message = typeof outputToProcess.signedMessage === "string" ? outputToProcess.signedMessage : new TextDecoder().decode(outputToProcess.signedMessage);
+          signature = outputToProcess.signature;
+        } else {
+          throw new Error("@supabase/auth-js: Wallet method signIn() API returned object without signedMessage and signature fields");
+        }
+      } else {
+        if (!("signMessage" in resolvedWallet) || typeof resolvedWallet.signMessage !== "function" || !("publicKey" in resolvedWallet) || typeof resolvedWallet !== "object" || !resolvedWallet.publicKey || !("toBase58" in resolvedWallet.publicKey) || typeof resolvedWallet.publicKey.toBase58 !== "function") {
+          throw new Error("@supabase/auth-js: Wallet does not have a compatible signMessage() and publicKey.toBase58() API");
+        }
+        message = [
+          `${url2.host} wants you to sign in with your Solana account:`,
+          resolvedWallet.publicKey.toBase58(),
+          ...statement ? ["", statement, ""] : [""],
+          "Version: 1",
+          `URI: ${url2.href}`,
+          `Issued At: ${(_c = (_b = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _b === void 0 ? void 0 : _b.issuedAt) !== null && _c !== void 0 ? _c : (/* @__PURE__ */ new Date()).toISOString()}`,
+          ...((_d = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _d === void 0 ? void 0 : _d.notBefore) ? [`Not Before: ${options.signInWithSolana.notBefore}`] : [],
+          ...((_e = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _e === void 0 ? void 0 : _e.expirationTime) ? [`Expiration Time: ${options.signInWithSolana.expirationTime}`] : [],
+          ...((_f = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _f === void 0 ? void 0 : _f.chainId) ? [`Chain ID: ${options.signInWithSolana.chainId}`] : [],
+          ...((_g = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _g === void 0 ? void 0 : _g.nonce) ? [`Nonce: ${options.signInWithSolana.nonce}`] : [],
+          ...((_h = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _h === void 0 ? void 0 : _h.requestId) ? [`Request ID: ${options.signInWithSolana.requestId}`] : [],
+          ...((_k = (_j = options === null || options === void 0 ? void 0 : options.signInWithSolana) === null || _j === void 0 ? void 0 : _j.resources) === null || _k === void 0 ? void 0 : _k.length) ? [
+            "Resources",
+            ...options.signInWithSolana.resources.map((resource) => `- ${resource}`)
+          ] : []
+        ].join("\n");
+        const maybeSignature = await resolvedWallet.signMessage(new TextEncoder().encode(message), "utf8");
+        if (!maybeSignature || !(maybeSignature instanceof Uint8Array)) {
+          throw new Error("@supabase/auth-js: Wallet signMessage() API returned an recognized value");
+        }
+        signature = maybeSignature;
+      }
+    }
+    try {
+      const { data, error } = await _request(this.fetch, "POST", `${this.url}/token?grant_type=web3`, {
+        headers: this.headers,
+        body: Object.assign({ chain: "solana", message, signature: bytesToBase64URL(signature) }, ((_l = credentials.options) === null || _l === void 0 ? void 0 : _l.captchaToken) ? { gotrue_meta_security: { captcha_token: (_m = credentials.options) === null || _m === void 0 ? void 0 : _m.captchaToken } } : null),
+        xform: _sessionResponse
+      });
+      if (error) {
+        throw error;
+      }
+      if (!data || !data.session || !data.user) {
+        const invalidTokenError = new AuthInvalidTokenResponseError();
+        return this._returnResult({ data: { user: null, session: null }, error: invalidTokenError });
+      }
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", data.session);
+      }
+      return this._returnResult({ data: Object.assign({}, data), error });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  async _exchangeCodeForSession(authCode) {
+    const storageItem = await getItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+    const [codeVerifier, redirectType] = (storageItem !== null && storageItem !== void 0 ? storageItem : "").split("/");
+    try {
+      if (!codeVerifier && this.flowType === "pkce") {
+        throw new AuthPKCECodeVerifierMissingError();
+      }
+      const { data, error } = await _request(this.fetch, "POST", `${this.url}/token?grant_type=pkce`, {
+        headers: this.headers,
+        body: {
+          auth_code: authCode,
+          code_verifier: codeVerifier
+        },
+        xform: _sessionResponse
+      });
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (error) {
+        throw error;
+      }
+      if (!data || !data.session || !data.user) {
+        const invalidTokenError = new AuthInvalidTokenResponseError();
+        return this._returnResult({
+          data: { user: null, session: null, redirectType: null },
+          error: invalidTokenError
+        });
+      }
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", data.session);
+      }
+      return this._returnResult({ data: Object.assign(Object.assign({}, data), { redirectType: redirectType !== null && redirectType !== void 0 ? redirectType : null }), error });
+    } catch (error) {
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (isAuthError(error)) {
+        return this._returnResult({
+          data: { user: null, session: null, redirectType: null },
+          error
+        });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Allows signing in with an OIDC ID token. The authentication provider used
+   * should be enabled and configured.
+   */
+  async signInWithIdToken(credentials) {
+    try {
+      const { options, provider, token, access_token, nonce } = credentials;
+      const res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=id_token`, {
+        headers: this.headers,
+        body: {
+          provider,
+          id_token: token,
+          access_token,
+          nonce,
+          gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+        },
+        xform: _sessionResponse
+      });
+      const { data, error } = res;
+      if (error) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      } else if (!data || !data.session || !data.user) {
+        const invalidTokenError = new AuthInvalidTokenResponseError();
+        return this._returnResult({ data: { user: null, session: null }, error: invalidTokenError });
+      }
+      if (data.session) {
+        await this._saveSession(data.session);
+        await this._notifyAllSubscribers("SIGNED_IN", data.session);
+      }
+      return this._returnResult({ data, error });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Log in a user using magiclink or a one-time password (OTP).
+   *
+   * If the `{{ .ConfirmationURL }}` variable is specified in the email template, a magiclink will be sent.
+   * If the `{{ .Token }}` variable is specified in the email template, an OTP will be sent.
+   * If you're using phone sign-ins, only an OTP will be sent. You won't be able to send a magiclink for phone sign-ins.
+   *
+   * Be aware that you may get back an error message that will not distinguish
+   * between the cases where the account does not exist or, that the account
+   * can only be accessed via social login.
+   *
+   * Do note that you will need to configure a Whatsapp sender on Twilio
+   * if you are using phone sign in with the 'whatsapp' channel. The whatsapp
+   * channel is not supported on other providers
+   * at this time.
+   * This method supports PKCE when an email is passed.
+   */
+  async signInWithOtp(credentials) {
+    var _a, _b, _c, _d, _e;
+    try {
+      if ("email" in credentials) {
+        const { email, options } = credentials;
+        let codeChallenge = null;
+        let codeChallengeMethod = null;
+        if (this.flowType === "pkce") {
+          ;
+          [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
+        }
+        const { error } = await _request(this.fetch, "POST", `${this.url}/otp`, {
+          headers: this.headers,
+          body: {
+            email,
+            data: (_a = options === null || options === void 0 ? void 0 : options.data) !== null && _a !== void 0 ? _a : {},
+            create_user: (_b = options === null || options === void 0 ? void 0 : options.shouldCreateUser) !== null && _b !== void 0 ? _b : true,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
+            code_challenge: codeChallenge,
+            code_challenge_method: codeChallengeMethod
+          },
+          redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo
+        });
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      if ("phone" in credentials) {
+        const { phone, options } = credentials;
+        const { data, error } = await _request(this.fetch, "POST", `${this.url}/otp`, {
+          headers: this.headers,
+          body: {
+            phone,
+            data: (_c = options === null || options === void 0 ? void 0 : options.data) !== null && _c !== void 0 ? _c : {},
+            create_user: (_d = options === null || options === void 0 ? void 0 : options.shouldCreateUser) !== null && _d !== void 0 ? _d : true,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken },
+            channel: (_e = options === null || options === void 0 ? void 0 : options.channel) !== null && _e !== void 0 ? _e : "sms"
+          }
+        });
+        return this._returnResult({
+          data: { user: null, session: null, messageId: data === null || data === void 0 ? void 0 : data.message_id },
+          error
+        });
+      }
+      throw new AuthInvalidCredentialsError("You must provide either an email or phone number.");
+    } catch (error) {
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Log in a user given a User supplied OTP or TokenHash received through mobile or email.
+   */
+  async verifyOtp(params) {
+    var _a, _b;
+    try {
+      let redirectTo = void 0;
+      let captchaToken = void 0;
+      if ("options" in params) {
+        redirectTo = (_a = params.options) === null || _a === void 0 ? void 0 : _a.redirectTo;
+        captchaToken = (_b = params.options) === null || _b === void 0 ? void 0 : _b.captchaToken;
+      }
+      const { data, error } = await _request(this.fetch, "POST", `${this.url}/verify`, {
+        headers: this.headers,
+        body: Object.assign(Object.assign({}, params), { gotrue_meta_security: { captcha_token: captchaToken } }),
+        redirectTo,
+        xform: _sessionResponse
+      });
+      if (error) {
+        throw error;
+      }
+      if (!data) {
+        const tokenVerificationError = new Error("An error occurred on token verification.");
+        throw tokenVerificationError;
+      }
+      const session = data.session;
+      const user = data.user;
+      if (session === null || session === void 0 ? void 0 : session.access_token) {
+        await this._saveSession(session);
+        await this._notifyAllSubscribers(params.type == "recovery" ? "PASSWORD_RECOVERY" : "SIGNED_IN", session);
+      }
+      return this._returnResult({ data: { user, session }, error: null });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Attempts a single-sign on using an enterprise Identity Provider. A
+   * successful SSO attempt will redirect the current page to the identity
+   * provider authorization page. The redirect URL is implementation and SSO
+   * protocol specific.
+   *
+   * You can use it by providing a SSO domain. Typically you can extract this
+   * domain by asking users for their email address. If this domain is
+   * registered on the Auth instance the redirect will use that organization's
+   * currently active SSO Identity Provider for the login.
+   *
+   * If you have built an organization-specific login page, you can use the
+   * organization's SSO Identity Provider UUID directly instead.
+   */
+  async signInWithSSO(params) {
+    var _a, _b, _c, _d, _e;
+    try {
+      let codeChallenge = null;
+      let codeChallengeMethod = null;
+      if (this.flowType === "pkce") {
+        ;
+        [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
+      }
+      const result = await _request(this.fetch, "POST", `${this.url}/sso`, {
+        body: Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, "providerId" in params ? { provider_id: params.providerId } : null), "domain" in params ? { domain: params.domain } : null), { redirect_to: (_b = (_a = params.options) === null || _a === void 0 ? void 0 : _a.redirectTo) !== null && _b !== void 0 ? _b : void 0 }), ((_c = params === null || params === void 0 ? void 0 : params.options) === null || _c === void 0 ? void 0 : _c.captchaToken) ? { gotrue_meta_security: { captcha_token: params.options.captchaToken } } : null), { skip_http_redirect: true, code_challenge: codeChallenge, code_challenge_method: codeChallengeMethod }),
+        headers: this.headers,
+        xform: _ssoResponse
+      });
+      if (((_d = result.data) === null || _d === void 0 ? void 0 : _d.url) && isBrowser() && !((_e = params.options) === null || _e === void 0 ? void 0 : _e.skipBrowserRedirect)) {
+        window.location.assign(result.data.url);
+      }
+      return this._returnResult(result);
+    } catch (error) {
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Sends a reauthentication OTP to the user's email or phone number.
+   * Requires the user to be signed-in.
+   */
+  async reauthenticate() {
+    await this.initializePromise;
+    return await this._acquireLock(-1, async () => {
+      return await this._reauthenticate();
+    });
+  }
+  async _reauthenticate() {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: { session }, error: sessionError } = result;
+        if (sessionError)
+          throw sessionError;
+        if (!session)
+          throw new AuthSessionMissingError();
+        const { error } = await _request(this.fetch, "GET", `${this.url}/reauthenticate`, {
+          headers: this.headers,
+          jwt: session.access_token
+        });
+        return this._returnResult({ data: { user: null, session: null }, error });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Resends an existing signup confirmation email, email change email, SMS OTP or phone change OTP.
+   */
+  async resend(credentials) {
+    try {
+      const endpoint = `${this.url}/resend`;
+      if ("email" in credentials) {
+        const { email, type, options } = credentials;
+        const { error } = await _request(this.fetch, "POST", endpoint, {
+          headers: this.headers,
+          body: {
+            email,
+            type,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+          },
+          redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo
+        });
+        return this._returnResult({ data: { user: null, session: null }, error });
+      } else if ("phone" in credentials) {
+        const { phone, type, options } = credentials;
+        const { data, error } = await _request(this.fetch, "POST", endpoint, {
+          headers: this.headers,
+          body: {
+            phone,
+            type,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+          }
+        });
+        return this._returnResult({
+          data: { user: null, session: null, messageId: data === null || data === void 0 ? void 0 : data.message_id },
+          error
+        });
+      }
+      throw new AuthInvalidCredentialsError("You must provide either an email or phone number and a type");
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Returns the session, refreshing it if necessary.
+   *
+   * The session returned can be null if the session is not detected which can happen in the event a user is not signed-in or has logged out.
+   *
+   * **IMPORTANT:** This method loads values directly from the storage attached
+   * to the client. If that storage is based on request cookies for example,
+   * the values in it may not be authentic and therefore it's strongly advised
+   * against using this method and its results in such circumstances. A warning
+   * will be emitted if this is detected. Use {@link #getUser()} instead.
+   */
+  async getSession() {
+    await this.initializePromise;
+    const result = await this._acquireLock(-1, async () => {
+      return this._useSession(async (result2) => {
+        return result2;
+      });
+    });
+    return result;
+  }
+  /**
+   * Acquires a global lock based on the storage key.
+   */
+  async _acquireLock(acquireTimeout, fn) {
+    this._debug("#_acquireLock", "begin", acquireTimeout);
+    try {
+      if (this.lockAcquired) {
+        const last = this.pendingInLock.length ? this.pendingInLock[this.pendingInLock.length - 1] : Promise.resolve();
+        const result = (async () => {
+          await last;
+          return await fn();
+        })();
+        this.pendingInLock.push((async () => {
+          try {
+            await result;
+          } catch (e) {
+          }
+        })());
+        return result;
+      }
+      return await this.lock(`lock:${this.storageKey}`, acquireTimeout, async () => {
+        this._debug("#_acquireLock", "lock acquired for storage key", this.storageKey);
+        try {
+          this.lockAcquired = true;
+          const result = fn();
+          this.pendingInLock.push((async () => {
+            try {
+              await result;
+            } catch (e) {
+            }
+          })());
+          await result;
+          while (this.pendingInLock.length) {
+            const waitOn = [...this.pendingInLock];
+            await Promise.all(waitOn);
+            this.pendingInLock.splice(0, waitOn.length);
+          }
+          return await result;
+        } finally {
+          this._debug("#_acquireLock", "lock released for storage key", this.storageKey);
+          this.lockAcquired = false;
+        }
+      });
+    } finally {
+      this._debug("#_acquireLock", "end");
+    }
+  }
+  /**
+   * Use instead of {@link #getSession} inside the library. It is
+   * semantically usually what you want, as getting a session involves some
+   * processing afterwards that requires only one client operating on the
+   * session at once across multiple tabs or processes.
+   */
+  async _useSession(fn) {
+    this._debug("#_useSession", "begin");
+    try {
+      const result = await this.__loadSession();
+      return await fn(result);
+    } finally {
+      this._debug("#_useSession", "end");
+    }
+  }
+  /**
+   * NEVER USE DIRECTLY!
+   *
+   * Always use {@link #_useSession}.
+   */
+  async __loadSession() {
+    this._debug("#__loadSession()", "begin");
+    if (!this.lockAcquired) {
+      this._debug("#__loadSession()", "used outside of an acquired lock!", new Error().stack);
+    }
+    try {
+      let currentSession = null;
+      const maybeSession = await getItemAsync(this.storage, this.storageKey);
+      this._debug("#getSession()", "session from storage", maybeSession);
+      if (maybeSession !== null) {
+        if (this._isValidSession(maybeSession)) {
+          currentSession = maybeSession;
+        } else {
+          this._debug("#getSession()", "session from storage is not valid");
+          await this._removeSession();
+        }
+      }
+      if (!currentSession) {
+        return { data: { session: null }, error: null };
+      }
+      const hasExpired = currentSession.expires_at ? currentSession.expires_at * 1e3 - Date.now() < EXPIRY_MARGIN_MS : false;
+      this._debug("#__loadSession()", `session has${hasExpired ? "" : " not"} expired`, "expires_at", currentSession.expires_at);
+      if (!hasExpired) {
+        if (this.userStorage) {
+          const maybeUser = await getItemAsync(this.userStorage, this.storageKey + "-user");
+          if (maybeUser === null || maybeUser === void 0 ? void 0 : maybeUser.user) {
+            currentSession.user = maybeUser.user;
+          } else {
+            currentSession.user = userNotAvailableProxy();
+          }
+        }
+        if (this.storage.isServer && currentSession.user && !currentSession.user.__isUserNotAvailableProxy) {
+          const suppressWarningRef = { value: this.suppressGetSessionWarning };
+          currentSession.user = insecureUserWarningProxy(currentSession.user, suppressWarningRef);
+          if (suppressWarningRef.value) {
+            this.suppressGetSessionWarning = true;
+          }
+        }
+        return { data: { session: currentSession }, error: null };
+      }
+      const { data: session, error } = await this._callRefreshToken(currentSession.refresh_token);
+      if (error) {
+        return this._returnResult({ data: { session: null }, error });
+      }
+      return this._returnResult({ data: { session }, error: null });
+    } finally {
+      this._debug("#__loadSession()", "end");
+    }
+  }
+  /**
+   * Gets the current user details if there is an existing session. This method
+   * performs a network request to the Supabase Auth server, so the returned
+   * value is authentic and can be used to base authorization rules on.
+   *
+   * @param jwt Takes in an optional access token JWT. If no JWT is provided, the JWT from the current session is used.
+   */
+  async getUser(jwt) {
+    if (jwt) {
+      return await this._getUser(jwt);
+    }
+    await this.initializePromise;
+    const result = await this._acquireLock(-1, async () => {
+      return await this._getUser();
+    });
+    if (result.data.user) {
+      this.suppressGetSessionWarning = true;
+    }
+    return result;
+  }
+  async _getUser(jwt) {
+    try {
+      if (jwt) {
+        return await _request(this.fetch, "GET", `${this.url}/user`, {
+          headers: this.headers,
+          jwt,
+          xform: _userResponse
+        });
+      }
+      return await this._useSession(async (result) => {
+        var _a, _b, _c;
+        const { data, error } = result;
+        if (error) {
+          throw error;
+        }
+        if (!((_a = data.session) === null || _a === void 0 ? void 0 : _a.access_token) && !this.hasCustomAuthorizationHeader) {
+          return { data: { user: null }, error: new AuthSessionMissingError() };
+        }
+        return await _request(this.fetch, "GET", `${this.url}/user`, {
+          headers: this.headers,
+          jwt: (_c = (_b = data.session) === null || _b === void 0 ? void 0 : _b.access_token) !== null && _c !== void 0 ? _c : void 0,
+          xform: _userResponse
+        });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        if (isAuthSessionMissingError(error)) {
+          await this._removeSession();
+          await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+        }
+        return this._returnResult({ data: { user: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Updates user data for a logged in user.
+   */
+  async updateUser(attributes, options = {}) {
+    await this.initializePromise;
+    return await this._acquireLock(-1, async () => {
+      return await this._updateUser(attributes, options);
+    });
+  }
+  async _updateUser(attributes, options = {}) {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: sessionData, error: sessionError } = result;
+        if (sessionError) {
+          throw sessionError;
+        }
+        if (!sessionData.session) {
+          throw new AuthSessionMissingError();
+        }
+        const session = sessionData.session;
+        let codeChallenge = null;
+        let codeChallengeMethod = null;
+        if (this.flowType === "pkce" && attributes.email != null) {
+          ;
+          [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
+        }
+        const { data, error: userError } = await _request(this.fetch, "PUT", `${this.url}/user`, {
+          headers: this.headers,
+          redirectTo: options === null || options === void 0 ? void 0 : options.emailRedirectTo,
+          body: Object.assign(Object.assign({}, attributes), { code_challenge: codeChallenge, code_challenge_method: codeChallengeMethod }),
+          jwt: session.access_token,
+          xform: _userResponse
+        });
+        if (userError) {
+          throw userError;
+        }
+        session.user = data.user;
+        await this._saveSession(session);
+        await this._notifyAllSubscribers("USER_UPDATED", session);
+        return this._returnResult({ data: { user: session.user }, error: null });
+      });
+    } catch (error) {
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Sets the session data from the current session. If the current session is expired, setSession will take care of refreshing it to obtain a new session.
+   * If the refresh token or access token in the current session is invalid, an error will be thrown.
+   * @param currentSession The current session that minimally contains an access token and refresh token.
+   */
+  async setSession(currentSession) {
+    await this.initializePromise;
+    return await this._acquireLock(-1, async () => {
+      return await this._setSession(currentSession);
+    });
+  }
+  async _setSession(currentSession) {
+    try {
+      if (!currentSession.access_token || !currentSession.refresh_token) {
+        throw new AuthSessionMissingError();
+      }
+      const timeNow = Date.now() / 1e3;
+      let expiresAt2 = timeNow;
+      let hasExpired = true;
+      let session = null;
+      const { payload } = decodeJWT(currentSession.access_token);
+      if (payload.exp) {
+        expiresAt2 = payload.exp;
+        hasExpired = expiresAt2 <= timeNow;
+      }
+      if (hasExpired) {
+        const { data: refreshedSession, error } = await this._callRefreshToken(currentSession.refresh_token);
+        if (error) {
+          return this._returnResult({ data: { user: null, session: null }, error });
+        }
+        if (!refreshedSession) {
+          return { data: { user: null, session: null }, error: null };
+        }
+        session = refreshedSession;
+      } else {
+        const { data, error } = await this._getUser(currentSession.access_token);
+        if (error) {
+          throw error;
+        }
+        session = {
+          access_token: currentSession.access_token,
+          refresh_token: currentSession.refresh_token,
+          user: data.user,
+          token_type: "bearer",
+          expires_in: expiresAt2 - timeNow,
+          expires_at: expiresAt2
+        };
+        await this._saveSession(session);
+        await this._notifyAllSubscribers("SIGNED_IN", session);
+      }
+      return this._returnResult({ data: { user: session.user, session }, error: null });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { session: null, user: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Returns a new session, regardless of expiry status.
+   * Takes in an optional current session. If not passed in, then refreshSession() will attempt to retrieve it from getSession().
+   * If the current session's refresh token is invalid, an error will be thrown.
+   * @param currentSession The current session. If passed in, it must contain a refresh token.
+   */
+  async refreshSession(currentSession) {
+    await this.initializePromise;
+    return await this._acquireLock(-1, async () => {
+      return await this._refreshSession(currentSession);
+    });
+  }
+  async _refreshSession(currentSession) {
+    try {
+      return await this._useSession(async (result) => {
+        var _a;
+        if (!currentSession) {
+          const { data, error: error2 } = result;
+          if (error2) {
+            throw error2;
+          }
+          currentSession = (_a = data.session) !== null && _a !== void 0 ? _a : void 0;
+        }
+        if (!(currentSession === null || currentSession === void 0 ? void 0 : currentSession.refresh_token)) {
+          throw new AuthSessionMissingError();
+        }
+        const { data: session, error } = await this._callRefreshToken(currentSession.refresh_token);
+        if (error) {
+          return this._returnResult({ data: { user: null, session: null }, error });
+        }
+        if (!session) {
+          return this._returnResult({ data: { user: null, session: null }, error: null });
+        }
+        return this._returnResult({ data: { user: session.user, session }, error: null });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { user: null, session: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Gets the session data from a URL string
+   */
+  async _getSessionFromURL(params, callbackUrlType) {
+    try {
+      if (!isBrowser())
+        throw new AuthImplicitGrantRedirectError("No browser detected.");
+      if (params.error || params.error_description || params.error_code) {
+        throw new AuthImplicitGrantRedirectError(params.error_description || "Error in URL with unspecified error_description", {
+          error: params.error || "unspecified_error",
+          code: params.error_code || "unspecified_code"
+        });
+      }
+      switch (callbackUrlType) {
+        case "implicit":
+          if (this.flowType === "pkce") {
+            throw new AuthPKCEGrantCodeExchangeError("Not a valid PKCE flow url.");
+          }
+          break;
+        case "pkce":
+          if (this.flowType === "implicit") {
+            throw new AuthImplicitGrantRedirectError("Not a valid implicit grant flow url.");
+          }
+          break;
+        default:
+      }
+      if (callbackUrlType === "pkce") {
+        this._debug("#_initialize()", "begin", "is PKCE flow", true);
+        if (!params.code)
+          throw new AuthPKCEGrantCodeExchangeError("No code detected.");
+        const { data: data2, error: error2 } = await this._exchangeCodeForSession(params.code);
+        if (error2)
+          throw error2;
+        const url2 = new URL(window.location.href);
+        url2.searchParams.delete("code");
+        window.history.replaceState(window.history.state, "", url2.toString());
+        return { data: { session: data2.session, redirectType: null }, error: null };
+      }
+      const { provider_token, provider_refresh_token, access_token, refresh_token, expires_in, expires_at, token_type } = params;
+      if (!access_token || !expires_in || !refresh_token || !token_type) {
+        throw new AuthImplicitGrantRedirectError("No session defined in URL");
+      }
+      const timeNow = Math.round(Date.now() / 1e3);
+      const expiresIn = parseInt(expires_in);
+      let expiresAt2 = timeNow + expiresIn;
+      if (expires_at) {
+        expiresAt2 = parseInt(expires_at);
+      }
+      const actuallyExpiresIn = expiresAt2 - timeNow;
+      if (actuallyExpiresIn * 1e3 <= AUTO_REFRESH_TICK_DURATION_MS) {
+        console.warn(`@supabase/gotrue-js: Session as retrieved from URL expires in ${actuallyExpiresIn}s, should have been closer to ${expiresIn}s`);
+      }
+      const issuedAt = expiresAt2 - expiresIn;
+      if (timeNow - issuedAt >= 120) {
+        console.warn("@supabase/gotrue-js: Session as retrieved from URL was issued over 120s ago, URL could be stale", issuedAt, expiresAt2, timeNow);
+      } else if (timeNow - issuedAt < 0) {
+        console.warn("@supabase/gotrue-js: Session as retrieved from URL was issued in the future? Check the device clock for skew", issuedAt, expiresAt2, timeNow);
+      }
+      const { data, error } = await this._getUser(access_token);
+      if (error)
+        throw error;
+      const session = {
+        provider_token,
+        provider_refresh_token,
+        access_token,
+        expires_in: expiresIn,
+        expires_at: expiresAt2,
+        refresh_token,
+        token_type,
+        user: data.user
+      };
+      window.location.hash = "";
+      this._debug("#_getSessionFromURL()", "clearing window.location.hash");
+      return this._returnResult({ data: { session, redirectType: params.type }, error: null });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { session: null, redirectType: null }, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Checks if the current URL contains parameters given by an implicit oauth grant flow (https://www.rfc-editor.org/rfc/rfc6749.html#section-4.2)
+   *
+   * If `detectSessionInUrl` is a function, it will be called with the URL and params to determine
+   * if the URL should be processed as a Supabase auth callback. This allows users to exclude
+   * URLs from other OAuth providers (e.g., Facebook Login) that also return access_token in the fragment.
+   */
+  _isImplicitGrantCallback(params) {
+    if (typeof this.detectSessionInUrl === "function") {
+      return this.detectSessionInUrl(new URL(window.location.href), params);
+    }
+    return Boolean(params.access_token || params.error_description);
+  }
+  /**
+   * Checks if the current URL and backing storage contain parameters given by a PKCE flow
+   */
+  async _isPKCECallback(params) {
+    const currentStorageContent = await getItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+    return !!(params.code && currentStorageContent);
+  }
+  /**
+   * Inside a browser context, `signOut()` will remove the logged in user from the browser session and log them out - removing all items from localstorage and then trigger a `"SIGNED_OUT"` event.
+   *
+   * For server-side management, you can revoke all refresh tokens for a user by passing a user's JWT through to `auth.api.signOut(JWT: string)`.
+   * There is no way to revoke a user's access token jwt until it expires. It is recommended to set a shorter expiry on the jwt for this reason.
+   *
+   * If using `others` scope, no `SIGNED_OUT` event is fired!
+   */
+  async signOut(options = { scope: "global" }) {
+    await this.initializePromise;
+    return await this._acquireLock(-1, async () => {
+      return await this._signOut(options);
+    });
+  }
+  async _signOut({ scope } = { scope: "global" }) {
+    return await this._useSession(async (result) => {
+      var _a;
+      const { data, error: sessionError } = result;
+      if (sessionError) {
+        return this._returnResult({ error: sessionError });
+      }
+      const accessToken = (_a = data.session) === null || _a === void 0 ? void 0 : _a.access_token;
+      if (accessToken) {
+        const { error } = await this.admin.signOut(accessToken, scope);
+        if (error) {
+          if (!(isAuthApiError(error) && (error.status === 404 || error.status === 401 || error.status === 403))) {
+            return this._returnResult({ error });
+          }
+        }
+      }
+      if (scope !== "others") {
+        await this._removeSession();
+        await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      }
+      return this._returnResult({ error: null });
+    });
+  }
+  onAuthStateChange(callback) {
+    const id = generateCallbackId();
+    const subscription = {
+      id,
+      callback,
+      unsubscribe: () => {
+        this._debug("#unsubscribe()", "state change callback with id removed", id);
+        this.stateChangeEmitters.delete(id);
+      }
+    };
+    this._debug("#onAuthStateChange()", "registered callback with id", id);
+    this.stateChangeEmitters.set(id, subscription);
+    (async () => {
+      await this.initializePromise;
+      await this._acquireLock(-1, async () => {
+        this._emitInitialSession(id);
+      });
+    })();
+    return { data: { subscription } };
+  }
+  async _emitInitialSession(id) {
+    return await this._useSession(async (result) => {
+      var _a, _b;
+      try {
+        const { data: { session }, error } = result;
+        if (error)
+          throw error;
+        await ((_a = this.stateChangeEmitters.get(id)) === null || _a === void 0 ? void 0 : _a.callback("INITIAL_SESSION", session));
+        this._debug("INITIAL_SESSION", "callback id", id, "session", session);
+      } catch (err) {
+        await ((_b = this.stateChangeEmitters.get(id)) === null || _b === void 0 ? void 0 : _b.callback("INITIAL_SESSION", null));
+        this._debug("INITIAL_SESSION", "callback id", id, "error", err);
+        console.error(err);
+      }
+    });
+  }
+  /**
+   * Sends a password reset request to an email address. This method supports the PKCE flow.
+   *
+   * @param email The email address of the user.
+   * @param options.redirectTo The URL to send the user to after they click the password reset link.
+   * @param options.captchaToken Verification token received when the user completes the captcha on the site.
+   */
+  async resetPasswordForEmail(email, options = {}) {
+    let codeChallenge = null;
+    let codeChallengeMethod = null;
+    if (this.flowType === "pkce") {
+      [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(
+        this.storage,
+        this.storageKey,
+        true
+        // isPasswordRecovery
+      );
+    }
+    try {
+      return await _request(this.fetch, "POST", `${this.url}/recover`, {
+        body: {
+          email,
+          code_challenge: codeChallenge,
+          code_challenge_method: codeChallengeMethod,
+          gotrue_meta_security: { captcha_token: options.captchaToken }
+        },
+        headers: this.headers,
+        redirectTo: options.redirectTo
+      });
+    } catch (error) {
+      await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Gets all the identities linked to a user.
+   */
+  async getUserIdentities() {
+    var _a;
+    try {
+      const { data, error } = await this.getUser();
+      if (error)
+        throw error;
+      return this._returnResult({ data: { identities: (_a = data.user.identities) !== null && _a !== void 0 ? _a : [] }, error: null });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  async linkIdentity(credentials) {
+    if ("token" in credentials) {
+      return this.linkIdentityIdToken(credentials);
+    }
+    return this.linkIdentityOAuth(credentials);
+  }
+  async linkIdentityOAuth(credentials) {
+    var _a;
+    try {
+      const { data, error } = await this._useSession(async (result) => {
+        var _a2, _b, _c, _d, _e;
+        const { data: data2, error: error2 } = result;
+        if (error2)
+          throw error2;
+        const url2 = await this._getUrlForProvider(`${this.url}/user/identities/authorize`, credentials.provider, {
+          redirectTo: (_a2 = credentials.options) === null || _a2 === void 0 ? void 0 : _a2.redirectTo,
+          scopes: (_b = credentials.options) === null || _b === void 0 ? void 0 : _b.scopes,
+          queryParams: (_c = credentials.options) === null || _c === void 0 ? void 0 : _c.queryParams,
+          skipBrowserRedirect: true
+        });
+        return await _request(this.fetch, "GET", url2, {
+          headers: this.headers,
+          jwt: (_e = (_d = data2.session) === null || _d === void 0 ? void 0 : _d.access_token) !== null && _e !== void 0 ? _e : void 0
+        });
+      });
+      if (error)
+        throw error;
+      if (isBrowser() && !((_a = credentials.options) === null || _a === void 0 ? void 0 : _a.skipBrowserRedirect)) {
+        window.location.assign(data === null || data === void 0 ? void 0 : data.url);
+      }
+      return this._returnResult({
+        data: { provider: credentials.provider, url: data === null || data === void 0 ? void 0 : data.url },
+        error: null
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { provider: credentials.provider, url: null }, error });
+      }
+      throw error;
+    }
+  }
+  async linkIdentityIdToken(credentials) {
+    return await this._useSession(async (result) => {
+      var _a;
+      try {
+        const { error: sessionError, data: { session } } = result;
+        if (sessionError)
+          throw sessionError;
+        const { options, provider, token, access_token, nonce } = credentials;
+        const res = await _request(this.fetch, "POST", `${this.url}/token?grant_type=id_token`, {
+          headers: this.headers,
+          jwt: (_a = session === null || session === void 0 ? void 0 : session.access_token) !== null && _a !== void 0 ? _a : void 0,
+          body: {
+            provider,
+            id_token: token,
+            access_token,
+            nonce,
+            link_identity: true,
+            gotrue_meta_security: { captcha_token: options === null || options === void 0 ? void 0 : options.captchaToken }
+          },
+          xform: _sessionResponse
+        });
+        const { data, error } = res;
+        if (error) {
+          return this._returnResult({ data: { user: null, session: null }, error });
+        } else if (!data || !data.session || !data.user) {
+          return this._returnResult({
+            data: { user: null, session: null },
+            error: new AuthInvalidTokenResponseError()
+          });
+        }
+        if (data.session) {
+          await this._saveSession(data.session);
+          await this._notifyAllSubscribers("USER_UPDATED", data.session);
+        }
+        return this._returnResult({ data, error });
+      } catch (error) {
+        await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+        if (isAuthError(error)) {
+          return this._returnResult({ data: { user: null, session: null }, error });
+        }
+        throw error;
+      }
+    });
+  }
+  /**
+   * Unlinks an identity from a user by deleting it. The user will no longer be able to sign in with that identity once it's unlinked.
+   */
+  async unlinkIdentity(identity) {
+    try {
+      return await this._useSession(async (result) => {
+        var _a, _b;
+        const { data, error } = result;
+        if (error) {
+          throw error;
+        }
+        return await _request(this.fetch, "DELETE", `${this.url}/user/identities/${identity.identity_id}`, {
+          headers: this.headers,
+          jwt: (_b = (_a = data.session) === null || _a === void 0 ? void 0 : _a.access_token) !== null && _b !== void 0 ? _b : void 0
+        });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Generates a new JWT.
+   * @param refreshToken A valid refresh token that was returned on login.
+   */
+  async _refreshAccessToken(refreshToken) {
+    const debugName = `#_refreshAccessToken(${refreshToken.substring(0, 5)}...)`;
+    this._debug(debugName, "begin");
+    try {
+      const startedAt = Date.now();
+      return await retryable(async (attempt) => {
+        if (attempt > 0) {
+          await sleep(200 * Math.pow(2, attempt - 1));
+        }
+        this._debug(debugName, "refreshing attempt", attempt);
+        return await _request(this.fetch, "POST", `${this.url}/token?grant_type=refresh_token`, {
+          body: { refresh_token: refreshToken },
+          headers: this.headers,
+          xform: _sessionResponse
+        });
+      }, (attempt, error) => {
+        const nextBackOffInterval = 200 * Math.pow(2, attempt);
+        return error && isAuthRetryableFetchError(error) && // retryable only if the request can be sent before the backoff overflows the tick duration
+        Date.now() + nextBackOffInterval - startedAt < AUTO_REFRESH_TICK_DURATION_MS;
+      });
+    } catch (error) {
+      this._debug(debugName, "error", error);
+      if (isAuthError(error)) {
+        return this._returnResult({ data: { session: null, user: null }, error });
+      }
+      throw error;
+    } finally {
+      this._debug(debugName, "end");
+    }
+  }
+  _isValidSession(maybeSession) {
+    const isValidSession = typeof maybeSession === "object" && maybeSession !== null && "access_token" in maybeSession && "refresh_token" in maybeSession && "expires_at" in maybeSession;
+    return isValidSession;
+  }
+  async _handleProviderSignIn(provider, options) {
+    const url2 = await this._getUrlForProvider(`${this.url}/authorize`, provider, {
+      redirectTo: options.redirectTo,
+      scopes: options.scopes,
+      queryParams: options.queryParams
+    });
+    this._debug("#_handleProviderSignIn()", "provider", provider, "options", options, "url", url2);
+    if (isBrowser() && !options.skipBrowserRedirect) {
+      window.location.assign(url2);
+    }
+    return { data: { provider, url: url2 }, error: null };
+  }
+  /**
+   * Recovers the session from LocalStorage and refreshes the token
+   * Note: this method is async to accommodate for AsyncStorage e.g. in React native.
+   */
+  async _recoverAndRefresh() {
+    var _a, _b;
+    const debugName = "#_recoverAndRefresh()";
+    this._debug(debugName, "begin");
+    try {
+      const currentSession = await getItemAsync(this.storage, this.storageKey);
+      if (currentSession && this.userStorage) {
+        let maybeUser = await getItemAsync(this.userStorage, this.storageKey + "-user");
+        if (!this.storage.isServer && Object.is(this.storage, this.userStorage) && !maybeUser) {
+          maybeUser = { user: currentSession.user };
+          await setItemAsync(this.userStorage, this.storageKey + "-user", maybeUser);
+        }
+        currentSession.user = (_a = maybeUser === null || maybeUser === void 0 ? void 0 : maybeUser.user) !== null && _a !== void 0 ? _a : userNotAvailableProxy();
+      } else if (currentSession && !currentSession.user) {
+        if (!currentSession.user) {
+          const separateUser = await getItemAsync(this.storage, this.storageKey + "-user");
+          if (separateUser && (separateUser === null || separateUser === void 0 ? void 0 : separateUser.user)) {
+            currentSession.user = separateUser.user;
+            await removeItemAsync(this.storage, this.storageKey + "-user");
+            await setItemAsync(this.storage, this.storageKey, currentSession);
+          } else {
+            currentSession.user = userNotAvailableProxy();
+          }
+        }
+      }
+      this._debug(debugName, "session from storage", currentSession);
+      if (!this._isValidSession(currentSession)) {
+        this._debug(debugName, "session is not valid");
+        if (currentSession !== null) {
+          await this._removeSession();
+        }
+        return;
+      }
+      const expiresWithMargin = ((_b = currentSession.expires_at) !== null && _b !== void 0 ? _b : Infinity) * 1e3 - Date.now() < EXPIRY_MARGIN_MS;
+      this._debug(debugName, `session has${expiresWithMargin ? "" : " not"} expired with margin of ${EXPIRY_MARGIN_MS}s`);
+      if (expiresWithMargin) {
+        if (this.autoRefreshToken && currentSession.refresh_token) {
+          const { error } = await this._callRefreshToken(currentSession.refresh_token);
+          if (error) {
+            console.error(error);
+            if (!isAuthRetryableFetchError(error)) {
+              this._debug(debugName, "refresh failed with a non-retryable error, removing the session", error);
+              await this._removeSession();
+            }
+          }
+        }
+      } else if (currentSession.user && currentSession.user.__isUserNotAvailableProxy === true) {
+        try {
+          const { data, error: userError } = await this._getUser(currentSession.access_token);
+          if (!userError && (data === null || data === void 0 ? void 0 : data.user)) {
+            currentSession.user = data.user;
+            await this._saveSession(currentSession);
+            await this._notifyAllSubscribers("SIGNED_IN", currentSession);
+          } else {
+            this._debug(debugName, "could not get user data, skipping SIGNED_IN notification");
+          }
+        } catch (getUserError) {
+          console.error("Error getting user data:", getUserError);
+          this._debug(debugName, "error getting user data, skipping SIGNED_IN notification", getUserError);
+        }
+      } else {
+        await this._notifyAllSubscribers("SIGNED_IN", currentSession);
+      }
+    } catch (err) {
+      this._debug(debugName, "error", err);
+      console.error(err);
+      return;
+    } finally {
+      this._debug(debugName, "end");
+    }
+  }
+  async _callRefreshToken(refreshToken) {
+    var _a, _b;
+    if (!refreshToken) {
+      throw new AuthSessionMissingError();
+    }
+    if (this.refreshingDeferred) {
+      return this.refreshingDeferred.promise;
+    }
+    const debugName = `#_callRefreshToken(${refreshToken.substring(0, 5)}...)`;
+    this._debug(debugName, "begin");
+    try {
+      this.refreshingDeferred = new Deferred();
+      const { data, error } = await this._refreshAccessToken(refreshToken);
+      if (error)
+        throw error;
+      if (!data.session)
+        throw new AuthSessionMissingError();
+      await this._saveSession(data.session);
+      await this._notifyAllSubscribers("TOKEN_REFRESHED", data.session);
+      const result = { data: data.session, error: null };
+      this.refreshingDeferred.resolve(result);
+      return result;
+    } catch (error) {
+      this._debug(debugName, "error", error);
+      if (isAuthError(error)) {
+        const result = { data: null, error };
+        if (!isAuthRetryableFetchError(error)) {
+          await this._removeSession();
+        }
+        (_a = this.refreshingDeferred) === null || _a === void 0 ? void 0 : _a.resolve(result);
+        return result;
+      }
+      (_b = this.refreshingDeferred) === null || _b === void 0 ? void 0 : _b.reject(error);
+      throw error;
+    } finally {
+      this.refreshingDeferred = null;
+      this._debug(debugName, "end");
+    }
+  }
+  async _notifyAllSubscribers(event, session, broadcast = true) {
+    const debugName = `#_notifyAllSubscribers(${event})`;
+    this._debug(debugName, "begin", session, `broadcast = ${broadcast}`);
+    try {
+      if (this.broadcastChannel && broadcast) {
+        this.broadcastChannel.postMessage({ event, session });
+      }
+      const errors = [];
+      const promises = Array.from(this.stateChangeEmitters.values()).map(async (x) => {
+        try {
+          await x.callback(event, session);
+        } catch (e) {
+          errors.push(e);
+        }
+      });
+      await Promise.all(promises);
+      if (errors.length > 0) {
+        for (let i = 0; i < errors.length; i += 1) {
+          console.error(errors[i]);
+        }
+        throw errors[0];
+      }
+    } finally {
+      this._debug(debugName, "end");
+    }
+  }
+  /**
+   * set currentSession and currentUser
+   * process to _startAutoRefreshToken if possible
+   */
+  async _saveSession(session) {
+    this._debug("#_saveSession()", session);
+    this.suppressGetSessionWarning = true;
+    await removeItemAsync(this.storage, `${this.storageKey}-code-verifier`);
+    const sessionToProcess = Object.assign({}, session);
+    const userIsProxy = sessionToProcess.user && sessionToProcess.user.__isUserNotAvailableProxy === true;
+    if (this.userStorage) {
+      if (!userIsProxy && sessionToProcess.user) {
+        await setItemAsync(this.userStorage, this.storageKey + "-user", {
+          user: sessionToProcess.user
+        });
+      }
+      const mainSessionData = Object.assign({}, sessionToProcess);
+      delete mainSessionData.user;
+      const clonedMainSessionData = deepClone(mainSessionData);
+      await setItemAsync(this.storage, this.storageKey, clonedMainSessionData);
+    } else {
+      const clonedSession = deepClone(sessionToProcess);
+      await setItemAsync(this.storage, this.storageKey, clonedSession);
+    }
+  }
+  async _removeSession() {
+    this._debug("#_removeSession()");
+    this.suppressGetSessionWarning = false;
+    await removeItemAsync(this.storage, this.storageKey);
+    await removeItemAsync(this.storage, this.storageKey + "-code-verifier");
+    await removeItemAsync(this.storage, this.storageKey + "-user");
+    if (this.userStorage) {
+      await removeItemAsync(this.userStorage, this.storageKey + "-user");
+    }
+    await this._notifyAllSubscribers("SIGNED_OUT", null);
+  }
+  /**
+   * Removes any registered visibilitychange callback.
+   *
+   * {@see #startAutoRefresh}
+   * {@see #stopAutoRefresh}
+   */
+  _removeVisibilityChangedCallback() {
+    this._debug("#_removeVisibilityChangedCallback()");
+    const callback = this.visibilityChangedCallback;
+    this.visibilityChangedCallback = null;
+    try {
+      if (callback && isBrowser() && (window === null || window === void 0 ? void 0 : window.removeEventListener)) {
+        window.removeEventListener("visibilitychange", callback);
+      }
+    } catch (e) {
+      console.error("removing visibilitychange callback failed", e);
+    }
+  }
+  /**
+   * This is the private implementation of {@link #startAutoRefresh}. Use this
+   * within the library.
+   */
+  async _startAutoRefresh() {
+    await this._stopAutoRefresh();
+    this._debug("#_startAutoRefresh()");
+    const ticker = setInterval(() => this._autoRefreshTokenTick(), AUTO_REFRESH_TICK_DURATION_MS);
+    this.autoRefreshTicker = ticker;
+    if (ticker && typeof ticker === "object" && typeof ticker.unref === "function") {
+      ticker.unref();
+    } else if (typeof Deno !== "undefined" && typeof Deno.unrefTimer === "function") {
+      Deno.unrefTimer(ticker);
+    }
+    setTimeout(async () => {
+      await this.initializePromise;
+      await this._autoRefreshTokenTick();
+    }, 0);
+  }
+  /**
+   * This is the private implementation of {@link #stopAutoRefresh}. Use this
+   * within the library.
+   */
+  async _stopAutoRefresh() {
+    this._debug("#_stopAutoRefresh()");
+    const ticker = this.autoRefreshTicker;
+    this.autoRefreshTicker = null;
+    if (ticker) {
+      clearInterval(ticker);
+    }
+  }
+  /**
+   * Starts an auto-refresh process in the background. The session is checked
+   * every few seconds. Close to the time of expiration a process is started to
+   * refresh the session. If refreshing fails it will be retried for as long as
+   * necessary.
+   *
+   * If you set the {@link GoTrueClientOptions#autoRefreshToken} you don't need
+   * to call this function, it will be called for you.
+   *
+   * On browsers the refresh process works only when the tab/window is in the
+   * foreground to conserve resources as well as prevent race conditions and
+   * flooding auth with requests. If you call this method any managed
+   * visibility change callback will be removed and you must manage visibility
+   * changes on your own.
+   *
+   * On non-browser platforms the refresh process works *continuously* in the
+   * background, which may not be desirable. You should hook into your
+   * platform's foreground indication mechanism and call these methods
+   * appropriately to conserve resources.
+   *
+   * {@see #stopAutoRefresh}
+   */
+  async startAutoRefresh() {
+    this._removeVisibilityChangedCallback();
+    await this._startAutoRefresh();
+  }
+  /**
+   * Stops an active auto refresh process running in the background (if any).
+   *
+   * If you call this method any managed visibility change callback will be
+   * removed and you must manage visibility changes on your own.
+   *
+   * See {@link #startAutoRefresh} for more details.
+   */
+  async stopAutoRefresh() {
+    this._removeVisibilityChangedCallback();
+    await this._stopAutoRefresh();
+  }
+  /**
+   * Runs the auto refresh token tick.
+   */
+  async _autoRefreshTokenTick() {
+    this._debug("#_autoRefreshTokenTick()", "begin");
+    try {
+      await this._acquireLock(0, async () => {
+        try {
+          const now = Date.now();
+          try {
+            return await this._useSession(async (result) => {
+              const { data: { session } } = result;
+              if (!session || !session.refresh_token || !session.expires_at) {
+                this._debug("#_autoRefreshTokenTick()", "no session");
+                return;
+              }
+              const expiresInTicks = Math.floor((session.expires_at * 1e3 - now) / AUTO_REFRESH_TICK_DURATION_MS);
+              this._debug("#_autoRefreshTokenTick()", `access token expires in ${expiresInTicks} ticks, a tick lasts ${AUTO_REFRESH_TICK_DURATION_MS}ms, refresh threshold is ${AUTO_REFRESH_TICK_THRESHOLD} ticks`);
+              if (expiresInTicks <= AUTO_REFRESH_TICK_THRESHOLD) {
+                await this._callRefreshToken(session.refresh_token);
+              }
+            });
+          } catch (e) {
+            console.error("Auto refresh tick failed with error. This is likely a transient error.", e);
+          }
+        } finally {
+          this._debug("#_autoRefreshTokenTick()", "end");
+        }
+      });
+    } catch (e) {
+      if (e.isAcquireTimeout || e instanceof LockAcquireTimeoutError) {
+        this._debug("auto refresh token tick lock not available");
+      } else {
+        throw e;
+      }
+    }
+  }
+  /**
+   * Registers callbacks on the browser / platform, which in-turn run
+   * algorithms when the browser window/tab are in foreground. On non-browser
+   * platforms it assumes always foreground.
+   */
+  async _handleVisibilityChange() {
+    this._debug("#_handleVisibilityChange()");
+    if (!isBrowser() || !(window === null || window === void 0 ? void 0 : window.addEventListener)) {
+      if (this.autoRefreshToken) {
+        this.startAutoRefresh();
+      }
+      return false;
+    }
+    try {
+      this.visibilityChangedCallback = async () => await this._onVisibilityChanged(false);
+      window === null || window === void 0 ? void 0 : window.addEventListener("visibilitychange", this.visibilityChangedCallback);
+      await this._onVisibilityChanged(true);
+    } catch (error) {
+      console.error("_handleVisibilityChange", error);
+    }
+  }
+  /**
+   * Callback registered with `window.addEventListener('visibilitychange')`.
+   */
+  async _onVisibilityChanged(calledFromInitialize) {
+    const methodName = `#_onVisibilityChanged(${calledFromInitialize})`;
+    this._debug(methodName, "visibilityState", document.visibilityState);
+    if (document.visibilityState === "visible") {
+      if (this.autoRefreshToken) {
+        this._startAutoRefresh();
+      }
+      if (!calledFromInitialize) {
+        await this.initializePromise;
+        await this._acquireLock(-1, async () => {
+          if (document.visibilityState !== "visible") {
+            this._debug(methodName, "acquired the lock to recover the session, but the browser visibilityState is no longer visible, aborting");
+            return;
+          }
+          await this._recoverAndRefresh();
+        });
+      }
+    } else if (document.visibilityState === "hidden") {
+      if (this.autoRefreshToken) {
+        this._stopAutoRefresh();
+      }
+    }
+  }
+  /**
+   * Generates the relevant login URL for a third-party provider.
+   * @param options.redirectTo A URL or mobile address to send the user to after they are confirmed.
+   * @param options.scopes A space-separated list of scopes granted to the OAuth application.
+   * @param options.queryParams An object of key-value pairs containing query parameters granted to the OAuth application.
+   */
+  async _getUrlForProvider(url2, provider, options) {
+    const urlParams = [`provider=${encodeURIComponent(provider)}`];
+    if (options === null || options === void 0 ? void 0 : options.redirectTo) {
+      urlParams.push(`redirect_to=${encodeURIComponent(options.redirectTo)}`);
+    }
+    if (options === null || options === void 0 ? void 0 : options.scopes) {
+      urlParams.push(`scopes=${encodeURIComponent(options.scopes)}`);
+    }
+    if (this.flowType === "pkce") {
+      const [codeChallenge, codeChallengeMethod] = await getCodeChallengeAndMethod(this.storage, this.storageKey);
+      const flowParams = new URLSearchParams({
+        code_challenge: `${encodeURIComponent(codeChallenge)}`,
+        code_challenge_method: `${encodeURIComponent(codeChallengeMethod)}`
+      });
+      urlParams.push(flowParams.toString());
+    }
+    if (options === null || options === void 0 ? void 0 : options.queryParams) {
+      const query = new URLSearchParams(options.queryParams);
+      urlParams.push(query.toString());
+    }
+    if (options === null || options === void 0 ? void 0 : options.skipBrowserRedirect) {
+      urlParams.push(`skip_http_redirect=${options.skipBrowserRedirect}`);
+    }
+    return `${url2}?${urlParams.join("&")}`;
+  }
+  async _unenroll(params) {
+    try {
+      return await this._useSession(async (result) => {
+        var _a;
+        const { data: sessionData, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        return await _request(this.fetch, "DELETE", `${this.url}/factors/${params.factorId}`, {
+          headers: this.headers,
+          jwt: (_a = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a === void 0 ? void 0 : _a.access_token
+        });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  async _enroll(params) {
+    try {
+      return await this._useSession(async (result) => {
+        var _a, _b;
+        const { data: sessionData, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        const body = Object.assign({ friendly_name: params.friendlyName, factor_type: params.factorType }, params.factorType === "phone" ? { phone: params.phone } : params.factorType === "totp" ? { issuer: params.issuer } : {});
+        const { data, error } = await _request(this.fetch, "POST", `${this.url}/factors`, {
+          body,
+          headers: this.headers,
+          jwt: (_a = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a === void 0 ? void 0 : _a.access_token
+        });
+        if (error) {
+          return this._returnResult({ data: null, error });
+        }
+        if (params.factorType === "totp" && data.type === "totp" && ((_b = data === null || data === void 0 ? void 0 : data.totp) === null || _b === void 0 ? void 0 : _b.qr_code)) {
+          data.totp.qr_code = `data:image/svg+xml;utf-8,${data.totp.qr_code}`;
+        }
+        return this._returnResult({ data, error: null });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  async _verify(params) {
+    return this._acquireLock(-1, async () => {
+      try {
+        return await this._useSession(async (result) => {
+          var _a;
+          const { data: sessionData, error: sessionError } = result;
+          if (sessionError) {
+            return this._returnResult({ data: null, error: sessionError });
+          }
+          const body = Object.assign({ challenge_id: params.challengeId }, "webauthn" in params ? {
+            webauthn: Object.assign(Object.assign({}, params.webauthn), { credential_response: params.webauthn.type === "create" ? serializeCredentialCreationResponse(params.webauthn.credential_response) : serializeCredentialRequestResponse(params.webauthn.credential_response) })
+          } : { code: params.code });
+          const { data, error } = await _request(this.fetch, "POST", `${this.url}/factors/${params.factorId}/verify`, {
+            body,
+            headers: this.headers,
+            jwt: (_a = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a === void 0 ? void 0 : _a.access_token
+          });
+          if (error) {
+            return this._returnResult({ data: null, error });
+          }
+          await this._saveSession(Object.assign({ expires_at: Math.round(Date.now() / 1e3) + data.expires_in }, data));
+          await this._notifyAllSubscribers("MFA_CHALLENGE_VERIFIED", data);
+          return this._returnResult({ data, error });
+        });
+      } catch (error) {
+        if (isAuthError(error)) {
+          return this._returnResult({ data: null, error });
+        }
+        throw error;
+      }
+    });
+  }
+  async _challenge(params) {
+    return this._acquireLock(-1, async () => {
+      try {
+        return await this._useSession(async (result) => {
+          var _a;
+          const { data: sessionData, error: sessionError } = result;
+          if (sessionError) {
+            return this._returnResult({ data: null, error: sessionError });
+          }
+          const response = await _request(this.fetch, "POST", `${this.url}/factors/${params.factorId}/challenge`, {
+            body: params,
+            headers: this.headers,
+            jwt: (_a = sessionData === null || sessionData === void 0 ? void 0 : sessionData.session) === null || _a === void 0 ? void 0 : _a.access_token
+          });
+          if (response.error) {
+            return response;
+          }
+          const { data } = response;
+          if (data.type !== "webauthn") {
+            return { data, error: null };
+          }
+          switch (data.webauthn.type) {
+            case "create":
+              return {
+                data: Object.assign(Object.assign({}, data), { webauthn: Object.assign(Object.assign({}, data.webauthn), { credential_options: Object.assign(Object.assign({}, data.webauthn.credential_options), { publicKey: deserializeCredentialCreationOptions(data.webauthn.credential_options.publicKey) }) }) }),
+                error: null
+              };
+            case "request":
+              return {
+                data: Object.assign(Object.assign({}, data), { webauthn: Object.assign(Object.assign({}, data.webauthn), { credential_options: Object.assign(Object.assign({}, data.webauthn.credential_options), { publicKey: deserializeCredentialRequestOptions(data.webauthn.credential_options.publicKey) }) }) }),
+                error: null
+              };
+          }
+        });
+      } catch (error) {
+        if (isAuthError(error)) {
+          return this._returnResult({ data: null, error });
+        }
+        throw error;
+      }
+    });
+  }
+  /**
+   * {@see GoTrueMFAApi#challengeAndVerify}
+   */
+  async _challengeAndVerify(params) {
+    const { data: challengeData, error: challengeError } = await this._challenge({
+      factorId: params.factorId
+    });
+    if (challengeError) {
+      return this._returnResult({ data: null, error: challengeError });
+    }
+    return await this._verify({
+      factorId: params.factorId,
+      challengeId: challengeData.id,
+      code: params.code
+    });
+  }
+  /**
+   * {@see GoTrueMFAApi#listFactors}
+   */
+  async _listFactors() {
+    var _a;
+    const { data: { user }, error: userError } = await this.getUser();
+    if (userError) {
+      return { data: null, error: userError };
+    }
+    const data = {
+      all: [],
+      phone: [],
+      totp: [],
+      webauthn: []
+    };
+    for (const factor of (_a = user === null || user === void 0 ? void 0 : user.factors) !== null && _a !== void 0 ? _a : []) {
+      data.all.push(factor);
+      if (factor.status === "verified") {
+        data[factor.factor_type].push(factor);
+      }
+    }
+    return {
+      data,
+      error: null
+    };
+  }
+  /**
+   * {@see GoTrueMFAApi#getAuthenticatorAssuranceLevel}
+   */
+  async _getAuthenticatorAssuranceLevel() {
+    var _a, _b;
+    const { data: { session }, error: sessionError } = await this.getSession();
+    if (sessionError) {
+      return this._returnResult({ data: null, error: sessionError });
+    }
+    if (!session) {
+      return {
+        data: { currentLevel: null, nextLevel: null, currentAuthenticationMethods: [] },
+        error: null
+      };
+    }
+    const { payload } = decodeJWT(session.access_token);
+    let currentLevel = null;
+    if (payload.aal) {
+      currentLevel = payload.aal;
+    }
+    let nextLevel = currentLevel;
+    const verifiedFactors = (_b = (_a = session.user.factors) === null || _a === void 0 ? void 0 : _a.filter((factor) => factor.status === "verified")) !== null && _b !== void 0 ? _b : [];
+    if (verifiedFactors.length > 0) {
+      nextLevel = "aal2";
+    }
+    const currentAuthenticationMethods = payload.amr || [];
+    return { data: { currentLevel, nextLevel, currentAuthenticationMethods }, error: null };
+  }
+  /**
+   * Retrieves details about an OAuth authorization request.
+   * Only relevant when the OAuth 2.1 server is enabled in Supabase Auth.
+   *
+   * Returns authorization details including client info, scopes, and user information.
+   * If the API returns a redirect_uri, it means consent was already given - the caller
+   * should handle the redirect manually if needed.
+   */
+  async _getAuthorizationDetails(authorizationId) {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: { session }, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        if (!session) {
+          return this._returnResult({ data: null, error: new AuthSessionMissingError() });
+        }
+        return await _request(this.fetch, "GET", `${this.url}/oauth/authorizations/${authorizationId}`, {
+          headers: this.headers,
+          jwt: session.access_token,
+          xform: (data) => ({ data, error: null })
+        });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Approves an OAuth authorization request.
+   * Only relevant when the OAuth 2.1 server is enabled in Supabase Auth.
+   */
+  async _approveAuthorization(authorizationId, options) {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: { session }, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        if (!session) {
+          return this._returnResult({ data: null, error: new AuthSessionMissingError() });
+        }
+        const response = await _request(this.fetch, "POST", `${this.url}/oauth/authorizations/${authorizationId}/consent`, {
+          headers: this.headers,
+          jwt: session.access_token,
+          body: { action: "approve" },
+          xform: (data) => ({ data, error: null })
+        });
+        if (response.data && response.data.redirect_url) {
+          if (isBrowser() && !(options === null || options === void 0 ? void 0 : options.skipBrowserRedirect)) {
+            window.location.assign(response.data.redirect_url);
+          }
+        }
+        return response;
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Denies an OAuth authorization request.
+   * Only relevant when the OAuth 2.1 server is enabled in Supabase Auth.
+   */
+  async _denyAuthorization(authorizationId, options) {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: { session }, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        if (!session) {
+          return this._returnResult({ data: null, error: new AuthSessionMissingError() });
+        }
+        const response = await _request(this.fetch, "POST", `${this.url}/oauth/authorizations/${authorizationId}/consent`, {
+          headers: this.headers,
+          jwt: session.access_token,
+          body: { action: "deny" },
+          xform: (data) => ({ data, error: null })
+        });
+        if (response.data && response.data.redirect_url) {
+          if (isBrowser() && !(options === null || options === void 0 ? void 0 : options.skipBrowserRedirect)) {
+            window.location.assign(response.data.redirect_url);
+          }
+        }
+        return response;
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Lists all OAuth grants that the authenticated user has authorized.
+   * Only relevant when the OAuth 2.1 server is enabled in Supabase Auth.
+   */
+  async _listOAuthGrants() {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: { session }, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        if (!session) {
+          return this._returnResult({ data: null, error: new AuthSessionMissingError() });
+        }
+        return await _request(this.fetch, "GET", `${this.url}/user/oauth/grants`, {
+          headers: this.headers,
+          jwt: session.access_token,
+          xform: (data) => ({ data, error: null })
+        });
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  /**
+   * Revokes a user's OAuth grant for a specific client.
+   * Only relevant when the OAuth 2.1 server is enabled in Supabase Auth.
+   */
+  async _revokeOAuthGrant(options) {
+    try {
+      return await this._useSession(async (result) => {
+        const { data: { session }, error: sessionError } = result;
+        if (sessionError) {
+          return this._returnResult({ data: null, error: sessionError });
+        }
+        if (!session) {
+          return this._returnResult({ data: null, error: new AuthSessionMissingError() });
+        }
+        await _request(this.fetch, "DELETE", `${this.url}/user/oauth/grants`, {
+          headers: this.headers,
+          jwt: session.access_token,
+          query: { client_id: options.clientId },
+          noResolveJson: true
+        });
+        return { data: {}, error: null };
+      });
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+  async fetchJwk(kid, jwks = { keys: [] }) {
+    let jwk = jwks.keys.find((key) => key.kid === kid);
+    if (jwk) {
+      return jwk;
+    }
+    const now = Date.now();
+    jwk = this.jwks.keys.find((key) => key.kid === kid);
+    if (jwk && this.jwks_cached_at + JWKS_TTL > now) {
+      return jwk;
+    }
+    const { data, error } = await _request(this.fetch, "GET", `${this.url}/.well-known/jwks.json`, {
+      headers: this.headers
+    });
+    if (error) {
+      throw error;
+    }
+    if (!data.keys || data.keys.length === 0) {
+      return null;
+    }
+    this.jwks = data;
+    this.jwks_cached_at = now;
+    jwk = data.keys.find((key) => key.kid === kid);
+    if (!jwk) {
+      return null;
+    }
+    return jwk;
+  }
+  /**
+   * Extracts the JWT claims present in the access token by first verifying the
+   * JWT against the server's JSON Web Key Set endpoint
+   * `/.well-known/jwks.json` which is often cached, resulting in significantly
+   * faster responses. Prefer this method over {@link #getUser} which always
+   * sends a request to the Auth server for each JWT.
+   *
+   * If the project is not using an asymmetric JWT signing key (like ECC or
+   * RSA) it always sends a request to the Auth server (similar to {@link
+   * #getUser}) to verify the JWT.
+   *
+   * @param jwt An optional specific JWT you wish to verify, not the one you
+   *            can obtain from {@link #getSession}.
+   * @param options Various additional options that allow you to customize the
+   *                behavior of this method.
+   */
+  async getClaims(jwt, options = {}) {
+    try {
+      let token = jwt;
+      if (!token) {
+        const { data, error } = await this.getSession();
+        if (error || !data.session) {
+          return this._returnResult({ data: null, error });
+        }
+        token = data.session.access_token;
+      }
+      const { header, payload, signature, raw: { header: rawHeader, payload: rawPayload } } = decodeJWT(token);
+      if (!(options === null || options === void 0 ? void 0 : options.allowExpired)) {
+        validateExp(payload.exp);
+      }
+      const signingKey = !header.alg || header.alg.startsWith("HS") || !header.kid || !("crypto" in globalThis && "subtle" in globalThis.crypto) ? null : await this.fetchJwk(header.kid, (options === null || options === void 0 ? void 0 : options.keys) ? { keys: options.keys } : options === null || options === void 0 ? void 0 : options.jwks);
+      if (!signingKey) {
+        const { error } = await this.getUser(token);
+        if (error) {
+          throw error;
+        }
+        return {
+          data: {
+            claims: payload,
+            header,
+            signature
+          },
+          error: null
+        };
+      }
+      const algorithm = getAlgorithm(header.alg);
+      const publicKey = await crypto.subtle.importKey("jwk", signingKey, algorithm, true, [
+        "verify"
+      ]);
+      const isValid = await crypto.subtle.verify(algorithm, publicKey, signature, stringToUint8Array(`${rawHeader}.${rawPayload}`));
+      if (!isValid) {
+        throw new AuthInvalidJwtError("Invalid JWT signature");
+      }
+      return {
+        data: {
+          claims: payload,
+          header,
+          signature
+        },
+        error: null
+      };
+    } catch (error) {
+      if (isAuthError(error)) {
+        return this._returnResult({ data: null, error });
+      }
+      throw error;
+    }
+  }
+}
+GoTrueClient.nextInstanceID = {};
+const AuthClient = GoTrueClient;
+const version = "2.89.0";
+let JS_ENV = "";
+if (typeof Deno !== "undefined") JS_ENV = "deno";
+else if (typeof document !== "undefined") JS_ENV = "web";
+else if (typeof navigator !== "undefined" && navigator.product === "ReactNative") JS_ENV = "react-native";
+else JS_ENV = "node";
+const DEFAULT_HEADERS = { "X-Client-Info": `supabase-js-${JS_ENV}/${version}` };
+const DEFAULT_GLOBAL_OPTIONS = { headers: DEFAULT_HEADERS };
+const DEFAULT_DB_OPTIONS = { schema: "public" };
+const DEFAULT_AUTH_OPTIONS = {
+  autoRefreshToken: true,
+  persistSession: true,
+  detectSessionInUrl: true,
+  flowType: "implicit"
+};
+const DEFAULT_REALTIME_OPTIONS = {};
+function _typeof(o) {
+  "@babel/helpers - typeof";
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o$1) {
+    return typeof o$1;
+  } : function(o$1) {
+    return o$1 && "function" == typeof Symbol && o$1.constructor === Symbol && o$1 !== Symbol.prototype ? "symbol" : typeof o$1;
+  }, _typeof(o);
+}
+function toPrimitive(t, r) {
+  if ("object" != _typeof(t) || !t) return t;
+  var e = t[Symbol.toPrimitive];
+  if (void 0 !== e) {
+    var i = e.call(t, r);
+    if ("object" != _typeof(i)) return i;
+    throw new TypeError("@@toPrimitive must return a primitive value.");
+  }
+  return ("string" === r ? String : Number)(t);
+}
+function toPropertyKey(t) {
+  var i = toPrimitive(t, "string");
+  return "symbol" == _typeof(i) ? i : i + "";
+}
+function _defineProperty(e, r, t) {
+  return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: true,
+    configurable: true,
+    writable: true
+  }) : e[r] = t, e;
+}
+function ownKeys(e, r) {
+  var t = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var o = Object.getOwnPropertySymbols(e);
+    r && (o = o.filter(function(r$1) {
+      return Object.getOwnPropertyDescriptor(e, r$1).enumerable;
+    })), t.push.apply(t, o);
+  }
+  return t;
+}
+function _objectSpread2(e) {
+  for (var r = 1; r < arguments.length; r++) {
+    var t = null != arguments[r] ? arguments[r] : {};
+    r % 2 ? ownKeys(Object(t), true).forEach(function(r$1) {
+      _defineProperty(e, r$1, t[r$1]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r$1) {
+      Object.defineProperty(e, r$1, Object.getOwnPropertyDescriptor(t, r$1));
+    });
+  }
+  return e;
+}
+const resolveFetch = (customFetch) => {
+  if (customFetch) return (...args) => customFetch(...args);
+  return (...args) => fetch(...args);
+};
+const resolveHeadersConstructor = () => {
+  return Headers;
+};
+const fetchWithAuth = (supabaseKey, getAccessToken, customFetch) => {
+  const fetch$1 = resolveFetch(customFetch);
+  const HeadersConstructor = resolveHeadersConstructor();
+  return async (input, init) => {
+    var _await$getAccessToken;
+    const accessToken = (_await$getAccessToken = await getAccessToken()) !== null && _await$getAccessToken !== void 0 ? _await$getAccessToken : supabaseKey;
+    let headers = new HeadersConstructor(init === null || init === void 0 ? void 0 : init.headers);
+    if (!headers.has("apikey")) headers.set("apikey", supabaseKey);
+    if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${accessToken}`);
+    return fetch$1(input, _objectSpread2(_objectSpread2({}, init), {}, { headers }));
+  };
+};
+function ensureTrailingSlash(url2) {
+  return url2.endsWith("/") ? url2 : url2 + "/";
+}
+function applySettingDefaults(options, defaults) {
+  var _DEFAULT_GLOBAL_OPTIO, _globalOptions$header;
+  const { db: dbOptions, auth: authOptions, realtime: realtimeOptions, global: globalOptions } = options;
+  const { db: DEFAULT_DB_OPTIONS$1, auth: DEFAULT_AUTH_OPTIONS$1, realtime: DEFAULT_REALTIME_OPTIONS$1, global: DEFAULT_GLOBAL_OPTIONS$1 } = defaults;
+  const result = {
+    db: _objectSpread2(_objectSpread2({}, DEFAULT_DB_OPTIONS$1), dbOptions),
+    auth: _objectSpread2(_objectSpread2({}, DEFAULT_AUTH_OPTIONS$1), authOptions),
+    realtime: _objectSpread2(_objectSpread2({}, DEFAULT_REALTIME_OPTIONS$1), realtimeOptions),
+    storage: {},
+    global: _objectSpread2(_objectSpread2(_objectSpread2({}, DEFAULT_GLOBAL_OPTIONS$1), globalOptions), {}, { headers: _objectSpread2(_objectSpread2({}, (_DEFAULT_GLOBAL_OPTIO = DEFAULT_GLOBAL_OPTIONS$1 === null || DEFAULT_GLOBAL_OPTIONS$1 === void 0 ? void 0 : DEFAULT_GLOBAL_OPTIONS$1.headers) !== null && _DEFAULT_GLOBAL_OPTIO !== void 0 ? _DEFAULT_GLOBAL_OPTIO : {}), (_globalOptions$header = globalOptions === null || globalOptions === void 0 ? void 0 : globalOptions.headers) !== null && _globalOptions$header !== void 0 ? _globalOptions$header : {}) }),
+    accessToken: async () => ""
+  };
+  if (options.accessToken) result.accessToken = options.accessToken;
+  else delete result.accessToken;
+  return result;
+}
+function validateSupabaseUrl(supabaseUrl) {
+  const trimmedUrl = supabaseUrl === null || supabaseUrl === void 0 ? void 0 : supabaseUrl.trim();
+  if (!trimmedUrl) throw new Error("supabaseUrl is required.");
+  if (!trimmedUrl.match(/^https?:\/\//i)) throw new Error("Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.");
+  try {
+    return new URL(ensureTrailingSlash(trimmedUrl));
+  } catch (_unused) {
+    throw Error("Invalid supabaseUrl: Provided URL is malformed.");
+  }
+}
+var SupabaseAuthClient = class extends AuthClient {
+  constructor(options) {
+    super(options);
+  }
+};
+var SupabaseClient = class {
+  /**
+  * Create a new client for use in the browser.
+  * @param supabaseUrl The unique Supabase URL which is supplied when you create a new project in your project dashboard.
+  * @param supabaseKey The unique Supabase Key which is supplied when you create a new project in your project dashboard.
+  * @param options.db.schema You can switch in between schemas. The schema needs to be on the list of exposed schemas inside Supabase.
+  * @param options.auth.autoRefreshToken Set to "true" if you want to automatically refresh the token before expiring.
+  * @param options.auth.persistSession Set to "true" if you want to automatically save the user session into local storage.
+  * @param options.auth.detectSessionInUrl Set to "true" if you want to automatically detects OAuth grants in the URL and signs in the user.
+  * @param options.realtime Options passed along to realtime-js constructor.
+  * @param options.storage Options passed along to the storage-js constructor.
+  * @param options.global.fetch A custom fetch implementation.
+  * @param options.global.headers Any additional headers to send with each network request.
+  * @example
+  * ```ts
+  * import { createClient } from '@supabase/supabase-js'
+  *
+  * const supabase = createClient('https://xyzcompany.supabase.co', 'public-anon-key')
+  * const { data } = await supabase.from('profiles').select('*')
+  * ```
+  */
+  constructor(supabaseUrl, supabaseKey, options) {
+    var _settings$auth$storag, _settings$global$head;
+    this.supabaseUrl = supabaseUrl;
+    this.supabaseKey = supabaseKey;
+    const baseUrl = validateSupabaseUrl(supabaseUrl);
+    if (!supabaseKey) throw new Error("supabaseKey is required.");
+    this.realtimeUrl = new URL("realtime/v1", baseUrl);
+    this.realtimeUrl.protocol = this.realtimeUrl.protocol.replace("http", "ws");
+    this.authUrl = new URL("auth/v1", baseUrl);
+    this.storageUrl = new URL("storage/v1", baseUrl);
+    this.functionsUrl = new URL("functions/v1", baseUrl);
+    const defaultStorageKey = `sb-${baseUrl.hostname.split(".")[0]}-auth-token`;
+    const DEFAULTS = {
+      db: DEFAULT_DB_OPTIONS,
+      realtime: DEFAULT_REALTIME_OPTIONS,
+      auth: _objectSpread2(_objectSpread2({}, DEFAULT_AUTH_OPTIONS), {}, { storageKey: defaultStorageKey }),
+      global: DEFAULT_GLOBAL_OPTIONS
+    };
+    const settings = applySettingDefaults(options !== null && options !== void 0 ? options : {}, DEFAULTS);
+    this.storageKey = (_settings$auth$storag = settings.auth.storageKey) !== null && _settings$auth$storag !== void 0 ? _settings$auth$storag : "";
+    this.headers = (_settings$global$head = settings.global.headers) !== null && _settings$global$head !== void 0 ? _settings$global$head : {};
+    if (!settings.accessToken) {
+      var _settings$auth;
+      this.auth = this._initSupabaseAuthClient((_settings$auth = settings.auth) !== null && _settings$auth !== void 0 ? _settings$auth : {}, this.headers, settings.global.fetch);
+    } else {
+      this.accessToken = settings.accessToken;
+      this.auth = new Proxy({}, { get: (_, prop) => {
+        throw new Error(`@supabase/supabase-js: Supabase Client is configured with the accessToken option, accessing supabase.auth.${String(prop)} is not possible`);
+      } });
+    }
+    this.fetch = fetchWithAuth(supabaseKey, this._getAccessToken.bind(this), settings.global.fetch);
+    this.realtime = this._initRealtimeClient(_objectSpread2({
+      headers: this.headers,
+      accessToken: this._getAccessToken.bind(this)
+    }, settings.realtime));
+    if (this.accessToken) this.accessToken().then((token) => this.realtime.setAuth(token)).catch((e) => console.warn("Failed to set initial Realtime auth token:", e));
+    this.rest = new PostgrestClient(new URL("rest/v1", baseUrl).href, {
+      headers: this.headers,
+      schema: settings.db.schema,
+      fetch: this.fetch
+    });
+    this.storage = new StorageClient(this.storageUrl.href, this.headers, this.fetch, options === null || options === void 0 ? void 0 : options.storage);
+    if (!settings.accessToken) this._listenForAuthEvents();
+  }
+  /**
+  * Supabase Functions allows you to deploy and invoke edge functions.
+  */
+  get functions() {
+    return new FunctionsClient(this.functionsUrl.href, {
+      headers: this.headers,
+      customFetch: this.fetch
+    });
+  }
+  /**
+  * Perform a query on a table or a view.
+  *
+  * @param relation - The table or view name to query
+  */
+  from(relation) {
+    return this.rest.from(relation);
+  }
+  /**
+  * Select a schema to query or perform an function (rpc) call.
+  *
+  * The schema needs to be on the list of exposed schemas inside Supabase.
+  *
+  * @param schema - The schema to query
+  */
+  schema(schema) {
+    return this.rest.schema(schema);
+  }
+  /**
+  * Perform a function call.
+  *
+  * @param fn - The function name to call
+  * @param args - The arguments to pass to the function call
+  * @param options - Named parameters
+  * @param options.head - When set to `true`, `data` will not be returned.
+  * Useful if you only need the count.
+  * @param options.get - When set to `true`, the function will be called with
+  * read-only access mode.
+  * @param options.count - Count algorithm to use to count rows returned by the
+  * function. Only applicable for [set-returning
+  * functions](https://www.postgresql.org/docs/current/functions-srf.html).
+  *
+  * `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
+  * hood.
+  *
+  * `"planned"`: Approximated but fast count algorithm. Uses the Postgres
+  * statistics under the hood.
+  *
+  * `"estimated"`: Uses exact count for low numbers and planned count for high
+  * numbers.
+  */
+  rpc(fn, args = {}, options = {
+    head: false,
+    get: false,
+    count: void 0
+  }) {
+    return this.rest.rpc(fn, args, options);
+  }
+  /**
+  * Creates a Realtime channel with Broadcast, Presence, and Postgres Changes.
+  *
+  * @param {string} name - The name of the Realtime channel.
+  * @param {Object} opts - The options to pass to the Realtime channel.
+  *
+  */
+  channel(name, opts = { config: {} }) {
+    return this.realtime.channel(name, opts);
+  }
+  /**
+  * Returns all Realtime channels.
+  */
+  getChannels() {
+    return this.realtime.getChannels();
+  }
+  /**
+  * Unsubscribes and removes Realtime channel from Realtime client.
+  *
+  * @param {RealtimeChannel} channel - The name of the Realtime channel.
+  *
+  */
+  removeChannel(channel) {
+    return this.realtime.removeChannel(channel);
+  }
+  /**
+  * Unsubscribes and removes all Realtime channels from Realtime client.
+  */
+  removeAllChannels() {
+    return this.realtime.removeAllChannels();
+  }
+  async _getAccessToken() {
+    var _this = this;
+    var _data$session$access_, _data$session;
+    if (_this.accessToken) return await _this.accessToken();
+    const { data } = await _this.auth.getSession();
+    return (_data$session$access_ = (_data$session = data.session) === null || _data$session === void 0 ? void 0 : _data$session.access_token) !== null && _data$session$access_ !== void 0 ? _data$session$access_ : _this.supabaseKey;
+  }
+  _initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, userStorage, storageKey, flowType, lock, debug, throwOnError }, headers, fetch$1) {
+    const authHeaders = {
+      Authorization: `Bearer ${this.supabaseKey}`,
+      apikey: `${this.supabaseKey}`
+    };
+    return new SupabaseAuthClient({
+      url: this.authUrl.href,
+      headers: _objectSpread2(_objectSpread2({}, authHeaders), headers),
+      storageKey,
+      autoRefreshToken,
+      persistSession,
+      detectSessionInUrl,
+      storage,
+      userStorage,
+      flowType,
+      lock,
+      debug,
+      throwOnError,
+      fetch: fetch$1,
+      hasCustomAuthorizationHeader: Object.keys(this.headers).some((key) => key.toLowerCase() === "authorization")
+    });
+  }
+  _initRealtimeClient(options) {
+    return new RealtimeClient(this.realtimeUrl.href, _objectSpread2(_objectSpread2({}, options), {}, { params: _objectSpread2(_objectSpread2({}, { apikey: this.supabaseKey }), options === null || options === void 0 ? void 0 : options.params) }));
+  }
+  _listenForAuthEvents() {
+    return this.auth.onAuthStateChange((event, session) => {
+      this._handleTokenChanged(event, "CLIENT", session === null || session === void 0 ? void 0 : session.access_token);
+    });
+  }
+  _handleTokenChanged(event, source, token) {
+    if ((event === "TOKEN_REFRESHED" || event === "SIGNED_IN") && this.changedAccessToken !== token) {
+      this.changedAccessToken = token;
+      this.realtime.setAuth(token);
+    } else if (event === "SIGNED_OUT") {
+      this.realtime.setAuth();
+      if (source == "STORAGE") this.auth.signOut();
+      this.changedAccessToken = void 0;
+    }
+  }
+};
+const createClient = (supabaseUrl, supabaseKey, options) => {
+  return new SupabaseClient(supabaseUrl, supabaseKey, options);
+};
+function shouldShowDeprecationWarning() {
+  if (typeof window !== "undefined") return false;
+  if (typeof process === "undefined") return false;
+  const processVersion = process["version"];
+  if (processVersion === void 0 || processVersion === null) return false;
+  const versionMatch = processVersion.match(/^v(\d+)\./);
+  if (!versionMatch) return false;
+  return parseInt(versionMatch[1], 10) <= 18;
+}
+if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
+const SUPABASE_URL = "https://mrqsiucmkonrfmikecxm.supabase.co";
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ycXNpdWNta29ucmZtaWtlY3htIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIxMDYzMSwiZXhwIjoyMDgxNzg2NjMxfQ.h8AX6ZXrrvsLmkqKjTbRqp7plcr33brduvJcd-8u11U";
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY
+);
+let monitoringActive = false;
+function setupPrinterHandlers(mainWindow2) {
+  electron.ipcMain.handle("printer:detect-system", async () => {
+    try {
+      console.log("[IPC] Detecting system printers...");
+      const printers = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Found ${printers.length} system printers`);
+      printers.forEach((p) => {
+        console.log(`  - ${p.name} (${p.status})`);
+      });
+      return { success: true, printers };
+    } catch (error) {
+      console.error("[IPC] Error detecting printers:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  electron.ipcMain.handle("printer:get-status", async (_, printerName) => {
+    try {
+      const status = await printerService.getPrinterStatus(printerName);
+      return { success: true, status };
+    } catch (error) {
+      console.error("[IPC] Error getting printer status:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  electron.ipcMain.handle("printer:start-monitoring", async (_, { shopId }) => {
+    try {
+      if (monitoringActive) {
+        console.log("[IPC] Monitoring already active");
+        return { success: true, message: "Already monitoring" };
+      }
+      console.log("[IPC] Starting printer monitoring for shop:", shopId);
+      console.log("[IPC] Fetching printers from database...");
+      console.log("[IPC] Shop ID:", shopId);
+      const { data: registeredPrinters, error } = await supabase.from("shop_printers").select("*").eq("shop_id", shopId);
+      console.log("[IPC] Database query result:");
+      console.log("[IPC]   - Error:", error);
+      console.log("[IPC]   - Data:", registeredPrinters);
+      console.log("[IPC]   - Count:", (registeredPrinters == null ? void 0 : registeredPrinters.length) || 0);
+      if (error) {
+        console.error("[IPC] Database error details:", error);
+        throw new Error(`Failed to fetch printers: ${error.message}`);
+      }
+      if (!registeredPrinters || registeredPrinters.length === 0) {
+        console.log("[IPC] No registered printers found");
+        return {
+          success: true,
+          message: "No printers registered yet",
+          printers: []
+        };
+      }
+      console.log(`[IPC] Found ${registeredPrinters.length} registered printers in database`);
+      console.log("[IPC] Performing immediate printer detection...");
+      const systemPrinters = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Immediate detection found ${systemPrinters.length} system printers`);
+      const initialPrinters = printerService.mapToAppPrinters(
+        systemPrinters,
+        registeredPrinters
+      );
+      await updatePrintersInDatabase(initialPrinters);
+      mainWindow2.webContents.send("printer:status-changed", initialPrinters);
+      console.log("[IPC] Initial printer status sent to renderer");
+      printerService.startMonitoring(
+        registeredPrinters,
+        async (updatedPrinters) => {
+          console.log("[IPC] Printer status changed during monitoring, updating database...");
+          await updatePrintersInDatabase(updatedPrinters);
+          mainWindow2.webContents.send("printer:status-changed", updatedPrinters);
+        },
+        1e4
+        // Check every 10 seconds
+      );
+      monitoringActive = true;
+      return {
+        success: true,
+        message: "Monitoring started",
+        printers: initialPrinters
+        // Return the synced printers
+      };
+    } catch (error) {
+      console.error("[IPC] Error starting monitoring:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  electron.ipcMain.handle("printer:stop-monitoring", async () => {
+    try {
+      console.log("[IPC] Stopping printer monitoring...");
+      printerService.stopMonitoring();
+      monitoringActive = false;
+      return { success: true };
+    } catch (error) {
+      console.error("[IPC] Error stopping monitoring:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  electron.ipcMain.handle("printer:sync-status", async (_, { shopId }) => {
+    try {
+      console.log("[IPC] Manual sync requested for shop:", shopId);
+      const { data: registeredPrinters, error: fetchError } = await supabase.from("shop_printers").select("*").eq("shop_id", shopId);
+      if (fetchError) throw fetchError;
+      if (!registeredPrinters || registeredPrinters.length === 0) {
+        return { success: true, printers: [] };
+      }
+      console.log(`[IPC] Syncing ${registeredPrinters.length} printers...`);
+      const systemPrinters = await printerService.detectSystemPrinters();
+      console.log(`[IPC] Found ${systemPrinters.length} system printers`);
+      const updatedPrinters = printerService.mapToAppPrinters(
+        systemPrinters,
+        registeredPrinters
+      );
+      updatedPrinters.forEach((p) => {
+        console.log(`  - ${p.printer_name}: ${p.status}`);
+      });
+      await updatePrintersInDatabase(updatedPrinters);
+      return { success: true, printers: updatedPrinters };
+    } catch (error) {
+      console.error("[IPC] Error syncing printer status:", error);
+      return { success: false, error: error.message };
+    }
+  });
+}
+async function updatePrintersInDatabase(printers) {
+  try {
+    console.log(`[DB] Updating ${printers.length} printers in database...`);
+    for (const printer of printers) {
+      console.log(`[DB] Updating ${printer.printer_name}: ${printer.status}`);
+      const { error } = await supabase.from("shop_printers").update({
+        status: printer.status,
+        last_heartbeat: printer.last_heartbeat
+      }).eq("id", printer.id);
+      if (error) {
+        console.error(`[DB] Error updating printer ${printer.printer_name}:`, error);
+      } else {
+        console.log(`[DB] ✓ Updated ${printer.printer_name} to ${printer.status}`);
+      }
+    }
+    console.log(`[DB] ✅ Successfully updated all ${printers.length} printers`);
+  } catch (error) {
+    console.error("[DB] Error updating printers:", error);
+  }
+}
+function cleanupPrinterHandlers() {
+  printerService.stopMonitoring();
+  monitoringActive = false;
+}
+async function printFile(job, fallbackPrinters = []) {
+  if (!(job == null ? void 0 : job.filePath)) {
+    throw new Error("Missing filePath for print job");
+  }
+  const appPrinters = job.availablePrinters && job.availablePrinters.length > 0 ? job.availablePrinters : fallbackPrinters;
+  console.log("[Print] Job started", {
+    orderId: job.orderId,
+    itemId: job.itemId,
+    filePath: job.filePath,
+    colorMode: job.colorMode
+  });
+  logAvailablePrinters(appPrinters);
+  const requestedMode = normalizeMode(job.colorMode);
+  const targetPrinter = selectPrinter(appPrinters, requestedMode);
+  if (!targetPrinter) {
+    const label = requestedMode ? requestedMode : "any";
+    throw new Error(`No online ${label} printer available`);
+  }
+  const systemPrinters = await printerService.detectSystemPrinters();
+  logSystemPrinters(systemPrinters);
+  const systemMatch = systemPrinters.find(
+    (printer) => printer.name.toLowerCase() === targetPrinter.printer_name.toLowerCase()
+  );
+  if (!systemMatch || systemMatch.status !== "online") {
+    throw new Error(
+      `Printer not available on system: ${targetPrinter.printer_name}`
+    );
+  }
+  console.log("[Print] Selected printer:", targetPrinter.printer_name);
+  const win = new electron.BrowserWindow({
+    show: false
+  });
+  try {
+    const fileUrl = url.pathToFileURL(job.filePath).toString();
+    await win.loadURL(fileUrl);
+    await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
+    console.log("[Print] Job finished:", job.filePath);
+  } finally {
+    win.close();
+  }
+}
+function normalizeMode(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized.includes("bw") || normalized.includes("b&w")) return "bw";
+  if (normalized.includes("black")) return "bw";
+  if (normalized.includes("color")) return "color";
+  return "";
+}
+function selectPrinter(printers, requestedMode) {
+  return printers.find((printer) => {
+    const isOnline = String(printer.status).toLowerCase() === "online";
+    if (!isOnline) return false;
+    if (!requestedMode) return true;
+    const printerMode = normalizeMode(printer.printer_type);
+    return printerMode === requestedMode;
+  });
+}
+function logAvailablePrinters(printers) {
+  console.log("[Print] Available app printers:", printers.length);
+  printers.forEach((printer) => {
+    console.log(
+      `[Print] - ${printer.printer_name} (${printer.printer_type}, ${printer.status})`
+    );
+  });
+}
+function logSystemPrinters(printers) {
+  console.log("[Print] System printers detected:", printers.length);
+  printers.forEach((printer) => {
+    console.log(`[Print] - ${printer.name} (${printer.status})`);
+  });
+}
+function printWebContents(win, deviceName, copies) {
+  return new Promise((resolve, reject) => {
+    win.webContents.print(
+      {
+        silent: true,
+        deviceName,
+        copies
+      },
+      (success, failureReason) => {
+        if (!success) {
+          reject(new Error(failureReason || "Print failed"));
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}
+function saveFile(fileName, buffer) {
+  const folder = path$1.join(process.cwd(), "print-queue");
+  if (!fs$1.existsSync(folder)) {
+    fs$1.mkdirSync(folder);
+  }
+  const filePath = path$1.join(folder, fileName);
+  fs$1.writeFileSync(filePath, Buffer.from(buffer));
+  return filePath;
+}
+function deleteFile(filePath) {
+  if (fs$1.existsSync(filePath)) {
+    fs$1.unlinkSync(filePath);
+  }
+}
+const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const fs = require("fs");
+const path = require("path");
+let mainWindow = null;
+let availablePrinters = [];
+const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+async function createWindow() {
+  try {
+    const preloadPath = path.join(__dirname, "index.js");
+    console.log("=== PRELOAD DEBUG ===");
+    console.log("__dirname:", __dirname);
+    console.log("Preload path:", preloadPath);
+    console.log("Preload exists:", require("fs").existsSync(preloadPath));
+    console.log("===================");
+    mainWindow = new BrowserWindow({
+      width: 1200,
+      height: 800,
+      minWidth: 800,
+      minHeight: 600,
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: preloadPath,
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: false
+      },
+      show: false
+    });
+    mainWindow.setMenuBarVisibility(false);
+    const getSessionPath = () => {
+      const userDataPath = app.getPath("userData");
+      return path.join(userDataPath, "session.json");
+    };
+    const setupAuthHandlers = () => {
+      ipcMain.handle("auth:save-session", async (_, session) => {
+        try {
+          const sessionPath = getSessionPath();
+          const sessionData = JSON.stringify(session, null, 2);
+          const dir = path.dirname(sessionPath);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          fs.writeFileSync(sessionPath, sessionData, "utf8");
+          console.log("[Auth] Session saved successfully");
+          return { success: true };
+        } catch (error) {
+          console.error("[Auth] Error saving session:", error);
+          return { success: false, error: error.message };
+        }
+      });
+      ipcMain.handle("auth:get-session", async () => {
+        try {
+          const sessionPath = getSessionPath();
+          if (!fs.existsSync(sessionPath)) {
+            console.log("[Auth] No session file found");
+            return null;
+          }
+          const sessionData = fs.readFileSync(sessionPath, "utf8");
+          const session = JSON.parse(sessionData);
+          console.log("[Auth] Session loaded successfully");
+          return session;
+        } catch (error) {
+          console.error("[Auth] Error loading session:", error);
+          return null;
+        }
+      });
+      ipcMain.handle("auth:clear-session", async () => {
+        try {
+          const sessionPath = getSessionPath();
+          if (fs.existsSync(sessionPath)) {
+            fs.unlinkSync(sessionPath);
+            console.log("[Auth] Session cleared successfully");
+          }
+          return { success: true };
+        } catch (error) {
+          console.error("[Auth] Error clearing session:", error);
+          return { success: false, error: error.message };
+        }
+      });
+      console.log("[Auth] Auth handlers registered");
+    };
+    setupAuthHandlers();
+    setupPrinterHandlers(mainWindow);
+    mainWindow.once("ready-to-show", () => {
+      mainWindow == null ? void 0 : mainWindow.show();
+    });
+    if (isDev) {
+      await mainWindow.loadURL("http://localhost:5173");
+      mainWindow.webContents.openDevTools();
+    } else {
+      await mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+    }
+    mainWindow.on("closed", () => {
+      mainWindow = null;
+    });
+  } catch (error) {
+    console.error("Error creating window:", error);
+    app.quit();
+  }
+}
+app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+  createWindow();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+app.on("window-all-closed", () => {
+  cleanupPrinterHandlers();
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+app.on("before-quit", () => {
+  cleanupPrinterHandlers();
+});
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception:", error);
+});
+process.on("unhandledRejection", (error) => {
+  console.error("Unhandled Rejection:", error);
+});
+ipcMain.handle("save-file", async (_, fileName, buffer) => {
+  const savePath = saveFile(fileName, buffer);
+  console.log("[Files] Saved file:", savePath);
+  return savePath;
+});
+ipcMain.handle("delete-file", async (_, filePath) => {
+  deleteFile(filePath);
+  console.log("[Files] Deleted file:", filePath);
+});
+ipcMain.handle("print-file", async (_, job) => {
+  console.log("[IPC] print-file called", {
+    orderId: job == null ? void 0 : job.orderId,
+    itemId: job == null ? void 0 : job.itemId,
+    filePath: job == null ? void 0 : job.filePath,
+    colorMode: job == null ? void 0 : job.colorMode
+  });
+  const printers = Array.isArray(job == null ? void 0 : job.availablePrinters) ? job.availablePrinters : availablePrinters;
+  await printFile(job, printers);
+});
+ipcMain.on("set-printers", (_, printers) => {
+  availablePrinters = printers;
+  console.log("[IPC] Available printers updated:", availablePrinters.length);
+});
+>>>>>>> eb3b010 (remove toolbar)

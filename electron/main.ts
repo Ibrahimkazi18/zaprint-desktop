@@ -1,11 +1,10 @@
 import { cleanupPrinterHandlers, setupPrinterHandlers } from "./main/printerHandlers";
 import { printFile } from "./main/printHandler";
 import { deleteFile, saveFile } from "./printing/fileManager";
-const { ipcMain, app: electronApp } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const fs = require('fs');
 
 // electron/main.ts
-const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
 let mainWindow: any = null;
@@ -29,6 +28,7 @@ async function createWindow() {
       height: 800,
       minWidth: 800,
       minHeight: 600,
+      autoHideMenuBar: true,
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,
@@ -38,8 +38,10 @@ async function createWindow() {
       show: false,
     });
 
+    mainWindow.setMenuBarVisibility(false);
+
     const getSessionPath = () => {
-      const userDataPath = electronApp.getPath('userData');
+      const userDataPath = app.getPath('userData');
       return path.join(userDataPath, 'session.json');
     };
 
@@ -137,6 +139,7 @@ async function createWindow() {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
   createWindow();
 
   app.on('activate', () => {
@@ -196,3 +199,4 @@ ipcMain.on("set-printers", (_: any, printers: any) => {
   availablePrinters = printers;
   console.log("[IPC] Available printers updated:", availablePrinters.length);
 });
+
