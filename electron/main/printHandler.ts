@@ -59,6 +59,7 @@ export async function printFile(
 
   const win = new BrowserWindow({
     show: false,
+    backgroundColor: "#FFFFFF",
     webPreferences: {
       plugins: true,
       sandbox: false,
@@ -69,7 +70,13 @@ export async function printFile(
     const fileUrl = pathToFileURL(job.filePath).toString();
     await win.loadURL(fileUrl);
     await waitForPrintReady(win, job.filePath);
-    await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
+    const isPdf = isPdfPath(job.filePath);
+    await printWebContents(
+      win,
+      targetPrinter.printer_name,
+      job.copies ?? 1,
+      !isPdf
+    );
     console.log("[Print] Job finished:", job.filePath);
   } finally {
     win.close();
@@ -114,7 +121,8 @@ function logSystemPrinters(printers: any[]) {
 function printWebContents(
   win: BrowserWindow,
   deviceName: string,
-  copies: number
+  copies: number,
+  printBackground: boolean
 ) {
   return new Promise<void>((resolve, reject) => {
     win.webContents.print(
@@ -122,7 +130,7 @@ function printWebContents(
         silent: true,
         deviceName,
         copies,
-        printBackground: true,
+        printBackground,
       },
       (success, failureReason) => {
         if (!success) {
