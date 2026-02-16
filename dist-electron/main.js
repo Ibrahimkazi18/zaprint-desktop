@@ -12011,8 +12011,19 @@ async function printFile(job, fallbackPrinters = []) {
     );
   }
   console.log("[Print] Selected printer:", targetPrinter.printer_name);
+  const isPdf = isPdfPath(job.filePath);
+  if (isPdf) {
+    await printPdfAsImages(
+      job.filePath,
+      targetPrinter.printer_name,
+      job.copies ?? 1
+    );
+    console.log("[Print] Job finished:", job.filePath);
+    return;
+  }
   const win = new electron.BrowserWindow({
     show: false,
+    backgroundColor: "#FFFFFF",
     webPreferences: {
       plugins: true,
       sandbox: false
@@ -12022,7 +12033,12 @@ async function printFile(job, fallbackPrinters = []) {
     const fileUrl = url.pathToFileURL(job.filePath).toString();
     await win.loadURL(fileUrl);
     await waitForPrintReady(win, job.filePath);
-    await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
+    await printWebContents(
+      win,
+      targetPrinter.printer_name,
+      job.copies ?? 1,
+      true
+    );
     console.log("[Print] Job finished:", job.filePath);
   } finally {
     win.close();
@@ -12058,14 +12074,14 @@ function logSystemPrinters(printers) {
     console.log(`[Print] - ${printer.name} (${printer.status})`);
   });
 }
-function printWebContents(win, deviceName, copies) {
+function printWebContents(win, deviceName, copies, printBackground) {
   return new Promise((resolve, reject) => {
     win.webContents.print(
       {
         silent: true,
         deviceName,
         copies,
-        printBackground: true
+        printBackground
       },
       (success, failureReason) => {
         if (!success) {
@@ -12107,6 +12123,106 @@ async function waitForPrintReady(win, filePath) {
 }
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function printPdfAsImages(filePath, deviceName, copies) {
+  const jobId = `pdf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const readyChannel = `pdf-render-ready:${jobId}`;
+  const errorChannel = `pdf-render-error:${jobId}`;
+  const win = new electron.BrowserWindow({
+    show: false,
+    backgroundColor: "#FFFFFF",
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      sandbox: false
+    }
+  });
+  const renderPromise = new Promise((resolve, reject) => {
+    const cleanup = () => {
+      electron.ipcMain.removeAllListeners(readyChannel);
+      electron.ipcMain.removeAllListeners(errorChannel);
+    };
+    electron.ipcMain.once(readyChannel, () => {
+      cleanup();
+      resolve();
+    });
+    electron.ipcMain.once(errorChannel, (_event, message) => {
+      cleanup();
+      reject(new Error(message || "PDF render failed"));
+    });
+    win.webContents.once("did-fail-load", (_event, _code, reason) => {
+      cleanup();
+      reject(new Error(reason || "PDF render load failed"));
+    });
+  });
+  try {
+    const html = buildPdfPrintHtml(filePath, jobId);
+    await win.loadURL(
+      `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
+    );
+    await renderPromise;
+    await printWebContents(win, deviceName, copies, false);
+  } finally {
+    win.close();
+  }
+}
+function buildPdfPrintHtml(filePath, jobId) {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @page { margin: 0; }
+      html, body { margin: 0; padding: 0; background: #ffffff; }
+      #pages { display: block; }
+      canvas { display: block; page-break-after: always; }
+    </style>
+  </head>
+  <body>
+    <div id="pages"></div>
+    <script>
+      const { ipcRenderer } = require('electron');
+      const fs = require('fs');
+      const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+      const filePath = ${JSON.stringify(filePath)};
+      const jobId = ${JSON.stringify(jobId)};
+      const scale = 2;
+
+      async function renderPdf() {
+        try {
+          const data = fs.readFileSync(filePath);
+          const loadingTask = pdfjsLib.getDocument({
+            data: new Uint8Array(data),
+            disableWorker: true
+          });
+          const pdf = await loadingTask.promise;
+          const container = document.getElementById('pages');
+
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d', { alpha: false });
+            canvas.width = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({ canvasContext: context, viewport, intent: 'print' }).promise;
+            container.appendChild(canvas);
+          }
+
+          ipcRenderer.send('pdf-render-ready:' + jobId);
+        } catch (error) {
+          const message = error && error.message ? error.message : String(error);
+          ipcRenderer.send('pdf-render-error:' + jobId, message);
+        }
+      }
+
+      renderPdf();
+    <\/script>
+  </body>
+</html>`;
 }
 function saveFile(fileName, buffer) {
   const folder = path$1.join(process.cwd(), "print-queue");
