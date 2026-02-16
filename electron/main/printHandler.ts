@@ -133,9 +133,14 @@ function printWebContents(
   win: BrowserWindow,
   deviceName: string,
   copies: number,
-  printBackground: boolean
+  printBackground: boolean,
+  timeoutMs = 60000
 ) {
   return new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error("Print timeout"));
+    }, timeoutMs);
+
     win.webContents.print(
       {
         silent: true,
@@ -144,6 +149,7 @@ function printWebContents(
         printBackground,
       },
       (success, failureReason) => {
+        clearTimeout(timeout);
         if (!success) {
           reject(new Error(failureReason || "Print failed"));
           return;
@@ -242,8 +248,9 @@ async function printPdfAsImages(
     await win.loadURL(
       `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
     );
-    await renderPromise;
-    await printWebContents(win, deviceName, copies, false);
+    await withTimeout(renderPromise, 30000, "PDF render timeout");
+    await delay(300);
+    await printWebContents(win, deviceName, copies, false, 60000);
   } finally {
     win.close();
   }
@@ -264,15 +271,17 @@ function buildPdfPrintHtml(filePath: string, jobId: string) {
   <body>
     <div id="pages"></div>
     <script>
-      const { ipcRenderer } = require('electron');
-      const fs = require('fs');
-      const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
       const filePath = ${JSON.stringify(filePath)};
       const jobId = ${JSON.stringify(jobId)};
       const scale = 2;
 
       async function renderPdf() {
+        let ipcRenderer;
         try {
+          ({ ipcRenderer } = require('electron'));
+          const fs = require('fs');
+          const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+
           const data = fs.readFileSync(filePath);
           const loadingTask = pdfjsLib.getDocument({
             data: new Uint8Array(data),
@@ -298,7 +307,11 @@ function buildPdfPrintHtml(filePath: string, jobId: string) {
           ipcRenderer.send('pdf-render-ready:' + jobId);
         } catch (error) {
           const message = error && error.message ? error.message : String(error);
-          ipcRenderer.send('pdf-render-error:' + jobId, message);
+          if (ipcRenderer) {
+            ipcRenderer.send('pdf-render-error:' + jobId, message);
+          } else {
+            console.error('PDF render error:', message);
+          }
         }
       }
 
@@ -306,4 +319,19 @@ function buildPdfPrintHtml(filePath: string, jobId: string) {
     </script>
   </body>
 </html>`;
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise
+      .then((value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  });
 }
