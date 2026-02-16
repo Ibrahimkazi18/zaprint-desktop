@@ -1,6 +1,9 @@
 import { BrowserWindow, ipcMain } from "electron";
+import { createRequire } from "module";
 import { pathToFileURL } from "url";
 import { printerService, AppPrinter } from "./printer/PrinterService";
+
+const require = createRequire(import.meta.url);
 
 type PrintJob = {
   filePath: string;
@@ -207,6 +210,7 @@ async function printPdfAsImages(
   deviceName: string,
   copies: number
 ) {
+  const pdfjsPath = resolvePdfjsPath();
   const jobId = `pdf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const readyChannel = `pdf-render-ready:${jobId}`;
   const errorChannel = `pdf-render-error:${jobId}`;
@@ -244,7 +248,7 @@ async function printPdfAsImages(
   });
 
   try {
-    const html = buildPdfPrintHtml(filePath, jobId);
+    const html = buildPdfPrintHtml(filePath, jobId, pdfjsPath);
     await win.loadURL(
       `data:text/html;charset=utf-8,${encodeURIComponent(html)}`
     );
@@ -256,7 +260,11 @@ async function printPdfAsImages(
   }
 }
 
-function buildPdfPrintHtml(filePath: string, jobId: string) {
+function buildPdfPrintHtml(
+  filePath: string,
+  jobId: string,
+  pdfjsPath: string
+) {
   return `<!doctype html>
 <html>
   <head>
@@ -273,6 +281,7 @@ function buildPdfPrintHtml(filePath: string, jobId: string) {
     <script>
       const filePath = ${JSON.stringify(filePath)};
       const jobId = ${JSON.stringify(jobId)};
+      const pdfjsPath = ${JSON.stringify(pdfjsPath)};
       const scale = 2;
 
       async function renderPdf() {
@@ -280,7 +289,7 @@ function buildPdfPrintHtml(filePath: string, jobId: string) {
         try {
           ({ ipcRenderer } = require('electron'));
           const fs = require('fs');
-          const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+          const pdfjsLib = require(pdfjsPath);
 
           const data = fs.readFileSync(filePath);
           const loadingTask = pdfjsLib.getDocument({
@@ -319,6 +328,16 @@ function buildPdfPrintHtml(filePath: string, jobId: string) {
     </script>
   </body>
 </html>`;
+}
+
+function resolvePdfjsPath() {
+  try {
+    return require.resolve("pdfjs-dist/legacy/build/pdf.js");
+  } catch (error) {
+    throw new Error(
+      "pdfjs-dist is not installed. Run `npm install` (or `npm install pdfjs-dist`)."
+    );
+  }
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string) {
