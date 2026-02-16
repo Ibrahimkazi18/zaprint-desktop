@@ -59,11 +59,16 @@ export async function printFile(
 
   const win = new BrowserWindow({
     show: false,
+    webPreferences: {
+      plugins: true,
+      sandbox: false,
+    },
   });
 
   try {
     const fileUrl = pathToFileURL(job.filePath).toString();
     await win.loadURL(fileUrl);
+    await waitForPrintReady(win, job.filePath);
     await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
     console.log("[Print] Job finished:", job.filePath);
   } finally {
@@ -117,6 +122,7 @@ function printWebContents(
         silent: true,
         deviceName,
         copies,
+        printBackground: true,
       },
       (success, failureReason) => {
         if (!success) {
@@ -128,4 +134,45 @@ function printWebContents(
       }
     );
   });
+}
+
+function isPdfPath(filePath: string) {
+  return /\.pdf$/i.test(filePath || "");
+}
+
+async function waitForPrintReady(win: BrowserWindow, filePath: string) {
+  if (!isPdfPath(filePath)) return;
+
+  // PDF rendering in the built-in viewer can lag behind did-finish-load.
+  // Wait for the viewer to fully render before printing to avoid blank pages.
+  const timeoutMs = 15000;
+  const pollMs = 250;
+  const start = Date.now();
+
+  while (win.webContents.isLoading()) {
+    await new Promise<void>((resolve) =>
+      win.webContents.once("did-stop-loading", () => resolve())
+    );
+  }
+
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const readyState = await win.webContents.executeJavaScript(
+        "document.readyState",
+        true
+      );
+      if (readyState === "complete") {
+        await delay(500);
+        return;
+      }
+    } catch {
+      // Ignore transient errors while the PDF viewer is still initializing.
+    }
+
+    await delay(pollMs);
+  }
+}
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
