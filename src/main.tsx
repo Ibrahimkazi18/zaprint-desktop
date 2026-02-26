@@ -1,26 +1,39 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./index.css";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import AuthPage from "./pages/AuthPage";
-import ShopOnboarding from "./pages/ShopOnboarding";
-import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics";
-import Customers from "./pages/Customers";
-import Settings from "./pages/Settings";
-import Queue from "./pages/Queue";
-import RegisterPrinter from "./pages/RegisterPrinter";
-import Printers from "./pages/Printers";
-
 import { Toaster } from "react-hot-toast";
+
+// Eager load only the auth page since it's the entry point
+import AuthPage from "./pages/AuthPage";
+
+// Lazy load all other pages
+const ShopOnboarding = lazy(() => import("./pages/ShopOnboarding"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Settings = lazy(() => import("./pages/Settings"));
+const RegisterPrinter = lazy(() => import("./pages/RegisterPrinter"));
+const Printers = lazy(() => import("./pages/Printers"));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="p-4 text-center">Loading...</div>;
+    return <PageLoader />;
   }
 
   return user ? <>{children}</> : <Navigate to="/" replace />;
@@ -29,67 +42,53 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<AuthPage />} />
-        <Route path="/onboarding" element={<ShopOnboarding />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/customers"
-          element={
-            <ProtectedRoute>
-              <Customers />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/queue"
-          element={
-            <ProtectedRoute>
-              <Queue />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/register-printer"
-          element={
-            <ProtectedRoute>
-              <RegisterPrinter />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/printers"
-          element={
-            <ProtectedRoute>
-              <Printers />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/onboarding" element={<ShopOnboarding />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/register-printer"
+            element={
+              <ProtectedRoute>
+                <RegisterPrinter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/printers"
+            element={
+              <ProtectedRoute>
+                <Printers />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

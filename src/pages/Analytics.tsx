@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 
-export default async function Analytics() {
+export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("7d");
 
   // Mock analytics data

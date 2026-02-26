@@ -1,3 +1,4 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,18 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sun,
-  Moon,
-  Settings,
-  User,
-  LogOut,
-  Store,
-  Wifi,
-  WifiOff,
-  Bell,
-  Search,
-} from "lucide-react";
+import { Sun, Moon, User, LogOut, Wifi, WifiOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
@@ -30,7 +20,10 @@ interface NavbarProps {
   toggleDarkMode: () => void;
 }
 
-export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
+const Navbar = React.memo(function Navbar({
+  darkMode,
+  toggleDarkMode,
+}: NavbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { shop, printers, loading } = useShopDashboard();
@@ -38,10 +31,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
   const handleLogout = () => {
     logout();
     navigate("/");
-  };
-
-  const handleSettings = () => {
-    navigate("/settings");
   };
 
   const getStatusBadge = () => {
@@ -96,14 +85,7 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
     <header className="border-b border-border bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 sticky top-0 z-50 shadow-sm dark:shadow-lg dark:shadow-primary/5">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-              <Store className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              Zaprint
-            </h1>
-          </div>
+          <h1 className="text-2xl font-bold text-foreground">Zaprint</h1>
 
           {shop && (
             <div className="flex items-center space-x-3 pl-6 border-l border-border/50">
@@ -119,29 +101,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Search Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 hover:bg-accent/50"
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-
-          {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 hover:bg-accent/50 relative"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full text-[10px] text-primary-foreground flex items-center justify-center">
-              3
-            </span>
-          </Button>
-
           {/* Theme Toggle */}
           <Button
             variant="ghost"
@@ -155,17 +114,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
             ) : (
               <Moon className="h-4 w-4 text-slate-600" />
             )}
-          </Button>
-
-          {/* Settings */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSettings}
-            aria-label="Settings"
-            className="h-10 w-10 hover:bg-accent/50"
-          >
-            <Settings className="h-4 w-4" />
           </Button>
 
           {/* Profile Dropdown */}
@@ -212,13 +160,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
                 <User className="mr-3 h-4 w-4" />
                 <span>Profile Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer p-3 rounded-lg"
-                onClick={() => console.log("More options clicked")}
-              >
-                <Settings className="mr-3 h-4 w-4" />
-                <span>Preferences</span>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer p-3 rounded-lg text-destructive focus:text-destructive"
@@ -233,4 +174,6 @@ export default function Navbar({ darkMode, toggleDarkMode }: NavbarProps) {
       </div>
     </header>
   );
-}
+});
+
+export default Navbar;

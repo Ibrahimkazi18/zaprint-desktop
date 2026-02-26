@@ -1,61 +1,68 @@
-import { createContext, useContext, useEffect, useState } from "react"
-import { supabase } from "@/auth/supabase"
-import { SupabaseClient } from "@supabase/supabase-js"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
+import { supabase } from "@/auth/supabase";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 interface AuthContextType {
-  user: any | null
-  loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string, name: string) => Promise<void>
-  logout: () => Promise<void>
+  user: any | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Restore session on app start
   useEffect(() => {
     const restore = async () => {
       if (!window.auth) {
-        console.warn('window.auth not available yet')
-        setLoading(false)
-        return
+        console.warn("window.auth not available yet");
+        setLoading(false);
+        return;
       }
 
-      const session = await window.auth.getSession()
+      const session = await window.auth.getSession();
       if (session) {
-        await supabase.auth.setSession(session)
-        setUser(session.user)
+        await supabase.auth.setSession(session);
+        setUser(session.user);
       }
-      setLoading(false)
-    }
+      setLoading(false);
+    };
 
-    restore()
+    restore();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_, session) => {
         if (session) {
-          await window.auth.saveSession(session)
-          setUser(session.user)
+          await window.auth.saveSession(session);
+          setUser(session.user);
         } else {
-          await window.auth.clearSession()
-          setUser(null)
+          await window.auth.clearSession();
+          setUser(null);
         }
-      }
-    )
+      },
+    );
 
     return () => {
-      listener.subscription.unsubscribe()
-    } 
-  }, [])
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   const upsertProfile = async (
     supabase: SupabaseClient,
     user: any,
-    role: "customer" | "shop" = "customer"
+    role: "customer" | "shop" = "customer",
   ) => {
     // Check if profile exists
     const { data: existingProfile } = await supabase
@@ -83,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data;
   };
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const profile = await supabase
       .from("profiles")
       .select("*")
@@ -94,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Profile not found");
     }
 
-    if(profile.data.role !== "shop") {
+    if (profile.data.role !== "shop") {
       throw new Error("Not a shop account");
     }
 
@@ -103,50 +110,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
 
-    if (error) throw error
+    if (error) throw error;
     if (!data.user) throw new Error("User not found");
 
-    await window.auth.saveSession(data.session)
-    setUser(data.user)
-  }
+    await window.auth.saveSession(data.session);
+    setUser(data.user);
+  }, []);
 
-  const signup = async (email: string, password: string, name: string) => {
-    const role = "shop"
+  const signup = useCallback(
+    async (email: string, password: string, name: string) => {
+      const role = "shop";
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name }
-      }
-    })
-    if (error) throw error
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+        },
+      });
+      if (error) throw error;
 
-    await upsertProfile(
-      supabase,
-      data.user,
-      role
-    );
+      await upsertProfile(supabase, data.user, role);
 
-    await window.auth.saveSession(data.session)
-    setUser(data.user)
-  }
+      await window.auth.saveSession(data.session);
+      setUser(data.user);
+    },
+    [],
+  );
 
-  const logout = async () => {
-    await supabase.auth.signOut()
-    await window.auth.clearSession()
-    setUser(null)
-  }
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    await window.auth.clearSession();
+    setUser(null);
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const value = useMemo(
+    () => ({ user, loading, login, signup, logout }),
+    [user, loading, login, signup, logout],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("AuthProvider missing")
-  return ctx
-}
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("AuthProvider missing");
+  return ctx;
+};

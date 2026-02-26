@@ -43,7 +43,10 @@ import {
 import { PrintJob } from "@/types";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import { fetchMissedOrders, subscribeToOrders } from "@/backend/realtime/subscribeToOrders";
+import {
+  fetchMissedOrders,
+  subscribeToOrders,
+} from "@/backend/realtime/subscribeToOrders";
 import { useEffect } from "react";
 import { supabase } from "@/auth/supabase";
 import { usePrintQueue } from "@/hooks/usePrintQueue";
@@ -136,36 +139,6 @@ export default function Dashboard() {
     },
   ]);
 
-  // Mock recent activity data
-  const recentActivity = [
-    {
-      action: "Job-001 completed successfully",
-      time: "2 mins ago",
-      type: "success",
-    },
-    {
-      action: "New customer Sarah Wilson registered",
-      time: "15 mins ago",
-      type: "info",
-    },
-    {
-      action: "Payment received for Job-045",
-      time: "32 mins ago",
-      type: "success",
-    },
-    {
-      action: "Printer maintenance scheduled",
-      time: "1 hour ago",
-      type: "warning",
-    },
-    { action: "Monthly report generated", time: "2 hours ago", type: "info" },
-    {
-      action: "New review: 5 stars from Alex J.",
-      time: "3 hours ago",
-      type: "success",
-    },
-  ];
-
   // Mock financial data
   const todayEarnings = 2450;
   const monthlyEarnings = 45600;
@@ -203,10 +176,6 @@ export default function Dashboard() {
               Here's what's happening with your print shop today.
             </p>
           </div>
-          <Button variant="gradient" size="lg" className="shadow-lg">
-            <Activity className="mr-2 h-5 w-5" />
-            View Analytics
-          </Button>
         </div>
 
         {/* Enhanced Stats Grid */}
@@ -307,7 +276,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-3xl font-bold">4.8 â˜…</p>
+                  <p className="text-3xl font-bold">4.8</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     120 reviews
                   </p>
@@ -332,7 +301,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-emerald-600">
-                â‚¹{todayEarnings.toLocaleString()}
+                {todayEarnings.toLocaleString()}
               </p>
               <div className="flex items-center text-sm text-emerald-600 mt-2">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
@@ -351,7 +320,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-blue-600">
-                â‚¹{monthlyEarnings.toLocaleString()}
+                {monthlyEarnings.toLocaleString()}
               </p>
               <div className="flex items-center text-sm text-blue-600 mt-2">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
@@ -370,7 +339,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-amber-600">
-                â‚¹{pendingPayments.toLocaleString()}
+                {pendingPayments.toLocaleString()}
               </p>
               <p className="text-sm text-amber-600 mt-2">3 pending invoices</p>
             </CardContent>
@@ -581,41 +550,6 @@ export default function Dashboard() {
                       </div>
                     ))
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2 text-primary" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div
-                        className={`w-2 h-2 rounded-full mt-2 ${
-                          activity.type === "success"
-                            ? "bg-emerald-500"
-                            : activity.type === "warning"
-                              ? "bg-amber-500"
-                              : "bg-blue-500"
-                        }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-relaxed">
-                          {activity.action}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {activity.time}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>

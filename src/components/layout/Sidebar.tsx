@@ -1,16 +1,14 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
   Home,
   Settings,
-  Users,
   BarChart3,
   ChevronLeft,
   ChevronRight,
   Printer,
-  List,
   Plus,
   Activity,
 } from "lucide-react";
@@ -30,66 +28,57 @@ interface NavItem {
   color?: string;
 }
 
-export default function Sidebar({ className }: SidebarProps) {
+const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const mainNavItems: NavItem[] = [
-    {
-      title: "Dashboard",
-      icon: Home,
-      path: "/dashboard",
-      onClick: () => navigate("/dashboard"),
-      color: "text-blue-500",
-    },
-    {
-      title: "Print Queue",
-      icon: List,
-      path: "/queue",
-      onClick: () => navigate("/queue"),
-      color: "text-purple-500",
-      badge: "12",
-    },
-    {
-      title: "Printers",
-      icon: Printer,
-      path: "/printers",
-      onClick: () => navigate("/printers"),
-      color: "text-green-500",
-    },
-    {
-      title: "Analytics",
-      icon: BarChart3,
-      path: "/analytics",
-      onClick: () => navigate("/analytics"),
-      color: "text-orange-500",
-    },
-    {
-      title: "Customers",
-      icon: Users,
-      path: "/customers",
-      onClick: () => navigate("/customers"),
-      color: "text-pink-500",
-    },
-  ];
+  const mainNavItems: NavItem[] = useMemo(
+    () => [
+      {
+        title: "Dashboard",
+        icon: Home,
+        path: "/dashboard",
+        onClick: () => navigate("/dashboard"),
+        color: "text-blue-500",
+      },
+      {
+        title: "Printers",
+        icon: Printer,
+        path: "/printers",
+        onClick: () => navigate("/printers"),
+        color: "text-green-500",
+      },
+      {
+        title: "Analytics",
+        icon: BarChart3,
+        path: "/analytics",
+        onClick: () => navigate("/analytics"),
+        color: "text-orange-500",
+      },
+    ],
+    [navigate],
+  );
 
-  const systemNavItems: NavItem[] = [
-    {
-      title: "Add Printer",
-      icon: Plus,
-      path: "/register-printer",
-      onClick: () => navigate("/register-printer"),
-      color: "text-emerald-500",
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      path: "/settings",
-      onClick: () => navigate("/settings"),
-      color: "text-gray-500",
-    },
-  ];
+  const systemNavItems: NavItem[] = useMemo(
+    () => [
+      {
+        title: "Add Printer",
+        icon: Plus,
+        path: "/register-printer",
+        onClick: () => navigate("/register-printer"),
+        color: "text-emerald-500",
+      },
+      {
+        title: "Settings",
+        icon: Settings,
+        path: "/settings",
+        onClick: () => navigate("/settings"),
+        color: "text-gray-500",
+      },
+    ],
+    [navigate],
+  );
 
   const NavButton = ({ item }: { item: NavItem }) => {
     const Icon = item.icon;
@@ -217,4 +206,6 @@ export default function Sidebar({ className }: SidebarProps) {
       </div>
     </div>
   );
-}
+});
+
+export default Sidebar;
