@@ -1,6 +1,8 @@
 import { BrowserWindow } from "electron";
 import { pathToFileURL } from "url";
 import { printerService, AppPrinter } from "./printer/PrinterService";
+import * as path from "path";
+const pdfPrinter = require("pdf-to-printer");
 
 type PrintJob = {
   filePath: string;
@@ -57,17 +59,30 @@ export async function printFile(
 
   console.log("[Print] Selected printer:", targetPrinter.printer_name);
 
-  const win = new BrowserWindow({
-    show: false,
-  });
+  // Check if file is PDF
+  const fileExtension = path.extname(job.filePath).toLowerCase();
+  const isPDF = fileExtension === ".pdf";
 
-  try {
-    const fileUrl = pathToFileURL(job.filePath).toString();
-    await win.loadURL(fileUrl);
-    await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
+  if (isPDF) {
+    // Use pdf-to-printer for PDF files
+    console.log("[Print] Using pdf-to-printer for PDF file");
+    await printPDF(job.filePath, targetPrinter.printer_name, job.copies ?? 1);
     console.log("[Print] Job finished:", job.filePath);
-  } finally {
-    win.close();
+  } else {
+    // Use BrowserWindow for images and other files
+    console.log("[Print] Using BrowserWindow for non-PDF file");
+    const win = new BrowserWindow({
+      show: false,
+    });
+
+    try {
+      const fileUrl = pathToFileURL(job.filePath).toString();
+      await win.loadURL(fileUrl);
+      await printWebContents(win, targetPrinter.printer_name, job.copies ?? 1);
+      console.log("[Print] Job finished:", job.filePath);
+    } finally {
+      win.close();
+    }
   }
 }
 
@@ -128,4 +143,30 @@ function printWebContents(
       }
     );
   });
+}
+
+async function printPDF(
+  filePath: string,
+  printerName: string,
+  copies: number
+) {
+  try {
+    const options: any = {
+      printer: printerName,
+    };
+
+    // Add copies if more than 1
+    if (copies > 1) {
+      options.copies = copies;
+    }
+
+    console.log("[Print] PDF print options:", options);
+    
+    await pdfPrinter.print(filePath, options);
+    
+    console.log("[Print] PDF printed successfully");
+  } catch (error: any) {
+    console.error("[Print] PDF print error:", error);
+    throw new Error(`PDF print failed: ${error.message || "unknown error"}`);
+  }
 }
