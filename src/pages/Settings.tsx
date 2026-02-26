@@ -206,7 +206,7 @@ export default function Settings() {
   };
 
   const handleImageUpload = (
-    type: "logo",
+    _type: "logo",
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];

@@ -35,26 +35,22 @@ export async function printFile(
 
   logAvailablePrinters(appPrinters);
 
+  // Get system printers first to check actual availability
+  const systemPrinters = await printerService.detectSystemPrinters();
+  logSystemPrinters(systemPrinters);
+
   const requestedMode = normalizeMode(job.colorMode);
-  const targetPrinter = selectPrinter(appPrinters, requestedMode);
+  let targetPrinter = selectPrinter(appPrinters, requestedMode, systemPrinters);
+
+  // Fallback: if no printer matches the requested mode, try any online printer
+  if (!targetPrinter && requestedMode) {
+    console.log(`[Print] No ${requestedMode} printer available, trying any online printer`);
+    targetPrinter = selectPrinter(appPrinters, "", systemPrinters);
+  }
 
   if (!targetPrinter) {
     const label = requestedMode ? requestedMode : "any";
     throw new Error(`No online ${label} printer available`);
-  }
-
-  const systemPrinters = await printerService.detectSystemPrinters();
-  logSystemPrinters(systemPrinters);
-
-  const systemMatch = systemPrinters.find(
-    (printer) =>
-      printer.name.toLowerCase() === targetPrinter.printer_name.toLowerCase()
-  );
-
-  if (!systemMatch || systemMatch.status !== "online") {
-    throw new Error(
-      `Printer not available on system: ${targetPrinter.printer_name}`
-    );
   }
 
   console.log("[Print] Selected printer:", targetPrinter.printer_name);
@@ -94,10 +90,23 @@ function normalizeMode(value?: string) {
   return "";
 }
 
-function selectPrinter(printers: AppPrinter[], requestedMode: string) {
+function selectPrinter(
+  printers: AppPrinter[],
+  requestedMode: string,
+  systemPrinters: any[]
+) {
   return printers.find((printer) => {
-    const isOnline = String(printer.status).toLowerCase() === "online";
-    if (!isOnline) return false;
+    // Check if printer is online on the system (actual status)
+    const systemMatch = systemPrinters.find(
+      (sp) => sp.name.toLowerCase() === printer.printer_name.toLowerCase()
+    );
+    
+    const isOnline = systemMatch && systemMatch.status === "online";
+    
+    if (!isOnline) {
+      console.log(`[Print] Skipping ${printer.printer_name} - not online on system`);
+      return false;
+    }
 
     if (!requestedMode) return true;
     const printerMode = normalizeMode(printer.printer_type);
