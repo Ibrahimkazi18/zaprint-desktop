@@ -41,6 +41,20 @@ const Navbar = React.memo(function Navbar({
         </Badge>
       );
 
+    // Check if there are any printers at all
+    if (!printers || printers.length === 0) {
+      return (
+        <Badge
+          variant="secondary"
+          className="bg-gray-500 hover:bg-gray-600 text-white shadow-lg dark:shadow-gray-500/25"
+          title="No printers registered"
+        >
+          <WifiOff className="h-3 w-3 mr-1" />
+          No Printers
+        </Badge>
+      );
+    }
+
     // Shop is open if at least one printer is online
     const hasOnlinePrinter = printers.some((p: any) => p.status === "online");
     const hasErrorPrinter = printers.some((p: any) => p.status === "error");

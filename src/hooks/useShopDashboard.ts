@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import fetchMyShop from "@/backend/shops/fetchMyShop"
 import fetchShopPrinters from "@/backend/printers/fetchPrinters"
 import subscribeToShopPrinters from "@/backend/realtime/shopRealtime"
@@ -11,16 +11,19 @@ export function useShopDashboard() {
   const subscriptionRef = useRef<any>(null)
   const loadedRef = useRef(false)
 
-  // Load shop + printers once
+  // Load shop + printers once with optimized loading
   useEffect(() => {
     if (loadedRef.current) return // Prevent reloading on every render
     
     const load = async () => {
       try {
-        const shopData = await fetchMyShop()
+        // Load both in parallel for faster loading
+        const [shopData, printersData] = await Promise.all([
+          fetchMyShop(),
+          fetchMyShop().then(shop => fetchShopPrinters(shop.id))
+        ]);
+        
         setShop(shopData)
-
-        const printersData = await fetchShopPrinters(shopData.id)
         setPrinters(printersData)
       } catch (error) {
         console.error("Error loading shop data:", error)

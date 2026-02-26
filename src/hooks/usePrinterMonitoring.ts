@@ -101,7 +101,8 @@ export function usePrinterMonitoring(shopId?: string) {
       });
 
       if (result.success && result.printers) {
-        setPrinters(result.printers);
+        // Force update the printers state immediately
+        setPrinters([...result.printers]);
         console.log('✅ Synced printer status:', result.printers);
         return result.printers;
       } else {
