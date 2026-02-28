@@ -86,8 +86,6 @@ export function usePrinterMonitoring(shopId?: string) {
       setLoading(true);
       setError(null);
 
-      console.log("Url: ", supabaseUrl, "Key:", supabaseAnonKey)
-
       const accessToken = await getAccessToken();
       if (!accessToken) {
         throw new Error('Not authenticated');
@@ -118,7 +116,7 @@ export function usePrinterMonitoring(shopId?: string) {
   }, [shopId, getAccessToken]);
 
   // Start automatic monitoring
-  const startMonitoring = useCallback(async () => {
+  const startMonitoring = useCallback(async (options?: { silent?: boolean }) => {
     if (!window.printerAPI) {
       setError('Printer API not available');
       return;
@@ -134,8 +132,12 @@ export function usePrinterMonitoring(shopId?: string) {
       return;
     }
 
+    const silent = Boolean(options?.silent);
+
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError(null);
 
       const accessToken = await getAccessToken();
@@ -166,7 +168,9 @@ export function usePrinterMonitoring(shopId?: string) {
       setError(err.message);
       console.error('❌ Error starting monitoring:', err);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [shopId, getAccessToken]);
 
@@ -206,7 +210,7 @@ export function usePrinterMonitoring(shopId?: string) {
   // Auto-start monitoring when component mounts
   useEffect(() => {
     if (shopId && user && !monitoringStartedRef.current) {
-      startMonitoring();
+      startMonitoring({ silent: true });
     }
 
     return () => {

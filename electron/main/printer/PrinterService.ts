@@ -1,6 +1,9 @@
 // electron/printer/PrinterService.ts
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import os from 'os';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export interface SystemPrinter {
   name: string;
@@ -25,6 +28,10 @@ export class PrinterService {
   private detectionInterval: NodeJS.Timeout | null = null;
   private statusChangeCallback: ((printers: AppPrinter[]) => void) | null = null;
   private lastKnownPrinters: Map<string, SystemPrinter> = new Map();
+  private detectionInFlight: Promise<SystemPrinter[]> | null = null;
+  private lastDetection: SystemPrinter[] = [];
+  private lastDetectionAt = 0;
+  private detectionCacheMs = 2000;
 
   constructor() {
     console.log('[PrinterService] Initialized');
@@ -33,18 +40,50 @@ export class PrinterService {
   /**
    * Detect all system printers using OS-specific commands
    */
-  async detectSystemPrinters(): Promise<SystemPrinter[]> {
+  async detectSystemPrinters(options: { force?: boolean } = {}): Promise<SystemPrinter[]> {
+    const now = Date.now();
+    const force = Boolean(options.force);
+
+    if (!force) {
+      if (this.detectionInFlight) {
+        return this.detectionInFlight;
+      }
+
+      if (
+        this.lastDetection.length > 0 &&
+        now - this.lastDetectionAt < this.detectionCacheMs
+      ) {
+        return this.lastDetection;
+      }
+    }
+
+    const detectionPromise = this.detectSystemPrintersInternal();
+    this.detectionInFlight = detectionPromise;
+
+    try {
+      const printers = await detectionPromise;
+      this.lastDetection = printers;
+      this.lastDetectionAt = Date.now();
+      return printers;
+    } finally {
+      if (this.detectionInFlight === detectionPromise) {
+        this.detectionInFlight = null;
+      }
+    }
+  }
+
+  private async detectSystemPrintersInternal(): Promise<SystemPrinter[]> {
     const platform = os.platform();
-    
+
     try {
       if (platform === 'win32') {
-        return this.detectWindowsPrinters();
+        return await this.detectWindowsPrinters();
       } else if (platform === 'darwin') {
-        return this.detectMacPrinters();
+        return await this.detectMacPrinters();
       } else if (platform === 'linux') {
-        return this.detectLinuxPrinters();
+        return await this.detectLinuxPrinters();
       }
-      
+
       console.warn('[PrinterService] Unsupported platform:', platform);
       return [];
     } catch (error) {
@@ -53,17 +92,28 @@ export class PrinterService {
     }
   }
 
+  private async runCommand(command: string) {
+    const { stdout } = await execAsync(command, {
+      encoding: 'utf-8',
+      windowsHide: true,
+      maxBuffer: 4 * 1024 * 1024,
+    });
+
+    return stdout;
+  }
+
   /**
    * Windows printer detection using PowerShell
    */
-  private detectWindowsPrinters(): SystemPrinter[] {
+  private async detectWindowsPrinters(): Promise<SystemPrinter[]> {
     try {
       // Use PowerShell to get printer information
-      const command = `powershell -Command "Get-Printer | Select-Object Name, PrinterStatus, WorkOffline, DriverName, PortName | ConvertTo-Json"`;
-      const output = execSync(command, { 
-        encoding: 'utf-8',
-        windowsHide: true 
-      });
+      const command = `powershell -NoProfile -Command "Get-Printer | Select-Object Name, PrinterStatus, WorkOffline, DriverName, PortName | ConvertTo-Json"`;
+      const output = await this.runCommand(command);
+
+      if (!output || output.trim() === '') {
+        return [];
+      }
 
       let printers = JSON.parse(output);
       
@@ -73,14 +123,11 @@ export class PrinterService {
       }
 
       // Get default printer
-      const defaultPrinterCommand = `powershell -Command "Get-CimInstance -ClassName Win32_Printer | Where-Object {$_.Default -eq $true} | Select-Object -ExpandProperty Name"`;
+      const defaultPrinterCommand = `powershell -NoProfile -Command "Get-CimInstance -ClassName Win32_Printer | Where-Object {$_.Default -eq $true} | Select-Object -ExpandProperty Name"`;
       let defaultPrinter = '';
       
       try {
-        defaultPrinter = execSync(defaultPrinterCommand, { 
-          encoding: 'utf-8',
-          windowsHide: true 
-        }).trim();
+        defaultPrinter = (await this.runCommand(defaultPrinterCommand)).trim();
       } catch (e) {
         console.warn('[PrinterService] Could not detect default printer');
       }
@@ -101,16 +148,16 @@ export class PrinterService {
   /**
    * macOS printer detection using lpstat
    */
-  private detectMacPrinters(): SystemPrinter[] {
+  private async detectMacPrinters(): Promise<SystemPrinter[]> {
     try {
       // Get all printers
-      const printersOutput = execSync('lpstat -p', { encoding: 'utf-8' });
+      const printersOutput = await this.runCommand('lpstat -p');
       const printerLines = printersOutput.split('\n').filter(line => line.trim());
       
       // Get default printer
       let defaultPrinter = '';
       try {
-        defaultPrinter = execSync('lpstat -d', { encoding: 'utf-8' })
+        defaultPrinter = (await this.runCommand('lpstat -d'))
           .replace('system default destination:', '')
           .trim();
       } catch (e) {
@@ -144,14 +191,14 @@ export class PrinterService {
   /**
    * Linux printer detection using lpstat
    */
-  private detectLinuxPrinters(): SystemPrinter[] {
+  private async detectLinuxPrinters(): Promise<SystemPrinter[]> {
     try {
-      const printersOutput = execSync('lpstat -p', { encoding: 'utf-8' });
+      const printersOutput = await this.runCommand('lpstat -p');
       const printerLines = printersOutput.split('\n').filter(line => line.trim());
       
       let defaultPrinter = '';
       try {
-        defaultPrinter = execSync('lpstat -d', { encoding: 'utf-8' })
+        defaultPrinter = (await this.runCommand('lpstat -d'))
           .replace('system default destination:', '')
           .trim();
       } catch (e) {

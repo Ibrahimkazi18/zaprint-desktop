@@ -14,11 +14,19 @@ type SystemPrinter = {
   isDefault?: boolean;
 };
 
-export function usePrintQueue(printers: AppPrinter[] = []) {
+export function usePrintQueue(
+  printers: AppPrinter[] = [],
+  options?: { detectSystemPrinters?: boolean; deferMs?: number }
+) {
   const [systemPrinters, setSystemPrinters] = useState<SystemPrinter[]>([]);
+  const shouldDetectSystemPrinters = options?.detectSystemPrinters !== false;
+  const deferMs = options?.deferMs ?? 0;
 
   useEffect(() => {
+    if (!shouldDetectSystemPrinters) return;
     if (!window?.printerAPI?.detectSystemPrinters) return;
+
+    let timeoutId: number | null = null;
 
     const detect = async () => {
       try {
@@ -31,8 +39,20 @@ export function usePrintQueue(printers: AppPrinter[] = []) {
       }
     };
 
-    void detect();
-  }, []);
+    if (deferMs > 0) {
+      timeoutId = window.setTimeout(() => {
+        void detect();
+      }, deferMs);
+    } else {
+      void detect();
+    }
+
+    return () => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [shouldDetectSystemPrinters, deferMs]);
 
   useEffect(() => {
     printQueueManager.setAvailablePrinters(printers);

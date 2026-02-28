@@ -28,7 +28,7 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle('printer:detect-system', async () => {
     try {
       console.log('[IPC] Detecting system printers...');
-      const printers = await printerService.detectSystemPrinters();
+      const printers = await printerService.detectSystemPrinters({ force: true });
       console.log(`[IPC] Found ${printers.length} system printers`);
       
       // Log each printer found
@@ -96,7 +96,7 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
 
       // IMMEDIATE SYNC - Do first detection right away
       console.log('[IPC] Performing immediate printer detection...');
-      const systemPrinters = await printerService.detectSystemPrinters();
+      const systemPrinters = await printerService.detectSystemPrinters({ force: true });
       console.log(`[IPC] Immediate detection found ${systemPrinters.length} system printers`);
       
       const initialPrinters = printerService.mapToAppPrinters(
@@ -104,8 +104,10 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
         registeredPrinters as AppPrinter[]
       );
 
-      // Update database immediately
-      await updatePrintersInDatabase(initialPrinters);
+      // Update database in the background to avoid blocking UI
+      void updatePrintersInDatabase(initialPrinters).catch((error) => {
+        console.error('[DB] Background update failed:', error);
+      });
       
       // Send initial status to renderer
       mainWindow.webContents.send('printer:status-changed', initialPrinters);
@@ -117,8 +119,10 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
         async (updatedPrinters) => {
           console.log('[IPC] Printer status changed during monitoring, updating database...');
           
-          // Update database
-          await updatePrintersInDatabase(updatedPrinters);
+          // Update database in the background
+          void updatePrintersInDatabase(updatedPrinters).catch((error) => {
+            console.error('[DB] Background update failed:', error);
+          });
           
           // Notify renderer process
           mainWindow.webContents.send('printer:status-changed', updatedPrinters);
@@ -172,7 +176,7 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
       console.log(`[IPC] Syncing ${registeredPrinters.length} printers...`);
 
       // Detect system printers
-      const systemPrinters = await printerService.detectSystemPrinters();
+      const systemPrinters = await printerService.detectSystemPrinters({ force: true });
       console.log(`[IPC] Found ${systemPrinters.length} system printers`);
 
       // Map to app printers
@@ -202,27 +206,28 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
  */
 async function updatePrintersInDatabase(printers: AppPrinter[]) {
   try {
-    console.log(`[DB] Updating ${printers.length} printers in database...`);
-    
-    for (const printer of printers) {
-      console.log(`[DB] Updating ${printer.printer_name}: ${printer.status}`);
-      
-      const { error } = await supabase
-        .from('shop_printers')
-        .update({
-          status: printer.status,
-          last_heartbeat: printer.last_heartbeat
-        })
-        .eq('id', printer.id);
-
-      if (error) {
-        console.error(`[DB] Error updating printer ${printer.printer_name}:`, error);
-      } else {
-        console.log(`[DB] ✓ Updated ${printer.printer_name} to ${printer.status}`);
-      }
+    if (!printers || printers.length === 0) {
+      return;
     }
 
-    console.log(`[DB] ✅ Successfully updated all ${printers.length} printers`);
+    const updates = printers.map(printer => ({
+      id: printer.id,
+      shop_id: printer.shop_id,
+      printer_name: printer.printer_name,
+      printer_type: printer.printer_type,
+      supported_services: printer.supported_services,
+      supported_sizes: printer.supported_sizes,
+      status: printer.status,
+      last_heartbeat: printer.last_heartbeat,
+    }));
+
+    const { error } = await supabase
+      .from('shop_printers')
+      .upsert(updates, { onConflict: 'id' });
+
+    if (error) {
+      console.error('[DB] Error updating printers:', error);
+    }
   } catch (error) {
     console.error('[DB] Error updating printers:', error);
   }
@@ -235,3 +240,4 @@ export function cleanupPrinterHandlers() {
   printerService.stopMonitoring();
   monitoringActive = false;
 }
+

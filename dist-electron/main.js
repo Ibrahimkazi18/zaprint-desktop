@@ -5,6 +5,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
 const electron = require("electron");
 const child_process = require("child_process");
 const os = require("os");
+const util = require("util");
 const url = require("url");
 const path$1 = require("path");
 const fs$1 = require("fs");
@@ -25,25 +26,54 @@ function _interopNamespaceDefault(e) {
   return Object.freeze(n);
 }
 const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path$1);
+const execAsync = util.promisify(child_process.exec);
 class PrinterService {
   constructor() {
     __publicField(this, "detectionInterval", null);
     __publicField(this, "statusChangeCallback", null);
     __publicField(this, "lastKnownPrinters", /* @__PURE__ */ new Map());
+    __publicField(this, "detectionInFlight", null);
+    __publicField(this, "lastDetection", []);
+    __publicField(this, "lastDetectionAt", 0);
+    __publicField(this, "detectionCacheMs", 2e3);
     console.log("[PrinterService] Initialized");
   }
   /**
    * Detect all system printers using OS-specific commands
    */
-  async detectSystemPrinters() {
+  async detectSystemPrinters(options = {}) {
+    const now = Date.now();
+    const force = Boolean(options.force);
+    if (!force) {
+      if (this.detectionInFlight) {
+        return this.detectionInFlight;
+      }
+      if (this.lastDetection.length > 0 && now - this.lastDetectionAt < this.detectionCacheMs) {
+        return this.lastDetection;
+      }
+    }
+    const detectionPromise = this.detectSystemPrintersInternal();
+    this.detectionInFlight = detectionPromise;
+    try {
+      const printers = await detectionPromise;
+      this.lastDetection = printers;
+      this.lastDetectionAt = Date.now();
+      return printers;
+    } finally {
+      if (this.detectionInFlight === detectionPromise) {
+        this.detectionInFlight = null;
+      }
+    }
+  }
+  async detectSystemPrintersInternal() {
     const platform = os.platform();
     try {
       if (platform === "win32") {
-        return this.detectWindowsPrinters();
+        return await this.detectWindowsPrinters();
       } else if (platform === "darwin") {
-        return this.detectMacPrinters();
+        return await this.detectMacPrinters();
       } else if (platform === "linux") {
-        return this.detectLinuxPrinters();
+        return await this.detectLinuxPrinters();
       }
       console.warn("[PrinterService] Unsupported platform:", platform);
       return [];
@@ -52,27 +82,32 @@ class PrinterService {
       return [];
     }
   }
+  async runCommand(command) {
+    const { stdout } = await execAsync(command, {
+      encoding: "utf-8",
+      windowsHide: true,
+      maxBuffer: 4 * 1024 * 1024
+    });
+    return stdout;
+  }
   /**
    * Windows printer detection using PowerShell
    */
-  detectWindowsPrinters() {
+  async detectWindowsPrinters() {
     try {
-      const command = `powershell -Command "Get-Printer | Select-Object Name, PrinterStatus, WorkOffline, DriverName, PortName | ConvertTo-Json"`;
-      const output = child_process.execSync(command, {
-        encoding: "utf-8",
-        windowsHide: true
-      });
+      const command = `powershell -NoProfile -Command "Get-Printer | Select-Object Name, PrinterStatus, WorkOffline, DriverName, PortName | ConvertTo-Json"`;
+      const output = await this.runCommand(command);
+      if (!output || output.trim() === "") {
+        return [];
+      }
       let printers = JSON.parse(output);
       if (!Array.isArray(printers)) {
         printers = [printers];
       }
-      const defaultPrinterCommand = `powershell -Command "Get-CimInstance -ClassName Win32_Printer | Where-Object {$_.Default -eq $true} | Select-Object -ExpandProperty Name"`;
+      const defaultPrinterCommand = `powershell -NoProfile -Command "Get-CimInstance -ClassName Win32_Printer | Where-Object {$_.Default -eq $true} | Select-Object -ExpandProperty Name"`;
       let defaultPrinter = "";
       try {
-        defaultPrinter = child_process.execSync(defaultPrinterCommand, {
-          encoding: "utf-8",
-          windowsHide: true
-        }).trim();
+        defaultPrinter = (await this.runCommand(defaultPrinterCommand)).trim();
       } catch (e) {
         console.warn("[PrinterService] Could not detect default printer");
       }
@@ -91,13 +126,13 @@ class PrinterService {
   /**
    * macOS printer detection using lpstat
    */
-  detectMacPrinters() {
+  async detectMacPrinters() {
     try {
-      const printersOutput = child_process.execSync("lpstat -p", { encoding: "utf-8" });
+      const printersOutput = await this.runCommand("lpstat -p");
       const printerLines = printersOutput.split("\n").filter((line) => line.trim());
       let defaultPrinter = "";
       try {
-        defaultPrinter = child_process.execSync("lpstat -d", { encoding: "utf-8" }).replace("system default destination:", "").trim();
+        defaultPrinter = (await this.runCommand("lpstat -d")).replace("system default destination:", "").trim();
       } catch (e) {
         console.warn("[PrinterService] No default printer set");
       }
@@ -123,13 +158,13 @@ class PrinterService {
   /**
    * Linux printer detection using lpstat
    */
-  detectLinuxPrinters() {
+  async detectLinuxPrinters() {
     try {
-      const printersOutput = child_process.execSync("lpstat -p", { encoding: "utf-8" });
+      const printersOutput = await this.runCommand("lpstat -p");
       const printerLines = printersOutput.split("\n").filter((line) => line.trim());
       let defaultPrinter = "";
       try {
-        defaultPrinter = child_process.execSync("lpstat -d", { encoding: "utf-8" }).replace("system default destination:", "").trim();
+        defaultPrinter = (await this.runCommand("lpstat -d")).replace("system default destination:", "").trim();
       } catch (e) {
         console.warn("[PrinterService] No default printer set");
       }
@@ -11859,7 +11894,7 @@ function setupPrinterHandlers(mainWindow2) {
   electron.ipcMain.handle("printer:detect-system", async () => {
     try {
       console.log("[IPC] Detecting system printers...");
-      const printers = await printerService.detectSystemPrinters();
+      const printers = await printerService.detectSystemPrinters({ force: true });
       console.log(`[IPC] Found ${printers.length} system printers`);
       printers.forEach((p) => {
         console.log(`  - ${p.name} (${p.status})`);
@@ -11907,20 +11942,24 @@ function setupPrinterHandlers(mainWindow2) {
       }
       console.log(`[IPC] Found ${registeredPrinters.length} registered printers in database`);
       console.log("[IPC] Performing immediate printer detection...");
-      const systemPrinters = await printerService.detectSystemPrinters();
+      const systemPrinters = await printerService.detectSystemPrinters({ force: true });
       console.log(`[IPC] Immediate detection found ${systemPrinters.length} system printers`);
       const initialPrinters = printerService.mapToAppPrinters(
         systemPrinters,
         registeredPrinters
       );
-      await updatePrintersInDatabase(initialPrinters);
+      void updatePrintersInDatabase(initialPrinters).catch((error2) => {
+        console.error("[DB] Background update failed:", error2);
+      });
       mainWindow2.webContents.send("printer:status-changed", initialPrinters);
       console.log("[IPC] Initial printer status sent to renderer");
       printerService.startMonitoring(
         registeredPrinters,
         async (updatedPrinters) => {
           console.log("[IPC] Printer status changed during monitoring, updating database...");
-          await updatePrintersInDatabase(updatedPrinters);
+          void updatePrintersInDatabase(updatedPrinters).catch((error2) => {
+            console.error("[DB] Background update failed:", error2);
+          });
           mainWindow2.webContents.send("printer:status-changed", updatedPrinters);
         },
         1e4
@@ -11958,7 +11997,7 @@ function setupPrinterHandlers(mainWindow2) {
         return { success: true, printers: [] };
       }
       console.log(`[IPC] Syncing ${registeredPrinters.length} printers...`);
-      const systemPrinters = await printerService.detectSystemPrinters();
+      const systemPrinters = await printerService.detectSystemPrinters({ force: true });
       console.log(`[IPC] Found ${systemPrinters.length} system printers`);
       const updatedPrinters = printerService.mapToAppPrinters(
         systemPrinters,
@@ -11977,20 +12016,23 @@ function setupPrinterHandlers(mainWindow2) {
 }
 async function updatePrintersInDatabase(printers) {
   try {
-    console.log(`[DB] Updating ${printers.length} printers in database...`);
-    for (const printer of printers) {
-      console.log(`[DB] Updating ${printer.printer_name}: ${printer.status}`);
-      const { error } = await supabase.from("shop_printers").update({
-        status: printer.status,
-        last_heartbeat: printer.last_heartbeat
-      }).eq("id", printer.id);
-      if (error) {
-        console.error(`[DB] Error updating printer ${printer.printer_name}:`, error);
-      } else {
-        console.log(`[DB] ✓ Updated ${printer.printer_name} to ${printer.status}`);
-      }
+    if (!printers || printers.length === 0) {
+      return;
     }
-    console.log(`[DB] ✅ Successfully updated all ${printers.length} printers`);
+    const updates = printers.map((printer) => ({
+      id: printer.id,
+      shop_id: printer.shop_id,
+      printer_name: printer.printer_name,
+      printer_type: printer.printer_type,
+      supported_services: printer.supported_services,
+      supported_sizes: printer.supported_sizes,
+      status: printer.status,
+      last_heartbeat: printer.last_heartbeat
+    }));
+    const { error } = await supabase.from("shop_printers").upsert(updates, { onConflict: "id" });
+    if (error) {
+      console.error("[DB] Error updating printers:", error);
+    }
   } catch (error) {
     console.error("[DB] Error updating printers:", error);
   }

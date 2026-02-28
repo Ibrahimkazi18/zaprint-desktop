@@ -54,10 +54,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const { shop, printers, loading } = useShopDashboard();
-  const { addJob: addToQueue } = usePrintQueue(printers);
+  const { addJob: addToQueue } = usePrintQueue(printers, {
+    detectSystemPrinters: false,
+  });
   const queue = useLiveQueue();
-
-  console.log("Shop data:", shop);
 
   useEffect(() => {
     if (!shop?.id) return;
