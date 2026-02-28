@@ -15,10 +15,7 @@ export function useLiveQueue() {
   const [queue, setQueue] = useState<QueueJob[]>([]);
 
   useEffect(() => {
-    // Poll the queue every second for updates
-    const interval = setInterval(() => {
-      const snapshot = printQueueManager.getQueueSnapshot();
-      
+    const unsubscribe = printQueueManager.subscribeQueue(snapshot => {
       const formattedQueue = snapshot.map((job, index) => ({
         orderId: job.orderId,
         itemId: job.itemId,
@@ -30,9 +27,11 @@ export function useLiveQueue() {
       }));
 
       setQueue(formattedQueue);
-    }, 1000);
+    });
 
-    return () => clearInterval(interval);
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   return queue;

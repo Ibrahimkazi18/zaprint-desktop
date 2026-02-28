@@ -20,6 +20,8 @@ export type PrintQueueJob = PrintQueueItem & {
   orderItemCount?: number;
 };
 
+type QueueListener = (snapshot: PrintQueueJob[]) => void;
+
 const queue: PrintQueueJob[] = [];
 const orderProgress = new Map<string, { total?: number; completed: number }>();
 let isProcessing = false;
@@ -27,6 +29,7 @@ let availablePrinters: AppPrinter[] = [];
 let systemPrinters: SystemPrinter[] = [];
 let retryTimer: number | null = null;
 const retryDelayMs = 15000;
+const queueListeners = new Set<QueueListener>();
 
 export const printQueueManager = {
   addJob,
@@ -34,11 +37,13 @@ export const printQueueManager = {
   setAvailablePrinters,
   getQueueSnapshot,
   getSystemPrinters,
+  subscribeQueue,
 };
 
 function addJob(job: PrintQueueJob) {
   queue.push(job);
   registerOrder(job);
+  notifyQueueChange();
 
   console.log("[PrintQueue] Job queued", {
     orderId: job.orderId,
@@ -64,6 +69,28 @@ function getQueueSnapshot() {
 
 function getSystemPrinters() {
   return [...systemPrinters];
+}
+
+function subscribeQueue(listener: QueueListener) {
+  queueListeners.add(listener);
+  listener(getQueueSnapshot());
+
+  return () => {
+    queueListeners.delete(listener);
+  };
+}
+
+function notifyQueueChange() {
+  if (queueListeners.size === 0) return;
+
+  const snapshot = getQueueSnapshot();
+  queueListeners.forEach(listener => {
+    try {
+      listener(snapshot);
+    } catch (error) {
+      console.error("[PrintQueue] Queue listener error", error);
+    }
+  });
 }
 
 async function processQueue() {
@@ -102,6 +129,7 @@ async function processQueue() {
         await cleanupAfterPrint(job);
 
         queue.shift();
+        notifyQueueChange();
       } catch (error: any) {
         console.error("[PrintQueue] Print failed", error);
         scheduleRetry(error?.message || "print failed");

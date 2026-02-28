@@ -1,6 +1,9 @@
 import { supabase } from "@/auth/supabase";
 import { updateOrderStatus } from "../orders/updateOrderStatus";
 
+const ORDER_ITEM_FETCH_ATTEMPTS = 6;
+const ORDER_ITEM_FETCH_DELAY_MS = 700;
+
 export function subscribeToOrders(
   shopId: string,
   addToQueue: (item: any) => void
@@ -8,7 +11,7 @@ export function subscribeToOrders(
   console.log("Subscribing to orders for shop ID:", shopId);
 
   const channel = supabase
-    .channel("shop-orders")
+    .channel(`shop-orders-${shopId}`)
     .on(
       "postgres_changes",
       {
@@ -32,20 +35,45 @@ export function subscribeToOrders(
   return channel;
 }
 
-async function processOrder(orderId: string, addToQueue: any) {
-  const { data: items, error } = await supabase
-    .from("order_items")
-    .select("*")
-    .eq("order_id", orderId);
+async function fetchOrderItemsWithRetry(orderId: string) {
+  for (let attempt = 1; attempt <= ORDER_ITEM_FETCH_ATTEMPTS; attempt += 1) {
+    const { data: items, error } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId);
 
-  if (error) {
-    console.error("Failed to fetch order items:", error);
+    if (error) {
+      console.error(
+        `[Orders] Failed to fetch order items (attempt ${attempt})`,
+        error
+      );
+    } else if (items && items.length > 0) {
+      return items;
+    }
+
+    if (attempt < ORDER_ITEM_FETCH_ATTEMPTS) {
+      await new Promise(resolve =>
+        setTimeout(resolve, ORDER_ITEM_FETCH_DELAY_MS * attempt)
+      );
+    }
+  }
+
+  return null;
+}
+
+async function processOrder(orderId: string, addToQueue: any) {
+  const items = await fetchOrderItemsWithRetry(orderId);
+
+  if (!items || items.length === 0) {
+    console.warn(
+      `[Orders] No order items found for order ${orderId} after retries`
+    );
     return;
   }
 
-  if (!items || items.length === 0) return;
-
   const totalItems = items.length;
+
+  await updateOrderStatus(orderId, "in_queue");
 
   for (const item of items) {
     const pathForDownload = item.file_url.split("/documents/")[1];
@@ -65,8 +93,6 @@ async function processOrder(orderId: string, addToQueue: any) {
       item.file_name,
       arrayBuffer
     );
-
-    await updateOrderStatus(orderId, "in_queue");
 
     addToQueue({
       orderId,

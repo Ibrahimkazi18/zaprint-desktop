@@ -17,10 +17,12 @@ export function useShopDashboard() {
     
     const load = async () => {
       try {
-        // Load both in parallel for faster loading
+        const shopPromise = fetchMyShop();
         const [shopData, printersData] = await Promise.all([
-          fetchMyShop(),
-          fetchMyShop().then(shop => fetchShopPrinters(shop.id))
+          shopPromise,
+          shopPromise.then(shop =>
+            shop?.id ? fetchShopPrinters(shop.id) : Promise.resolve([])
+          ),
         ]);
         
         setShop(shopData)
