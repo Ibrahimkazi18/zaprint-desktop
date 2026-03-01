@@ -1,4 +1,4 @@
-// import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -22,6 +22,24 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Printer as PrinterIcon,
   Plus,
   Edit,
@@ -37,6 +55,9 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
 import { usePrinterMonitoring } from "@/hooks/usePrinterMonitoring";
 import { Printer } from "@/types";
+import updatePrinter from "@/backend/printers/updatePrinter";
+import deletePrinter from "@/backend/printers/deletePrinter";
+import toast from "react-hot-toast";
 
 // Visual status mapping
 const getStatusConfig = (status: Printer["status"]) => {
@@ -92,12 +113,31 @@ const getPrinterTypeLabel = (type: string) => {
   return typeMap[type] || type;
 };
 
+const PRINTER_TYPES = [
+  { label: "Black & White", value: "bw" },
+  { label: "Color", value: "color" },
+  { label: "Photo", value: "photo" },
+  { label: "Passport / ID", value: "passport" },
+  { label: "Large Format", value: "large_format" },
+];
+
+const SERVICES = [
+  "Black & White Printing",
+  "Color Printing",
+  "Photocopy",
+  "Photo Printing",
+  "Passport Size Prints",
+];
+
+const PAPER_SIZES = ["A4", "A3", "A5", "Legal", "Letter", "Passport"];
+
 export default function Printers() {
   const navigate = useNavigate();
   const {
     shop,
     printers: registeredPrinters,
     loading: dashboardLoading,
+    refreshPrinters,
   } = useShopDashboard();
 
   // Initialize printer monitoring
@@ -116,14 +156,110 @@ export default function Printers() {
     monitoredPrinters.length > 0 ? monitoredPrinters : registeredPrinters;
   const loading = dashboardLoading || monitoringLoading;
 
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingPrinter, setEditingPrinter] = useState<Printer | null>(null);
+  const [editForm, setEditForm] = useState({
+    printer_name: "",
+    printer_type: "",
+    supported_services: [] as string[],
+    supported_sizes: [] as string[],
+  });
+  const [editLoading, setEditLoading] = useState(false);
+
   const handleEditPrinter = (printer: Printer) => {
-    console.log("Edit printer:", printer.id);
-    alert("Edit printer functionality will be implemented later");
+    setEditingPrinter(printer);
+    setEditForm({
+      printer_name: printer.printer_name,
+      printer_type: printer.printer_type,
+      supported_services: [...printer.supported_services],
+      supported_sizes: [...printer.supported_sizes],
+    });
+    setEditDialogOpen(true);
   };
 
-  const handleDeletePrinter = (printer: Printer) => {
-    console.log("Delete printer:", printer.id);
-    alert("Delete printer functionality will be implemented later");
+  const handleSaveEdit = async () => {
+    if (!editingPrinter) return;
+
+    if (!editForm.printer_name.trim()) {
+      toast.error("Printer name is required");
+      return;
+    }
+
+    if (editForm.supported_services.length === 0) {
+      toast.error("Please select at least one service");
+      return;
+    }
+
+    if (editForm.supported_sizes.length === 0) {
+      toast.error("Please select at least one paper size");
+      return;
+    }
+
+    setEditLoading(true);
+
+    try {
+      const updatedPrinter = await updatePrinter(editingPrinter.id, {
+        printer_name: editForm.printer_name.trim(),
+        printer_type: editForm.printer_type,
+        supported_services: editForm.supported_services,
+        supported_sizes: editForm.supported_sizes,
+      });
+
+      toast.success("Printer updated successfully!");
+      setEditDialogOpen(false);
+      
+      // Refresh both printer sources to ensure UI is updated
+      // The realtime subscription should also trigger, but we do this for immediate feedback
+      await refreshPrinters();
+      
+      // Sync printer status if monitoring is active
+      if (isMonitoring) {
+        await syncPrinterStatus();
+      }
+    } catch (error: any) {
+      console.error("Error updating printer:", error);
+      toast.error(error.message || "Failed to update printer");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const toggleEditService = (service: string) => {
+    setEditForm((prev) => ({
+      ...prev,
+      supported_services: prev.supported_services.includes(service)
+        ? prev.supported_services.filter((s) => s !== service)
+        : [...prev.supported_services, service],
+    }));
+  };
+
+  const toggleEditSize = (size: string) => {
+    setEditForm((prev) => ({
+      ...prev,
+      supported_sizes: prev.supported_sizes.includes(size)
+        ? prev.supported_sizes.filter((s) => s !== size)
+        : [...prev.supported_sizes, size],
+    }));
+  };
+
+  const handleDeletePrinter = async (printer: Printer) => {
+    try {
+      await deletePrinter(printer.id);
+      toast.success("Printer deleted successfully!");
+      
+      // Refresh printer list to ensure UI is updated
+      // The realtime subscription should also trigger, but we do this for immediate feedback
+      await refreshPrinters();
+      
+      // Sync printer status if monitoring is active
+      if (isMonitoring) {
+        await syncPrinterStatus();
+      }
+    } catch (error: any) {
+      console.error("Error deleting printer:", error);
+      toast.error(error.message || "Failed to delete printer");
+    }
   };
 
   const handleTestPrinter = (printer: Printer) => {
@@ -547,6 +683,121 @@ export default function Printers() {
           </div>
         )}
       </div>
+
+      {/* Edit Printer Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Edit Printer</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Update printer details and capabilities
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Printer Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-printer-name" className="text-sm font-medium text-foreground">
+                Printer Name
+              </Label>
+              <Input
+                id="edit-printer-name"
+                value={editForm.printer_name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, printer_name: e.target.value })
+                }
+                placeholder="e.g. HP LaserJet Pro"
+                className="bg-background text-foreground"
+              />
+            </div>
+
+            {/* Printer Type */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-printer-type" className="text-sm font-medium text-foreground">
+                Printer Type
+              </Label>
+              <Select
+                value={editForm.printer_type}
+                onValueChange={(value) =>
+                  setEditForm({ ...editForm, printer_type: value })
+                }
+              >
+                <SelectTrigger className="bg-background text-foreground">
+                  <SelectValue placeholder="Select printer type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRINTER_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Supported Services */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-foreground">
+                Supported Services
+              </Label>
+              <div className="grid grid-cols-2 gap-3 p-4 border border-border rounded-lg bg-card">
+                {SERVICES.map((service) => (
+                  <div key={service} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-service-${service}`}
+                      checked={editForm.supported_services.includes(service)}
+                      onCheckedChange={() => toggleEditService(service)}
+                    />
+                    <Label
+                      htmlFor={`edit-service-${service}`}
+                      className="cursor-pointer text-sm font-normal text-foreground"
+                    >
+                      {service}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Supported Paper Sizes */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-foreground">
+                Supported Paper Sizes
+              </Label>
+              <div className="grid grid-cols-3 gap-3 p-4 border border-border rounded-lg bg-card">
+                {PAPER_SIZES.map((size) => (
+                  <div key={size} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-size-${size}`}
+                      checked={editForm.supported_sizes.includes(size)}
+                      onCheckedChange={() => toggleEditSize(size)}
+                    />
+                    <Label
+                      htmlFor={`edit-size-${size}`}
+                      className="cursor-pointer text-sm font-normal text-foreground"
+                    >
+                      {size}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={editLoading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={editLoading}>
+              {editLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

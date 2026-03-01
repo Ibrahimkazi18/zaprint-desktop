@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import fetchMyShop from "@/backend/shops/fetchMyShop"
 import fetchShopPrinters from "@/backend/printers/fetchPrinters"
 import subscribeToShopPrinters from "@/backend/realtime/shopRealtime"
@@ -61,9 +61,20 @@ export function useShopDashboard() {
     }
   }, [shop?.id])
 
+  // Manual refresh function with useCallback to prevent infinite loops
+  const refreshPrinters = useCallback(async () => {
+    if (!shop?.id) return
+    try {
+      const updated = await fetchShopPrinters(shop.id)
+      setPrinters(updated)
+    } catch (error) {
+      console.error("Error refreshing printers:", error)
+    }
+  }, [shop?.id])
+
   // Memoize the return value to prevent unnecessary re-renders
   return useMemo(
-    () => ({ shop, printers, loading }),
-    [shop, printers, loading]
+    () => ({ shop, printers, loading, refreshPrinters }),
+    [shop, printers, loading, refreshPrinters]
   )
 }
