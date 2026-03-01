@@ -1,6 +1,7 @@
 // electron/main/printerHandlers.ts
 import { ipcMain, BrowserWindow } from 'electron';
 import { printerService, AppPrinter } from './printer/PrinterService';
+import { testPrintService } from './printer/TestPrintService';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Supabase client cache
@@ -196,6 +197,22 @@ export function setupPrinterHandlers(mainWindow: BrowserWindow) {
       return { success: true, printers: updatedPrinters };
     } catch (error: any) {
       console.error('[IPC] Error syncing printer status:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Test print
+  ipcMain.handle('printer:test-print', async (_, { printerName, shopName, printerType }) => {
+    try {
+      console.log('[IPC] Test print requested for:', printerName);
+      const result = await testPrintService.printTestPage({
+        printerName,
+        shopName,
+        printerType
+      });
+      return result;
+    } catch (error: any) {
+      console.error('[IPC] Error printing test page:', error);
       return { success: false, error: error.message };
     }
   });

@@ -262,9 +262,41 @@ export default function Printers() {
     }
   };
 
-  const handleTestPrinter = (printer: Printer) => {
-    console.log("Test printer:", printer.id);
-    alert("Test print functionality coming soon!");
+  const handleTestPrinter = async (printer: Printer) => {
+    if (!window.printerAPI) {
+      toast.error("Printer API not available. Please run in Electron app.");
+      return;
+    }
+
+    if (printer.status !== "online") {
+      toast.error("Printer must be online to test print");
+      return;
+    }
+
+    try {
+      toast.loading("Sending test page to printer...", { id: "test-print" });
+
+      const result = await window.printerAPI.testPrint({
+        printerName: printer.printer_name,
+        shopName: shop?.shop_name || "Print Shop",
+        printerType: getPrinterTypeLabel(printer.printer_type),
+      });
+
+      if (result.success) {
+        toast.success("Test page sent to printer successfully!", {
+          id: "test-print",
+        });
+      } else {
+        toast.error(result.error || "Failed to print test page", {
+          id: "test-print",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error testing printer:", error);
+      toast.error(error.message || "Failed to print test page", {
+        id: "test-print",
+      });
+    }
   };
 
   const handleRefreshStatus = async () => {

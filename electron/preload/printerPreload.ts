@@ -71,6 +71,16 @@ onStatusChanged: (callback: (printers: AppPrinter[]) => void) => void;
 
 // Remove status change listener
 removeStatusListener: () => void;
+
+// Test print
+testPrint: (data: {
+    printerName: string;
+    shopName?: string;
+    printerType?: string;
+}) => Promise<{
+    success: boolean;
+    error?: string;
+}>;
 }
 
 /**
@@ -101,7 +111,10 @@ const printerAPI: PrinterAPI = {
 
     removeStatusListener: () => {
     ipcRenderer.removeAllListeners('printer:status-changed');
-    }
+    },
+
+    testPrint: (data) =>
+    ipcRenderer.invoke('printer:test-print', data)
 };
 
 contextBridge.exposeInMainWorld('printerAPI', printerAPI);
