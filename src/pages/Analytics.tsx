@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,6 +9,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -25,71 +26,75 @@ import {
   FileText,
   BarChart3,
   Download,
+  Clock,
+  Target,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useShopDashboard } from "@/hooks/useShopDashboard";
+import fetchAnalyticsOverview, { AnalyticsOverview } from "@/backend/analytics/fetchAnalyticsOverview";
+import fetchMonthlyRevenue, { MonthlyRevenue } from "@/backend/analytics/fetchMonthlyRevenue";
+import fetchTopCustomers, { TopCustomer } from "@/backend/analytics/fetchTopCustomers";
+import fetchDailyPerformance, { DailyPerformance } from "@/backend/analytics/fetchDailyPerformance";
+import fetchGrowthMetrics, { GrowthMetrics } from "@/backend/analytics/fetchGrowthMetrics";
+import fetchHourlyPerformance, { HourlyPerformance } from "@/backend/analytics/fetchHourlyPerformance";
+import toast from "react-hot-toast";
 
 export default function Analytics() {
-  const [selectedPeriod, setSelectedPeriod] = useState("7d");
+  const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const { shop } = useShopDashboard();
+  
+  // State for analytics data
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([]);
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>([]);
+  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetrics | null>(null);
+  const [hourlyPerformance, setHourlyPerformance] = useState<HourlyPerformance[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock analytics data
-  const overviewStats = {
-    totalRevenue: 125400,
-    revenueChange: 12.5,
-    totalJobs: 1247,
-    jobsChange: 8.3,
-    totalCustomers: 342,
-    customersChange: 15.2,
-    avgJobValue: 100.56,
-    avgJobValueChange: -2.1,
-  };
+  // Load all analytics data
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      if (!shop?.id) return;
 
-  const revenueData = [
-    { period: "Jan", revenue: 8500, jobs: 85 },
-    { period: "Feb", revenue: 9200, jobs: 92 },
-    { period: "Mar", revenue: 10100, jobs: 101 },
-    { period: "Apr", revenue: 11800, jobs: 118 },
-    { period: "May", revenue: 12400, jobs: 124 },
-    { period: "Jun", revenue: 13200, jobs: 132 },
-  ];
+      try {
+        setLoading(true);
+        
+        const [
+          overviewData,
+          monthlyData,
+          customersData,
+          dailyData,
+          growthData,
+          hourlyData,
+        ] = await Promise.all([
+          fetchAnalyticsOverview(shop.id),
+          fetchMonthlyRevenue(shop.id, selectedPeriod === "30d" ? 6 : selectedPeriod === "90d" ? 12 : 3),
+          fetchTopCustomers(shop.id, 10),
+          fetchDailyPerformance(shop.id),
+          fetchGrowthMetrics(shop.id),
+          fetchHourlyPerformance(shop.id),
+        ]);
 
-  const topServices = [
-    {
-      service: "Document Printing",
-      revenue: 45600,
-      jobs: 456,
-      percentage: 36.4,
-    },
-    {
-      service: "Binding Services",
-      revenue: 28900,
-      jobs: 289,
-      percentage: 23.1,
-    },
-    { service: "Color Printing", revenue: 22100, jobs: 221, percentage: 17.6 },
-    { service: "Large Format", revenue: 15800, jobs: 158, percentage: 12.6 },
-    { service: "Scanning", revenue: 8900, jobs: 89, percentage: 7.1 },
-    { service: "Others", revenue: 4100, jobs: 41, percentage: 3.2 },
-  ];
+        setOverview(overviewData);
+        setMonthlyRevenue(monthlyData);
+        setTopCustomers(customersData);
+        setDailyPerformance(dailyData);
+        setGrowthMetrics(growthData);
+        setHourlyPerformance(hourlyData);
+      } catch (error) {
+        console.error("Error loading analytics:", error);
+        toast.error("Failed to load analytics data");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const topCustomers = [
-    { name: "John Doe", jobs: 45, revenue: 4500, lastOrder: "2 days ago" },
-    { name: "Jane Smith", jobs: 38, revenue: 3800, lastOrder: "1 day ago" },
-    { name: "Alex Johnson", jobs: 32, revenue: 3200, lastOrder: "3 days ago" },
-    { name: "Sarah Wilson", jobs: 28, revenue: 2800, lastOrder: "1 week ago" },
-    { name: "Mike Chen", jobs: 25, revenue: 2500, lastOrder: "4 days ago" },
-  ];
-
-  const dailyStats = [
-    { day: "Monday", jobs: 18, revenue: 1800 },
-    { day: "Tuesday", jobs: 22, revenue: 2200 },
-    { day: "Wednesday", jobs: 25, revenue: 2500 },
-    { day: "Thursday", jobs: 20, revenue: 2000 },
-    { day: "Friday", jobs: 28, revenue: 2800 },
-    { day: "Saturday", jobs: 15, revenue: 1500 },
-    { day: "Sunday", jobs: 8, revenue: 800 },
-  ];
+    loadAnalytics();
+  }, [shop?.id, selectedPeriod]);
 
   const formatCurrency = (amount: number) => `₹${amount.toLocaleString()}`;
+  
   const formatChange = (change: number) => (
     <span
       className={`flex items-center ${change >= 0 ? "text-green-600" : "text-red-600"}`}
@@ -99,9 +104,63 @@ export default function Analytics() {
       ) : (
         <TrendingDown className="h-4 w-4 mr-1" />
       )}
-      {Math.abs(change)}%
+      {Math.abs(change).toFixed(1)}%
     </span>
   );
+
+  const calculateChange = (current: number, previous: number): number => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <Skeleton className="h-9 w-64 mb-2" />
+              <Skeleton className="h-5 w-96" />
+            </div>
+            <Skeleton className="h-10 w-48" />
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-8 w-32" />
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -155,10 +214,15 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(overviewStats.totalRevenue)}
+                {formatCurrency(overview?.quarter_revenue || 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatChange(overviewStats.revenueChange)} from last period
+                {formatChange(
+                  growthMetrics
+                    ? growthMetrics.mom_revenue_growth
+                    : 0
+                )}{" "}
+                from last month
               </p>
             </CardContent>
           </Card>
@@ -170,10 +234,15 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {overviewStats.totalJobs.toLocaleString()}
+                {overview?.quarter_orders || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatChange(overviewStats.jobsChange)} from last period
+                {formatChange(
+                  growthMetrics
+                    ? growthMetrics.mom_orders_growth
+                    : 0
+                )}{" "}
+                from last month
               </p>
             </CardContent>
           </Card>
@@ -187,10 +256,10 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {overviewStats.totalCustomers}
+                {overview?.total_customers || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatChange(overviewStats.customersChange)} from last period
+                {overview?.active_customers_month || 0} active this month
               </p>
             </CardContent>
           </Card>
@@ -204,10 +273,10 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {formatCurrency(overviewStats.avgJobValue)}
+                {formatCurrency(overview?.avg_order_value || 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatChange(overviewStats.avgJobValueChange)} from last period
+                {overview?.completion_rate || 0}% completion rate
               </p>
             </CardContent>
           </Card>
@@ -216,9 +285,9 @@ export default function Analytics() {
         <Tabs defaultValue="revenue" className="space-y-6">
           <TabsList>
             <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
-            <TabsTrigger value="services">Service Performance</TabsTrigger>
             <TabsTrigger value="customers">Customer Insights</TabsTrigger>
             <TabsTrigger value="daily">Daily Trends</TabsTrigger>
+            <TabsTrigger value="hourly">Peak Hours</TabsTrigger>
           </TabsList>
 
           <TabsContent value="revenue" className="space-y-6">
@@ -227,41 +296,50 @@ export default function Analytics() {
                 <CardHeader>
                   <CardTitle>Monthly Revenue Trend</CardTitle>
                   <CardDescription>
-                    Revenue and job count over the last 6 months
+                    Revenue and job count over time
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {revenueData.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 text-sm font-medium">
-                            {item.period}
-                          </div>
-                          <div className="flex-1">
-                            <div className="w-full bg-muted rounded-full h-2">
-                              <div
-                                className="bg-primary h-2 rounded-full"
-                                style={{
-                                  width: `${(item.revenue / 15000) * 100}%`,
-                                }}
-                              />
+                    {monthlyRevenue.length > 0 ? (
+                      monthlyRevenue.map((item, index) => {
+                        const maxRevenue = Math.max(...monthlyRevenue.map(m => m.total_revenue));
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex items-center space-x-4 flex-1">
+                              <div className="w-16 text-sm font-medium">
+                                {item.month_label.split(' ')[0]}
+                              </div>
+                              <div className="flex-1">
+                                <div className="w-full bg-muted rounded-full h-2">
+                                  <div
+                                    className="bg-primary h-2 rounded-full transition-all"
+                                    style={{
+                                      width: `${(item.total_revenue / maxRevenue) * 100}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right ml-4">
+                              <div className="text-sm font-medium">
+                                {formatCurrency(item.total_revenue)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {item.order_count} jobs
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">
-                            {formatCurrency(item.revenue)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.jobs} jobs
-                          </div>
-                        </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No revenue data available
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -270,7 +348,7 @@ export default function Analytics() {
                 <CardHeader>
                   <CardTitle>Revenue Breakdown</CardTitle>
                   <CardDescription>
-                    Current month performance metrics
+                    Current period performance metrics
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -278,95 +356,66 @@ export default function Analytics() {
                     <div>
                       <p className="text-sm font-medium">This Month</p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(13200)}
+                        {formatCurrency(overview?.month_revenue || 0)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">132 jobs</p>
-                      <p className="text-sm text-green-600">
-                        +11.8% vs last month
+                      <p className="text-sm text-muted-foreground">
+                        {overview?.month_orders || 0} jobs
                       </p>
+                      {growthMetrics && (
+                        <p className={`text-sm ${growthMetrics.mom_revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {growthMetrics.mom_revenue_growth >= 0 ? '+' : ''}
+                          {growthMetrics.mom_revenue_growth.toFixed(1)}% vs last month
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="text-sm font-medium">This Week</p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(3200)}
+                        {formatCurrency(overview?.week_revenue || 0)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">32 jobs</p>
-                      <p className="text-sm text-green-600">
-                        +5.2% vs last week
+                      <p className="text-sm text-muted-foreground">
+                        {overview?.week_orders || 0} jobs
                       </p>
+                      {growthMetrics && (
+                        <p className={`text-sm ${growthMetrics.wow_revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {growthMetrics.wow_revenue_growth >= 0 ? '+' : ''}
+                          {growthMetrics.wow_revenue_growth.toFixed(1)}% vs last week
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="text-sm font-medium">Today</p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(450)}
+                        {formatCurrency(overview?.today_revenue || 0)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">5 jobs</p>
-                      <p className="text-sm text-green-600">
-                        +12% vs yesterday
+                      <p className="text-sm text-muted-foreground">
+                        {overview?.today_orders || 0} jobs
                       </p>
+                      {overview && overview.yesterday_revenue > 0 && (
+                        <p className={`text-sm ${
+                          calculateChange(overview.today_revenue, overview.yesterday_revenue) >= 0 
+                            ? 'text-green-600' 
+                            : 'text-red-600'
+                        }`}>
+                          {calculateChange(overview.today_revenue, overview.yesterday_revenue) >= 0 ? '+' : ''}
+                          {calculateChange(overview.today_revenue, overview.yesterday_revenue).toFixed(1)}% vs yesterday
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="services" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Performing Services</CardTitle>
-                <CardDescription>
-                  Revenue and job count by service type
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Jobs</TableHead>
-                      <TableHead>Share</TableHead>
-                      <TableHead>Performance</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topServices.map((service, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">
-                          {service.service}
-                        </TableCell>
-                        <TableCell>{formatCurrency(service.revenue)}</TableCell>
-                        <TableCell>{service.jobs}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {service.percentage}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="w-full bg-muted rounded-full h-2">
-                            <div
-                              className="bg-primary h-2 rounded-full"
-                              style={{ width: `${service.percentage}%` }}
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="customers" className="space-y-6">
@@ -378,36 +427,47 @@ export default function Analytics() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Total Jobs</TableHead>
-                      <TableHead>Total Revenue</TableHead>
-                      <TableHead>Avg per Job</TableHead>
-                      <TableHead>Last Order</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topCustomers.map((customer, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">
-                          {customer.name}
-                        </TableCell>
-                        <TableCell>{customer.jobs}</TableCell>
-                        <TableCell>
-                          {formatCurrency(customer.revenue)}
-                        </TableCell>
-                        <TableCell>
-                          {formatCurrency(customer.revenue / customer.jobs)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {customer.lastOrder}
-                        </TableCell>
+                {topCustomers.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Total Jobs</TableHead>
+                        <TableHead>Total Revenue</TableHead>
+                        <TableHead>Avg per Job</TableHead>
+                        <TableHead>Last Order</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {topCustomers.map((customer, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {customer.customer_name || "Unknown"}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {customer.customer_phone || "N/A"}
+                          </TableCell>
+                          <TableCell>{customer.total_orders}</TableCell>
+                          <TableCell>
+                            {formatCurrency(customer.total_revenue)}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(customer.avg_order_value)}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {formatTimeAgo(customer.last_order_date)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No customer data available yet</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -421,36 +481,110 @@ export default function Analytics() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {dailyStats.map((day, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-20 text-sm font-medium">
-                          {day.day}
-                        </div>
-                        <div className="flex-1">
-                          <div className="w-full bg-muted rounded-full h-3">
-                            <div
-                              className="bg-primary h-3 rounded-full"
-                              style={{ width: `${(day.jobs / 30) * 100}%` }}
-                            />
+                {dailyPerformance.length > 0 ? (
+                  <div className="space-y-4">
+                    {dailyPerformance.map((day, index) => {
+                      const maxOrders = Math.max(...dailyPerformance.map(d => d.total_orders));
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-4 flex-1">
+                            <div className="w-24 text-sm font-medium">
+                              {day.day_name}
+                            </div>
+                            <div className="flex-1">
+                              <div className="w-full bg-muted rounded-full h-3">
+                                <div
+                                  className="bg-primary h-3 rounded-full transition-all"
+                                  style={{ width: `${(day.total_orders / maxOrders) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <div className="text-sm font-medium">
+                              {formatCurrency(day.total_revenue)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {day.total_orders} jobs
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium">
-                          {formatCurrency(day.revenue)}
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No daily performance data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="hourly" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Peak Hours Analysis</CardTitle>
+                <CardDescription>
+                  Busiest hours of the day for your shop
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {hourlyPerformance.length > 0 ? (
+                  <div className="space-y-3">
+                    {hourlyPerformance.map((hour, index) => {
+                      const maxOrders = Math.max(...hourlyPerformance.map(h => h.order_count));
+                      const isPeakHour = hour.order_count === maxOrders && maxOrders > 0;
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between p-3 border rounded-lg ${
+                            isPeakHour ? 'bg-primary/5 border-primary' : 'hover:bg-muted/50'
+                          } transition-colors`}
+                        >
+                          <div className="flex items-center space-x-4 flex-1">
+                            <div className="w-20 text-sm font-medium flex items-center">
+                              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                              {hour.hour}:00
+                            </div>
+                            <div className="flex-1">
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div
+                                  className={`h-2 rounded-full transition-all ${
+                                    isPeakHour ? 'bg-primary' : 'bg-primary/60'
+                                  }`}
+                                  style={{ width: `${(hour.order_count / maxOrders) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <div className="text-sm font-medium">
+                              {hour.order_count} orders
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatCurrency(hour.total_revenue)}
+                            </div>
+                          </div>
+                          {isPeakHour && (
+                            <Badge variant="default" className="ml-2">
+                              Peak
+                            </Badge>
+                          )}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {day.jobs} jobs
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No hourly performance data available</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
