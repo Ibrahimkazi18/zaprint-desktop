@@ -38,6 +38,7 @@ import fetchDailyPerformance, { DailyPerformance } from "@/backend/analytics/fet
 import fetchGrowthMetrics, { GrowthMetrics } from "@/backend/analytics/fetchGrowthMetrics";
 import fetchHourlyPerformance, { HourlyPerformance } from "@/backend/analytics/fetchHourlyPerformance";
 import toast from "react-hot-toast";
+import { exportAnalyticsPDF } from "@/utils/exportAnalyticsPDF";
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
@@ -126,6 +127,33 @@ export default function Analytics() {
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
+  const handleExportPDF = () => {
+    if (!shop?.shop_name) {
+      toast.error("Shop information not available");
+      return;
+    }
+
+    try {
+      toast.loading("Generating PDF report...", { id: "export-pdf" });
+
+      exportAnalyticsPDF({
+        shopName: shop.shop_name,
+        overview,
+        monthlyRevenue,
+        topCustomers,
+        dailyPerformance,
+        growthMetrics,
+        hourlyPerformance,
+        period: selectedPeriod === "7d" ? "Last 7 Days" : selectedPeriod === "30d" ? "Last 30 Days" : "Last 90 Days",
+      });
+
+      toast.success("PDF report downloaded successfully!", { id: "export-pdf" });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Failed to generate PDF report", { id: "export-pdf" });
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -196,7 +224,7 @@ export default function Analytics() {
                 90 Days
               </Button>
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
               Export Report
             </Button>
