@@ -11,6 +11,7 @@ import {
   Printer,
   Plus,
   Activity,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -41,6 +42,13 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         path: "/dashboard",
         onClick: () => navigate("/dashboard"),
         color: "text-blue-500",
+      },
+      {
+        title: "Pending Orders",
+        icon: Package,
+        path: "/pending-orders",
+        onClick: () => navigate("/pending-orders"),
+        color: "text-amber-500",
       },
       {
         title: "Printers",

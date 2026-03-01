@@ -29,15 +29,16 @@ import {
 import {
   RefreshCw,
   TrendingUp,
+  TrendingDown,
   Users,
   Clock,
-  Star,
   FileText,
   Printer,
   DollarSign,
   Zap,
   Target,
   ArrowUpRight,
+  Package,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
@@ -45,10 +46,11 @@ import {
   fetchMissedOrders,
   subscribeToOrders,
 } from "@/backend/realtime/subscribeToOrders";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/auth/supabase";
 import { usePrintQueue } from "@/hooks/usePrintQueue";
 import { useLiveQueue } from "@/hooks/useLiveQueue";
+import fetchDashboardStats, { DashboardStats } from "@/backend/dashboard/fetchDashboardStats";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -58,6 +60,28 @@ export default function Dashboard() {
     detectSystemPrinters: false,
   });
   const queue = useLiveQueue();
+  
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Load dashboard stats
+  useEffect(() => {
+    const loadStats = async () => {
+      if (!shop?.id) return;
+      
+      try {
+        setStatsLoading(true);
+        const data = await fetchDashboardStats(shop.id);
+        setStats(data);
+      } catch (error) {
+        console.error("Error loading dashboard stats:", error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadStats();
+  }, [shop?.id]);
 
   useEffect(() => {
     if (!shop?.id) return;
@@ -70,15 +94,19 @@ export default function Dashboard() {
     };
   }, [shop?.id, addToQueue]);
 
-  // Mock financial data
-  const todayEarnings = 2450;
-  const monthlyEarnings = 45600;
-  const pendingPayments = 1200;
-
   const fetchQueue = async () => {
     // Queue is now live and updates automatically
     console.log("Queue is live - no manual refresh needed");
   };
+
+  // Calculate percentage changes
+  const todayChange = stats && stats.yesterday_earnings > 0
+    ? ((stats.today_earnings - stats.yesterday_earnings) / stats.yesterday_earnings) * 100
+    : 0;
+    
+  const monthChange = stats && stats.last_month_earnings > 0
+    ? ((stats.month_earnings - stats.last_month_earnings) / stats.last_month_earnings) * 100
+    : 0;
 
   if (loading) {
     return (
@@ -224,14 +252,51 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-3xl font-bold">12</p>
-                  <div className="flex items-center text-sm text-emerald-600 mt-1">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    +3 from yesterday
-                  </div>
+                  <p className="text-3xl font-bold">
+                    {statsLoading ? "..." : stats?.today_orders || 0}
+                  </p>
+                  {stats && stats.yesterday_orders > 0 && (
+                    <div className={`flex items-center text-sm mt-1 ${
+                      stats.today_orders >= stats.yesterday_orders ? "text-emerald-600" : "text-red-600"
+                    }`}>
+                      {stats.today_orders >= stats.yesterday_orders ? (
+                        <TrendingUp className="h-4 w-4 mr-1" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 mr-1" />
+                      )}
+                      {stats.today_orders >= stats.yesterday_orders ? "+" : ""}
+                      {stats.today_orders - stats.yesterday_orders} from yesterday
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 bg-blue-500/10 rounded-full">
                   <FileText className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="relative overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => navigate("/pending-orders")}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Pending Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-bold">
+                    {statsLoading ? "..." : stats?.pending_orders || 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Ready for pickup
+                  </p>
+                </div>
+                <div className="p-3 bg-amber-500/10 rounded-full">
+                  <Package className="h-6 w-6 text-amber-500" />
                 </div>
               </div>
             </CardContent>
@@ -246,34 +311,15 @@ export default function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-3xl font-bold">45</p>
+                  <p className="text-3xl font-bold">
+                    {statsLoading ? "..." : stats?.active_customers_week || 0}
+                  </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Ready for service
+                    This week
                   </p>
                 </div>
                 <div className="p-3 bg-purple-500/10 rounded-full">
                   <Users className="h-6 w-6 text-purple-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Shop Rating
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-3xl font-bold">4.8</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    120 reviews
-                  </p>
-                </div>
-                <div className="p-3 bg-amber-500/10 rounded-full">
-                  <Star className="h-6 w-6 text-amber-500" />
                 </div>
               </div>
             </CardContent>
@@ -292,12 +338,20 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-emerald-600">
-                {todayEarnings.toLocaleString()}
+                ₹{statsLoading ? "..." : (stats?.today_earnings || 0).toLocaleString()}
               </p>
-              <div className="flex items-center text-sm text-emerald-600 mt-2">
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-                +12% from yesterday
-              </div>
+              {stats && stats.yesterday_earnings > 0 && (
+                <div className={`flex items-center text-sm mt-2 ${
+                  todayChange >= 0 ? "text-emerald-600" : "text-red-600"
+                }`}>
+                  {todayChange >= 0 ? (
+                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 mr-1" />
+                  )}
+                  {todayChange >= 0 ? "+" : ""}{todayChange.toFixed(1)}% from yesterday
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -311,28 +365,38 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="relative">
               <p className="text-3xl font-bold text-blue-600">
-                {monthlyEarnings.toLocaleString()}
+                ₹{statsLoading ? "..." : (stats?.month_earnings || 0).toLocaleString()}
               </p>
-              <div className="flex items-center text-sm text-blue-600 mt-2">
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-                +8% from last month
-              </div>
+              {stats && stats.last_month_earnings > 0 && (
+                <div className={`flex items-center text-sm mt-2 ${
+                  monthChange >= 0 ? "text-blue-600" : "text-red-600"
+                }`}>
+                  {monthChange >= 0 ? (
+                    <ArrowUpRight className="h-4 w-4 mr-1" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 mr-1" />
+                  )}
+                  {monthChange >= 0 ? "+" : ""}{monthChange.toFixed(1)}% from last month
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-amber-600/5"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-purple-600/5"></div>
             <CardHeader className="relative">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
                 <Clock className="h-4 w-4 mr-2" />
-                Pending Payments
+                Active Orders
               </CardTitle>
             </CardHeader>
             <CardContent className="relative">
-              <p className="text-3xl font-bold text-amber-600">
-                {pendingPayments.toLocaleString()}
+              <p className="text-3xl font-bold text-purple-600">
+                {statsLoading ? "..." : stats?.active_orders || 0}
               </p>
-              <p className="text-sm text-amber-600 mt-2">3 pending invoices</p>
+              <p className="text-sm text-purple-600 mt-2">
+                In queue or printing
+              </p>
             </CardContent>
           </Card>
         </div>

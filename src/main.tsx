@@ -12,6 +12,7 @@ import AuthPage from "./pages/AuthPage";
 // Lazy load all other pages
 const ShopOnboarding = lazy(() => import("./pages/ShopOnboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PendingOrders = lazy(() => import("./pages/PendingOrders"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Settings = lazy(() => import("./pages/Settings"));
 const RegisterPrinter = lazy(() => import("./pages/RegisterPrinter"));
@@ -51,6 +52,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pending-orders"
+            element={
+              <ProtectedRoute>
+                <PendingOrders />
               </ProtectedRoute>
             }
           />
