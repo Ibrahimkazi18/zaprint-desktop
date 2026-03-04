@@ -10,7 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sun, Moon, User, LogOut, Wifi, WifiOff } from "lucide-react";
+import { User, LogOut, Wifi, WifiOff } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
@@ -114,21 +115,9 @@ const Navbar = React.memo(function Navbar({
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleDarkMode}
-            aria-label="Toggle dark mode"
-            className="h-10 w-10 hover:bg-accent/50"
-          >
-            {darkMode ? (
-              <Sun className="h-4 w-4 text-amber-500" />
-            ) : (
-              <Moon className="h-4 w-4 text-slate-600" />
-            )}
-          </Button>
+          <ThemeToggle isDark={darkMode} onToggle={toggleDarkMode} />
 
           {/* Profile Dropdown */}
           <DropdownMenu>

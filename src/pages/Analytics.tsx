@@ -28,29 +28,55 @@ import {
   Download,
   Clock,
   Target,
+  LayoutList,
 } from "lucide-react";
+import {
+  RevenueChart,
+  DailyChart,
+  HourlyChart,
+  CustomerChart,
+} from "@/components/ui/analytics-charts";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import fetchAnalyticsOverview, { AnalyticsOverview } from "@/backend/analytics/fetchAnalyticsOverview";
-import fetchMonthlyRevenue, { MonthlyRevenue } from "@/backend/analytics/fetchMonthlyRevenue";
-import fetchTopCustomers, { TopCustomer } from "@/backend/analytics/fetchTopCustomers";
-import fetchDailyPerformance, { DailyPerformance } from "@/backend/analytics/fetchDailyPerformance";
-import fetchGrowthMetrics, { GrowthMetrics } from "@/backend/analytics/fetchGrowthMetrics";
-import fetchHourlyPerformance, { HourlyPerformance } from "@/backend/analytics/fetchHourlyPerformance";
+import fetchAnalyticsOverview, {
+  AnalyticsOverview,
+} from "@/backend/analytics/fetchAnalyticsOverview";
+import fetchMonthlyRevenue, {
+  MonthlyRevenue,
+} from "@/backend/analytics/fetchMonthlyRevenue";
+import fetchTopCustomers, {
+  TopCustomer,
+} from "@/backend/analytics/fetchTopCustomers";
+import fetchDailyPerformance, {
+  DailyPerformance,
+} from "@/backend/analytics/fetchDailyPerformance";
+import fetchGrowthMetrics, {
+  GrowthMetrics,
+} from "@/backend/analytics/fetchGrowthMetrics";
+import fetchHourlyPerformance, {
+  HourlyPerformance,
+} from "@/backend/analytics/fetchHourlyPerformance";
 import toast from "react-hot-toast";
 import { exportAnalyticsPDF } from "@/utils/exportAnalyticsPDF";
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const [viewMode, setViewMode] = useState<"table" | "graph">("table");
   const { shop } = useShopDashboard();
-  
+
   // State for analytics data
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([]);
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
-  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>([]);
-  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetrics | null>(null);
-  const [hourlyPerformance, setHourlyPerformance] = useState<HourlyPerformance[]>([]);
+  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>(
+    [],
+  );
+  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetrics | null>(
+    null,
+  );
+  const [hourlyPerformance, setHourlyPerformance] = useState<
+    HourlyPerformance[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   // Load all analytics data
@@ -60,7 +86,7 @@ export default function Analytics() {
 
       try {
         setLoading(true);
-        
+
         const [
           overviewData,
           monthlyData,
@@ -70,7 +96,10 @@ export default function Analytics() {
           hourlyData,
         ] = await Promise.all([
           fetchAnalyticsOverview(shop.id),
-          fetchMonthlyRevenue(shop.id, selectedPeriod === "30d" ? 6 : selectedPeriod === "90d" ? 12 : 3),
+          fetchMonthlyRevenue(
+            shop.id,
+            selectedPeriod === "30d" ? 6 : selectedPeriod === "90d" ? 12 : 3,
+          ),
           fetchTopCustomers(shop.id, 10),
           fetchDailyPerformance(shop.id),
           fetchGrowthMetrics(shop.id),
@@ -95,7 +124,7 @@ export default function Analytics() {
   }, [shop?.id, selectedPeriod]);
 
   const formatCurrency = (amount: number) => `₹${amount.toLocaleString()}`;
-  
+
   const formatChange = (change: number) => (
     <span
       className={`flex items-center ${change >= 0 ? "text-green-600" : "text-red-600"}`}
@@ -144,10 +173,17 @@ export default function Analytics() {
         dailyPerformance,
         growthMetrics,
         hourlyPerformance,
-        period: selectedPeriod === "7d" ? "Last 7 Days" : selectedPeriod === "30d" ? "Last 30 Days" : "Last 90 Days",
+        period:
+          selectedPeriod === "7d"
+            ? "Last 7 Days"
+            : selectedPeriod === "30d"
+              ? "Last 30 Days"
+              : "Last 90 Days",
       });
 
-      toast.success("PDF report downloaded successfully!", { id: "export-pdf" });
+      toast.success("PDF report downloaded successfully!", {
+        id: "export-pdf",
+      });
     } catch (error) {
       console.error("Error exporting PDF:", error);
       toast.error("Failed to generate PDF report", { id: "export-pdf" });
@@ -224,6 +260,7 @@ export default function Analytics() {
                 90 Days
               </Button>
             </div>
+
             <Button variant="outline" onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
               Export Report
@@ -246,9 +283,7 @@ export default function Analytics() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {formatChange(
-                  growthMetrics
-                    ? growthMetrics.mom_revenue_growth
-                    : 0
+                  growthMetrics ? growthMetrics.mom_revenue_growth : 0,
                 )}{" "}
                 from last month
               </p>
@@ -266,9 +301,7 @@ export default function Analytics() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {formatChange(
-                  growthMetrics
-                    ? growthMetrics.mom_orders_growth
-                    : 0
+                  growthMetrics ? growthMetrics.mom_orders_growth : 0,
                 )}{" "}
                 from last month
               </p>
@@ -319,135 +352,285 @@ export default function Analytics() {
           </TabsList>
 
           <TabsContent value="revenue" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Revenue Trend</CardTitle>
-                  <CardDescription>
-                    Revenue and job count over time
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+            {viewMode === "graph" ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card className="relative">
+                  <CardHeader>
+                    <CardTitle>Monthly Revenue Trend</CardTitle>
+                    <CardDescription>
+                      Revenue and job count over time
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
                     {monthlyRevenue.length > 0 ? (
-                      monthlyRevenue.map((item, index) => {
-                        const maxRevenue = Math.max(...monthlyRevenue.map(m => m.total_revenue));
-                        return (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="flex items-center space-x-4 flex-1">
-                              <div className="w-16 text-sm font-medium">
-                                {item.month_label.split(' ')[0]}
-                              </div>
-                              <div className="flex-1">
-                                <div className="w-full bg-muted rounded-full h-2">
-                                  <div
-                                    className="bg-primary h-2 rounded-full transition-all"
-                                    style={{
-                                      width: `${(item.total_revenue / maxRevenue) * 100}%`,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right ml-4">
-                              <div className="text-sm font-medium">
-                                {formatCurrency(item.total_revenue)}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {item.order_count} jobs
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
+                      <RevenueChart data={monthlyRevenue} />
                     ) : (
                       <div className="text-center py-8 text-muted-foreground">
                         No revenue data available
                       </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                  <button
+                    onClick={() => setViewMode("table")}
+                    className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                    title="Switch to table view"
+                  >
+                    <LayoutList className="h-4 w-4" />
+                  </button>
+                </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Breakdown</CardTitle>
-                  <CardDescription>
-                    Current period performance metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">This Month</p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(overview?.month_revenue || 0)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {overview?.month_orders || 0} jobs
-                      </p>
-                      {growthMetrics && (
-                        <p className={`text-sm ${growthMetrics.mom_revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {growthMetrics.mom_revenue_growth >= 0 ? '+' : ''}
-                          {growthMetrics.mom_revenue_growth.toFixed(1)}% vs last month
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue Breakdown</CardTitle>
+                    <CardDescription>
+                      Current period performance metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">This Month</p>
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(overview?.month_revenue || 0)}
                         </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {overview?.month_orders || 0} jobs
+                        </p>
+                        {growthMetrics && (
+                          <p
+                            className={`text-sm ${growthMetrics.mom_revenue_growth >= 0 ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {growthMetrics.mom_revenue_growth >= 0 ? "+" : ""}
+                            {growthMetrics.mom_revenue_growth.toFixed(1)}% vs
+                            last month
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">This Week</p>
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(overview?.week_revenue || 0)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {overview?.week_orders || 0} jobs
+                        </p>
+                        {growthMetrics && (
+                          <p
+                            className={`text-sm ${growthMetrics.wow_revenue_growth >= 0 ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {growthMetrics.wow_revenue_growth >= 0 ? "+" : ""}
+                            {growthMetrics.wow_revenue_growth.toFixed(1)}% vs
+                            last week
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">Today</p>
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(overview?.today_revenue || 0)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {overview?.today_orders || 0} jobs
+                        </p>
+                        {overview && overview.yesterday_revenue > 0 && (
+                          <p
+                            className={`text-sm ${
+                              calculateChange(
+                                overview.today_revenue,
+                                overview.yesterday_revenue,
+                              ) >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {calculateChange(
+                              overview.today_revenue,
+                              overview.yesterday_revenue,
+                            ) >= 0
+                              ? "+"
+                              : ""}
+                            {calculateChange(
+                              overview.today_revenue,
+                              overview.yesterday_revenue,
+                            ).toFixed(1)}
+                            % vs yesterday
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card className="relative">
+                  <CardHeader>
+                    <CardTitle>Monthly Revenue Trend</CardTitle>
+                    <CardDescription>
+                      Revenue and job count over time
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {monthlyRevenue.length > 0 ? (
+                        monthlyRevenue.map((item, index) => {
+                          const maxRevenue = Math.max(
+                            ...monthlyRevenue.map((m) => m.total_revenue),
+                          );
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between"
+                            >
+                              <div className="flex items-center space-x-4 flex-1">
+                                <div className="w-16 text-sm font-medium">
+                                  {item.month_label.split(" ")[0]}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="w-full bg-muted rounded-full h-2">
+                                    <div
+                                      className="bg-primary h-2 rounded-full transition-all"
+                                      style={{
+                                        width: `${(item.total_revenue / maxRevenue) * 100}%`,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right ml-4">
+                                <div className="text-sm font-medium">
+                                  {formatCurrency(item.total_revenue)}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.order_count} jobs
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No revenue data available
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">This Week</p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(overview?.week_revenue || 0)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {overview?.week_orders || 0} jobs
-                      </p>
-                      {growthMetrics && (
-                        <p className={`text-sm ${growthMetrics.wow_revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {growthMetrics.wow_revenue_growth >= 0 ? '+' : ''}
-                          {growthMetrics.wow_revenue_growth.toFixed(1)}% vs last week
+                  </CardContent>
+                  <button
+                    onClick={() => setViewMode("graph")}
+                    className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                    title="Switch to graph view"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                  </button>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Revenue Breakdown</CardTitle>
+                    <CardDescription>
+                      Current period performance metrics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">This Month</p>
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(overview?.month_revenue || 0)}
                         </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">Today</p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(overview?.today_revenue || 0)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {overview?.today_orders || 0} jobs
-                      </p>
-                      {overview && overview.yesterday_revenue > 0 && (
-                        <p className={`text-sm ${
-                          calculateChange(overview.today_revenue, overview.yesterday_revenue) >= 0 
-                            ? 'text-green-600' 
-                            : 'text-red-600'
-                        }`}>
-                          {calculateChange(overview.today_revenue, overview.yesterday_revenue) >= 0 ? '+' : ''}
-                          {calculateChange(overview.today_revenue, overview.yesterday_revenue).toFixed(1)}% vs yesterday
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {overview?.month_orders || 0} jobs
                         </p>
-                      )}
+                        {growthMetrics && (
+                          <p
+                            className={`text-sm ${growthMetrics.mom_revenue_growth >= 0 ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {growthMetrics.mom_revenue_growth >= 0 ? "+" : ""}
+                            {growthMetrics.mom_revenue_growth.toFixed(1)}% vs
+                            last month
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">This Week</p>
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(overview?.week_revenue || 0)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {overview?.week_orders || 0} jobs
+                        </p>
+                        {growthMetrics && (
+                          <p
+                            className={`text-sm ${growthMetrics.wow_revenue_growth >= 0 ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {growthMetrics.wow_revenue_growth >= 0 ? "+" : ""}
+                            {growthMetrics.wow_revenue_growth.toFixed(1)}% vs
+                            last week
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">Today</p>
+                        <p className="text-2xl font-bold">
+                          {formatCurrency(overview?.today_revenue || 0)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">
+                          {overview?.today_orders || 0} jobs
+                        </p>
+                        {overview && overview.yesterday_revenue > 0 && (
+                          <p
+                            className={`text-sm ${
+                              calculateChange(
+                                overview.today_revenue,
+                                overview.yesterday_revenue,
+                              ) >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {calculateChange(
+                              overview.today_revenue,
+                              overview.yesterday_revenue,
+                            ) >= 0
+                              ? "+"
+                              : ""}
+                            {calculateChange(
+                              overview.today_revenue,
+                              overview.yesterday_revenue,
+                            ).toFixed(1)}
+                            % vs yesterday
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="customers" className="space-y-6">
-            <Card>
+            <Card className="relative">
               <CardHeader>
                 <CardTitle>Top Customers</CardTitle>
                 <CardDescription>
@@ -456,40 +639,44 @@ export default function Analytics() {
               </CardHeader>
               <CardContent>
                 {topCustomers.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Total Jobs</TableHead>
-                        <TableHead>Total Revenue</TableHead>
-                        <TableHead>Avg per Job</TableHead>
-                        <TableHead>Last Order</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topCustomers.map((customer, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {customer.customer_name || "Unknown"}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {customer.customer_phone || "N/A"}
-                          </TableCell>
-                          <TableCell>{customer.total_orders}</TableCell>
-                          <TableCell>
-                            {formatCurrency(customer.total_revenue)}
-                          </TableCell>
-                          <TableCell>
-                            {formatCurrency(customer.avg_order_value)}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {formatTimeAgo(customer.last_order_date)}
-                          </TableCell>
+                  viewMode === "graph" ? (
+                    <CustomerChart data={topCustomers} />
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Customer</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Total Jobs</TableHead>
+                          <TableHead>Total Revenue</TableHead>
+                          <TableHead>Avg per Job</TableHead>
+                          <TableHead>Last Order</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {topCustomers.map((customer, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">
+                              {customer.customer_name || "Unknown"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {customer.customer_phone || "N/A"}
+                            </TableCell>
+                            <TableCell>{customer.total_orders}</TableCell>
+                            <TableCell>
+                              {formatCurrency(customer.total_revenue)}
+                            </TableCell>
+                            <TableCell>
+                              {formatCurrency(customer.avg_order_value)}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatTimeAgo(customer.last_order_date)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -497,11 +684,28 @@ export default function Analytics() {
                   </div>
                 )}
               </CardContent>
+              <button
+                onClick={() =>
+                  setViewMode(viewMode === "graph" ? "table" : "graph")
+                }
+                className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                title={
+                  viewMode === "graph"
+                    ? "Switch to table view"
+                    : "Switch to graph view"
+                }
+              >
+                {viewMode === "graph" ? (
+                  <LayoutList className="h-4 w-4" />
+                ) : (
+                  <BarChart3 className="h-4 w-4" />
+                )}
+              </button>
             </Card>
           </TabsContent>
 
           <TabsContent value="daily" className="space-y-6">
-            <Card>
+            <Card className="relative">
               <CardHeader>
                 <CardTitle>Daily Performance</CardTitle>
                 <CardDescription>
@@ -510,39 +714,47 @@ export default function Analytics() {
               </CardHeader>
               <CardContent>
                 {dailyPerformance.length > 0 ? (
-                  <div className="space-y-4">
-                    {dailyPerformance.map((day, index) => {
-                      const maxOrders = Math.max(...dailyPerformance.map(d => d.total_orders));
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div className="w-24 text-sm font-medium">
-                              {day.day_name}
+                  viewMode === "graph" ? (
+                    <DailyChart data={dailyPerformance} />
+                  ) : (
+                    <div className="space-y-4">
+                      {dailyPerformance.map((day, index) => {
+                        const maxOrders = Math.max(
+                          ...dailyPerformance.map((d) => d.total_orders),
+                        );
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center space-x-4 flex-1">
+                              <div className="w-24 text-sm font-medium">
+                                {day.day_name}
+                              </div>
+                              <div className="flex-1">
+                                <div className="w-full bg-muted rounded-full h-3">
+                                  <div
+                                    className="bg-primary h-3 rounded-full transition-all"
+                                    style={{
+                                      width: `${(day.total_orders / maxOrders) * 100}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <div className="w-full bg-muted rounded-full h-3">
-                                <div
-                                  className="bg-primary h-3 rounded-full transition-all"
-                                  style={{ width: `${(day.total_orders / maxOrders) * 100}%` }}
-                                />
+                            <div className="text-right ml-4">
+                              <div className="text-sm font-medium">
+                                {formatCurrency(day.total_revenue)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {day.total_orders} jobs
                               </div>
                             </div>
                           </div>
-                          <div className="text-right ml-4">
-                            <div className="text-sm font-medium">
-                              {formatCurrency(day.total_revenue)}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {day.total_orders} jobs
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -550,11 +762,28 @@ export default function Analytics() {
                   </div>
                 )}
               </CardContent>
+              <button
+                onClick={() =>
+                  setViewMode(viewMode === "graph" ? "table" : "graph")
+                }
+                className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                title={
+                  viewMode === "graph"
+                    ? "Switch to table view"
+                    : "Switch to graph view"
+                }
+              >
+                {viewMode === "graph" ? (
+                  <LayoutList className="h-4 w-4" />
+                ) : (
+                  <BarChart3 className="h-4 w-4" />
+                )}
+              </button>
             </Card>
           </TabsContent>
 
           <TabsContent value="hourly" className="space-y-6">
-            <Card>
+            <Card className="relative">
               <CardHeader>
                 <CardTitle>Peak Hours Analysis</CardTitle>
                 <CardDescription>
@@ -563,50 +792,63 @@ export default function Analytics() {
               </CardHeader>
               <CardContent>
                 {hourlyPerformance.length > 0 ? (
-                  <div className="space-y-3">
-                    {hourlyPerformance.map((hour, index) => {
-                      const maxOrders = Math.max(...hourlyPerformance.map(h => h.order_count));
-                      const isPeakHour = hour.order_count === maxOrders && maxOrders > 0;
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center justify-between p-3 border rounded-lg ${
-                            isPeakHour ? 'bg-primary/5 border-primary' : 'hover:bg-muted/50'
-                          } transition-colors`}
-                        >
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div className="w-20 text-sm font-medium flex items-center">
-                              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                              {hour.hour}:00
-                            </div>
-                            <div className="flex-1">
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div
-                                  className={`h-2 rounded-full transition-all ${
-                                    isPeakHour ? 'bg-primary' : 'bg-primary/60'
-                                  }`}
-                                  style={{ width: `${(hour.order_count / maxOrders) * 100}%` }}
-                                />
+                  viewMode === "graph" ? (
+                    <HourlyChart data={hourlyPerformance} />
+                  ) : (
+                    <div className="space-y-3">
+                      {hourlyPerformance.map((hour, index) => {
+                        const maxOrders = Math.max(
+                          ...hourlyPerformance.map((h) => h.order_count),
+                        );
+                        const isPeakHour =
+                          hour.order_count === maxOrders && maxOrders > 0;
+                        return (
+                          <div
+                            key={index}
+                            className={`flex items-center justify-between p-3 border rounded-lg ${
+                              isPeakHour
+                                ? "bg-primary/5 border-primary"
+                                : "hover:bg-muted/50"
+                            } transition-colors`}
+                          >
+                            <div className="flex items-center space-x-4 flex-1">
+                              <div className="w-20 text-sm font-medium flex items-center">
+                                <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                                {hour.hour}:00
+                              </div>
+                              <div className="flex-1">
+                                <div className="w-full bg-muted rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full transition-all ${
+                                      isPeakHour
+                                        ? "bg-primary"
+                                        : "bg-primary/60"
+                                    }`}
+                                    style={{
+                                      width: `${(hour.order_count / maxOrders) * 100}%`,
+                                    }}
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right ml-4">
-                            <div className="text-sm font-medium">
-                              {hour.order_count} orders
+                            <div className="text-right ml-4">
+                              <div className="text-sm font-medium">
+                                {hour.order_count} orders
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {formatCurrency(hour.total_revenue)}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {formatCurrency(hour.total_revenue)}
-                            </div>
+                            {isPeakHour && (
+                              <Badge variant="default" className="ml-2">
+                                Peak
+                              </Badge>
+                            )}
                           </div>
-                          {isPeakHour && (
-                            <Badge variant="default" className="ml-2">
-                              Peak
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -614,6 +856,23 @@ export default function Analytics() {
                   </div>
                 )}
               </CardContent>
+              <button
+                onClick={() =>
+                  setViewMode(viewMode === "graph" ? "table" : "graph")
+                }
+                className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                title={
+                  viewMode === "graph"
+                    ? "Switch to table view"
+                    : "Switch to graph view"
+                }
+              >
+                {viewMode === "graph" ? (
+                  <LayoutList className="h-4 w-4" />
+                ) : (
+                  <BarChart3 className="h-4 w-4" />
+                )}
+              </button>
             </Card>
           </TabsContent>
         </Tabs>
