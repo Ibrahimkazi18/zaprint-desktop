@@ -58,50 +58,60 @@ import { Printer } from "@/types";
 import updatePrinter from "@/backend/printers/updatePrinter";
 import deletePrinter from "@/backend/printers/deletePrinter";
 import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
-// Visual status mapping
 const getStatusConfig = (status: Printer["status"]) => {
   switch (status) {
     case "online":
       return {
         icon: Wifi,
-        color: "bg-green-500",
-        textColor: "text-green-700",
-        bgColor: "bg-green-50",
+        dot: "bg-emerald-500",
+        text: "text-emerald-600 dark:text-emerald-400",
+        bg: "bg-emerald-500/8 dark:bg-emerald-500/10",
+        border: "border-emerald-500/20",
         label: "Online",
-        variant: "default" as const,
+        badgeVariant: "default" as const,
+        badgeClass:
+          "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
       };
     case "offline":
       return {
         icon: WifiOff,
-        color: "bg-yellow-500",
-        textColor: "text-yellow-700",
-        bgColor: "bg-yellow-50",
+        dot: "bg-amber-500",
+        text: "text-amber-600 dark:text-amber-400",
+        bg: "bg-amber-500/8 dark:bg-amber-500/10",
+        border: "border-amber-500/20",
         label: "Offline",
-        variant: "secondary" as const,
+        badgeVariant: "secondary" as const,
+        badgeClass:
+          "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
       };
     case "error":
       return {
         icon: AlertTriangle,
-        color: "bg-red-500",
-        textColor: "text-red-700",
-        bgColor: "bg-red-50",
+        dot: "bg-red-500",
+        text: "text-red-600 dark:text-red-400",
+        bg: "bg-red-500/8 dark:bg-red-500/10",
+        border: "border-red-500/20",
         label: "Error",
-        variant: "destructive" as const,
+        badgeVariant: "destructive" as const,
+        badgeClass:
+          "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30",
       };
     default:
       return {
         icon: WifiOff,
-        color: "bg-gray-500",
-        textColor: "text-gray-700",
-        bgColor: "bg-gray-50",
+        dot: "bg-slate-400",
+        text: "text-slate-600",
+        bg: "bg-slate-500/8",
+        border: "border-slate-500/20",
         label: "Unknown",
-        variant: "secondary" as const,
+        badgeVariant: "secondary" as const,
+        badgeClass: "",
       };
   }
 };
 
-// Printer type display mapping
 const getPrinterTypeLabel = (type: string) => {
   const typeMap: Record<string, string> = {
     bw: "Black & White",
@@ -140,7 +150,6 @@ export default function Printers() {
     refreshPrinters,
   } = useShopDashboard();
 
-  // Initialize printer monitoring
   const {
     printers: monitoredPrinters,
     systemPrinters,
@@ -151,12 +160,10 @@ export default function Printers() {
     syncPrinterStatus,
   } = usePrinterMonitoring(shop?.id);
 
-  // Use monitored printers if available, otherwise fallback to registered printers
   const printers =
     monitoredPrinters.length > 0 ? monitoredPrinters : registeredPrinters;
   const loading = dashboardLoading || monitoringLoading;
 
-  // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingPrinter, setEditingPrinter] = useState<Printer | null>(null);
   const [editForm, setEditForm] = useState({
@@ -180,45 +187,32 @@ export default function Printers() {
 
   const handleSaveEdit = async () => {
     if (!editingPrinter) return;
-
     if (!editForm.printer_name.trim()) {
       toast.error("Printer name is required");
       return;
     }
-
     if (editForm.supported_services.length === 0) {
-      toast.error("Please select at least one service");
+      toast.error("Select at least one service");
       return;
     }
-
     if (editForm.supported_sizes.length === 0) {
-      toast.error("Please select at least one paper size");
+      toast.error("Select at least one paper size");
       return;
     }
 
     setEditLoading(true);
-
     try {
-      const updatedPrinter = await updatePrinter(editingPrinter.id, {
+      await updatePrinter(editingPrinter.id, {
         printer_name: editForm.printer_name.trim(),
         printer_type: editForm.printer_type,
         supported_services: editForm.supported_services,
         supported_sizes: editForm.supported_sizes,
       });
-
       toast.success("Printer updated successfully!");
       setEditDialogOpen(false);
-      
-      // Refresh both printer sources to ensure UI is updated
-      // The realtime subscription should also trigger, but we do this for immediate feedback
       await refreshPrinters();
-      
-      // Sync printer status if monitoring is active
-      if (isMonitoring) {
-        await syncPrinterStatus();
-      }
+      if (isMonitoring) await syncPrinterStatus();
     } catch (error: any) {
-      console.error("Error updating printer:", error);
       toast.error(error.message || "Failed to update printer");
     } finally {
       setEditLoading(false);
@@ -247,17 +241,9 @@ export default function Printers() {
     try {
       await deletePrinter(printer.id);
       toast.success("Printer deleted successfully!");
-      
-      // Refresh printer list to ensure UI is updated
-      // The realtime subscription should also trigger, but we do this for immediate feedback
       await refreshPrinters();
-      
-      // Sync printer status if monitoring is active
-      if (isMonitoring) {
-        await syncPrinterStatus();
-      }
+      if (isMonitoring) await syncPrinterStatus();
     } catch (error: any) {
-      console.error("Error deleting printer:", error);
       toast.error(error.message || "Failed to delete printer");
     }
   };
@@ -267,32 +253,23 @@ export default function Printers() {
       toast.error("Printer API not available. Please run in Electron app.");
       return;
     }
-
     if (printer.status !== "online") {
       toast.error("Printer must be online to test print");
       return;
     }
-
     try {
-      toast.loading("Sending test page to printer...", { id: "test-print" });
-
+      toast.loading("Sending test page...", { id: "test-print" });
       const result = await window.printerAPI.testPrint({
         printerName: printer.printer_name,
         shopName: shop?.shop_name || "Print Shop",
         printerType: getPrinterTypeLabel(printer.printer_type),
       });
-
       if (result.success) {
-        toast.success("Test page sent to printer successfully!", {
-          id: "test-print",
-        });
+        toast.success("Test page sent!", { id: "test-print" });
       } else {
-        toast.error(result.error || "Failed to print test page", {
-          id: "test-print",
-        });
+        toast.error(result.error || "Failed", { id: "test-print" });
       }
     } catch (error: any) {
-      console.error("Error testing printer:", error);
       toast.error(error.message || "Failed to print test page", {
         id: "test-print",
       });
@@ -300,18 +277,12 @@ export default function Printers() {
   };
 
   const handleRefreshStatus = async () => {
-    const updatedPrinters = await syncPrinterStatus();
-    // Force a re-render by updating the state
-    if (updatedPrinters && updatedPrinters.length > 0) {
-      console.log("Status synced successfully, printers updated");
-    }
+    await syncPrinterStatus();
   };
-
   const handleDetectPrinters = async () => {
     await detectSystemPrinters();
   };
 
-  // Calculate stats
   const onlineCount = printers.filter((p) => p.status === "online").length;
   const offlineCount = printers.filter((p) => p.status === "offline").length;
   const errorCount = printers.filter((p) => p.status === "error").length;
@@ -319,23 +290,20 @@ export default function Printers() {
   if (loading && printers.length === 0) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-6 py-8">
-          {/* Header Skeleton */}
+        <div className="container mx-auto px-6 py-8 animate-fade-in">
           <div className="flex items-center justify-between mb-8">
             <div className="space-y-2">
               <Skeleton className="h-9 w-32" />
               <Skeleton className="h-5 w-64" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex gap-3">
               <Skeleton className="h-10 w-32" />
               <Skeleton className="h-10 w-32" />
             </div>
           </div>
-
-          {/* Stats Cards Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
             {[...Array(4)].map((_, i) => (
-              <Card key={i}>
+              <Card key={i} className="stat-card">
                 <CardHeader className="pb-3">
                   <Skeleton className="h-4 w-24 mb-2" />
                   <Skeleton className="h-8 w-16" />
@@ -343,33 +311,15 @@ export default function Printers() {
               </Card>
             ))}
           </div>
-
-          {/* Printer Cards Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[...Array(3)].map((_, i) => (
               <Card key={i}>
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Skeleton className="h-10 w-10 rounded-lg" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-5 w-32" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-6 w-16" />
-                  </div>
+                  <Skeleton className="h-20 w-full rounded-xl" />
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Skeleton className="h-16 w-full rounded-lg" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <div className="flex gap-2">
-                      <Skeleton className="h-6 w-20" />
-                      <Skeleton className="h-6 w-20" />
-                    </div>
-                  </div>
-                  <div className="flex space-x-2 pt-2">
+                  <Skeleton className="h-16 w-full rounded-xl" />
+                  <div className="flex gap-2">
                     <Skeleton className="h-9 flex-1" />
                     <Skeleton className="h-9 flex-1" />
                     <Skeleton className="h-9 w-9" />
@@ -385,97 +335,103 @@ export default function Printers() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
+      <div className="container mx-auto px-6 py-8 animate-slide-up">
+        {/* ── Header ── */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Printers</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-bold tracking-tight">Printers</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
               Manage all printers registered for your shop
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Monitoring Status Indicator */}
             {isMonitoring && (
-              <Badge variant="outline" className="flex items-center gap-2">
-                <Activity className="h-3 w-3 animate-pulse text-green-500" />
-                <span>Live Monitoring</span>
-              </Badge>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
+                <Activity className="h-3 w-3 animate-pulse" />
+                Live Monitoring
+              </div>
             )}
             <Button
               variant="outline"
+              size="sm"
               onClick={handleRefreshStatus}
               disabled={loading}
+              className="h-9 gap-1.5 text-sm"
             >
               <RefreshCw
-                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                className={cn("h-3.5 w-3.5", loading && "animate-spin")}
               />
               Sync Status
             </Button>
-            <Button onClick={() => navigate("/register-printer")}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button
+              onClick={() => navigate("/register-printer")}
+              size="sm"
+              className="h-9 gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
               Add Printer
             </Button>
           </div>
         </div>
 
-        {/* Error Display */}
+        {/* ── Error Banner ── */}
         {monitoringError && (
-          <Card className="mb-6 border-destructive">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                <div>
-                  <p className="font-medium text-destructive">
-                    Monitoring Error
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {monitoringError}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-6 flex items-center gap-3 p-4 rounded-xl border border-destructive/30 bg-destructive/5">
+            <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-destructive">
+                Monitoring Error
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {monitoringError}
+              </p>
+            </div>
+          </div>
         )}
 
-        {/* Stats Cards */}
+        {/* ── Stats Cards ── */}
         {printers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription>Total Printers</CardDescription>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+            <Card className="stat-card border-border/60">
+              <CardHeader className="pb-2">
+                <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+                  Total
+                </CardDescription>
                 <CardTitle className="text-3xl">{printers.length}</CardTitle>
               </CardHeader>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <Card className="stat-card relative overflow-hidden border-border/60">
+              <div className="absolute inset-0 bg-emerald-500 opacity-[0.03]" />
+              <CardHeader className="pb-2 relative">
+                <CardDescription className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Online
                 </CardDescription>
-                <CardTitle className="text-3xl text-green-600">
+                <CardTitle className="text-3xl text-emerald-600 dark:text-emerald-400">
                   {onlineCount}
                 </CardTitle>
               </CardHeader>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+            <Card className="stat-card relative overflow-hidden border-border/60">
+              <div className="absolute inset-0 bg-amber-500 opacity-[0.03]" />
+              <CardHeader className="pb-2 relative">
+                <CardDescription className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   Offline
                 </CardDescription>
-                <CardTitle className="text-3xl text-yellow-600">
+                <CardTitle className="text-3xl text-amber-600 dark:text-amber-400">
                   {offlineCount}
                 </CardTitle>
               </CardHeader>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <Card className="stat-card relative overflow-hidden border-border/60">
+              <div className="absolute inset-0 bg-red-500 opacity-[0.03]" />
+              <CardHeader className="pb-2 relative">
+                <CardDescription className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                   Errors
                 </CardDescription>
-                <CardTitle className="text-3xl text-red-600">
+                <CardTitle className="text-3xl text-red-600 dark:text-red-400">
                   {errorCount}
                 </CardTitle>
               </CardHeader>
@@ -483,16 +439,16 @@ export default function Printers() {
           </div>
         )}
 
-        {/* System Printers Debug Info (Optional) */}
+        {/* ── System Printers ── */}
         {systemPrinters.length > 0 && (
-          <Card className="mb-6 bg-blue-50/50 border-blue-200">
+          <Card className="mb-6 border-blue-500/20 bg-blue-500/3 dark:bg-blue-500/5">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">
+                  <CardTitle className="text-base font-semibold">
                     System Printers Detected
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs mt-0.5">
                     {systemPrinters.length} printer(s) found in your operating
                     system
                   </CardDescription>
@@ -502,9 +458,10 @@ export default function Printers() {
                   size="sm"
                   onClick={handleDetectPrinters}
                   disabled={loading}
+                  className="h-8 gap-1.5 text-xs"
                 >
                   <RefreshCw
-                    className={`h-3 w-3 mr-2 ${loading ? "animate-spin" : ""}`}
+                    className={cn("h-3 w-3", loading && "animate-spin")}
                   />
                   Detect Again
                 </Button>
@@ -515,29 +472,31 @@ export default function Printers() {
                 {systemPrinters.map((printer, idx) => (
                   <div
                     key={idx}
-                    className="bg-white rounded-lg p-3 border border-blue-100"
+                    className="rounded-xl p-3 border border-border/60 bg-card/80 flex items-center justify-between gap-3"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-sm">{printer.name}</p>
-                      <Badge
-                        variant={
-                          printer.status === "online" ? "default" : "secondary"
-                        }
-                        className="text-xs"
-                      >
-                        {printer.status}
-                      </Badge>
-                    </div>
-                    {printer.driver && (
-                      <p className="text-xs text-muted-foreground">
-                        Driver: {printer.driver}
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {printer.name}
                       </p>
-                    )}
-                    {printer.isDefault && (
-                      <Badge variant="outline" className="text-xs mt-2">
-                        Default Printer
-                      </Badge>
-                    )}
+                      {printer.driver && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {printer.driver}
+                        </p>
+                      )}
+                      {printer.isDefault && (
+                        <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full mt-1 inline-block">
+                          Default
+                        </span>
+                      )}
+                    </div>
+                    <Badge
+                      variant={
+                        printer.status === "online" ? "default" : "secondary"
+                      }
+                      className="text-[10px] flex-shrink-0"
+                    >
+                      {printer.status}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -545,69 +504,85 @@ export default function Printers() {
           </Card>
         )}
 
-        {/* Empty State */}
+        {/* ── Empty State ── */}
         {printers.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <PrinterIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+          <Card className="border-dashed border-2 border-border">
+            <CardContent className="text-center py-16">
+              <div className="inline-flex p-5 rounded-2xl bg-muted/40 mb-4">
+                <PrinterIcon className="h-10 w-10 text-muted-foreground/40" />
+              </div>
+              <h3 className="text-base font-semibold mb-2">
                 No printers registered
               </h3>
-              <p className="text-muted-foreground mb-6">
-                No printers registered. Add your first printer to get started.
+              <p className="text-sm text-muted-foreground mb-5">
+                Add your first printer to get started.
               </p>
-              <Button onClick={() => navigate("/register-printer")}>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button
+                onClick={() => navigate("/register-printer")}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
                 Add Your First Printer
               </Button>
             </CardContent>
           </Card>
         ) : (
-          /* Printer Cards Grid */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          /* ── Printer Cards Grid ── */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {printers.map((printer: Printer) => {
-              const statusConfig = getStatusConfig(printer.status);
-              const StatusIcon = statusConfig.icon;
+              const sc = getStatusConfig(printer.status);
+              const StatusIcon = sc.icon;
 
               return (
-                <Card key={printer.id} className="relative">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
+                <Card
+                  key={printer.id}
+                  className="stat-card border-border/60 overflow-hidden"
+                >
+                  {/* Color-coded top strip */}
+                  <div className={cn("h-1 w-full", sc.dot)} />
+
+                  <CardHeader className="pb-3 pt-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2.5 rounded-xl bg-primary/10 flex-shrink-0">
                           <PrinterIcon className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
-                          <CardTitle className="text-lg">
+                        <div className="min-w-0">
+                          <CardTitle className="text-base font-semibold truncate">
                             {printer.printer_name}
                           </CardTitle>
-                          <CardDescription>
+                          <CardDescription className="text-xs mt-0.5">
                             {getPrinterTypeLabel(printer.printer_type)}
                           </CardDescription>
                         </div>
                       </div>
                       <Badge
-                        variant={statusConfig.variant}
-                        className="flex items-center space-x-1"
+                        variant={sc.badgeVariant}
+                        className={cn(
+                          "text-[10px] gap-1 flex-shrink-0 font-semibold px-2 py-0.5 rounded-full",
+                          sc.badgeClass,
+                        )}
                       >
-                        <StatusIcon className="h-3 w-3" />
-                        <span>{statusConfig.label}</span>
+                        <StatusIcon className="h-2.5 w-2.5" />
+                        {sc.label}
                       </Badge>
                     </div>
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    {/* Status Details */}
-                    <div className={`p-3 rounded-lg ${statusConfig.bgColor}`}>
-                      <div className="flex items-center space-x-2">
+                    {/* Status box */}
+                    <div
+                      className={cn("p-3 rounded-xl border", sc.bg, sc.border)}
+                    >
+                      <div className="flex items-center gap-2">
                         <div
-                          className={`w-2 h-2 rounded-full ${statusConfig.color} ${
-                            printer.status === "online" ? "animate-pulse" : ""
-                          }`}
-                        ></div>
-                        <span
-                          className={`text-sm font-medium ${statusConfig.textColor}`}
-                        >
+                          className={cn(
+                            "w-2 h-2 rounded-full flex-shrink-0",
+                            sc.dot,
+                            printer.status === "online" && "animate-pulse",
+                          )}
+                        />
+                        <span className={cn("text-xs font-medium", sc.text)}>
                           {printer.status === "online" &&
                             "Printer is ready and online"}
                           {printer.status === "offline" &&
@@ -617,7 +592,7 @@ export default function Printers() {
                         </span>
                       </div>
                       {printer.last_heartbeat && (
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-[10px] text-muted-foreground mt-1.5 ml-4">
                           Last checked:{" "}
                           {new Date(
                             printer.last_heartbeat,
@@ -626,17 +601,17 @@ export default function Printers() {
                       )}
                     </div>
 
-                    {/* Supported Services */}
+                    {/* Services */}
                     <div>
-                      <h4 className="text-sm font-medium mb-2">
-                        Supported Services
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                        Services
                       </h4>
                       <div className="flex flex-wrap gap-1">
                         {printer.supported_services.map((service) => (
                           <Badge
                             key={service}
                             variant="outline"
-                            className="text-xs"
+                            className="text-[10px] rounded-full font-medium"
                           >
                             {service}
                           </Badge>
@@ -644,15 +619,17 @@ export default function Printers() {
                       </div>
                     </div>
 
-                    {/* Supported Paper Sizes */}
+                    {/* Paper Sizes */}
                     <div>
-                      <h4 className="text-sm font-medium mb-2">Paper Sizes</h4>
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                        Paper Sizes
+                      </h4>
                       <div className="flex flex-wrap gap-1">
                         {printer.supported_sizes.map((size) => (
                           <Badge
                             key={size}
                             variant="outline"
-                            className="text-xs"
+                            className="text-[10px] rounded-full font-medium"
                           >
                             {size}
                           </Badge>
@@ -661,14 +638,14 @@ export default function Printers() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex space-x-2 pt-2">
+                    <div className="flex gap-2 pt-1">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditPrinter(printer)}
-                        className="flex-1"
+                        className="flex-1 h-8 gap-1.5 text-xs"
                       >
-                        <Edit className="h-3 w-3 mr-1" />
+                        <Edit className="h-3 w-3" />
                         Edit
                       </Button>
                       <Button
@@ -676,15 +653,19 @@ export default function Printers() {
                         size="sm"
                         onClick={() => handleTestPrinter(printer)}
                         disabled={printer.status !== "online"}
-                        className="flex-1"
+                        className="flex-1 h-8 gap-1.5 text-xs"
                       >
-                        <TestTube className="h-3 w-3 mr-1" />
+                        <TestTube className="h-3 w-3" />
                         Test
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="px-2">
-                            <Trash2 className="h-3 w-3" />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -716,20 +697,22 @@ export default function Printers() {
         )}
       </div>
 
-      {/* Edit Printer Dialog */}
+      {/* ── Edit Printer Dialog ── */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Edit Printer</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle>Edit Printer</DialogTitle>
+            <DialogDescription>
               Update printer details and capabilities
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Printer Name */}
             <div className="space-y-2">
-              <Label htmlFor="edit-printer-name" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="edit-printer-name"
+                className="text-sm font-medium"
+              >
                 Printer Name
               </Label>
               <Input
@@ -739,13 +722,15 @@ export default function Printers() {
                   setEditForm({ ...editForm, printer_name: e.target.value })
                 }
                 placeholder="e.g. HP LaserJet Pro"
-                className="bg-background text-foreground"
+                className="rounded-xl"
               />
             </div>
 
-            {/* Printer Type */}
             <div className="space-y-2">
-              <Label htmlFor="edit-printer-type" className="text-sm font-medium text-foreground">
+              <Label
+                htmlFor="edit-printer-type"
+                className="text-sm font-medium"
+              >
                 Printer Type
               </Label>
               <Select
@@ -754,7 +739,7 @@ export default function Printers() {
                   setEditForm({ ...editForm, printer_type: value })
                 }
               >
-                <SelectTrigger className="bg-background text-foreground">
+                <SelectTrigger className="rounded-xl">
                   <SelectValue placeholder="Select printer type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -767,14 +752,11 @@ export default function Printers() {
               </Select>
             </div>
 
-            {/* Supported Services */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-foreground">
-                Supported Services
-              </Label>
-              <div className="grid grid-cols-2 gap-3 p-4 border border-border rounded-lg bg-card">
+              <Label className="text-sm font-medium">Supported Services</Label>
+              <div className="grid grid-cols-2 gap-3 p-4 border border-border/60 rounded-xl bg-muted/20">
                 {SERVICES.map((service) => (
-                  <div key={service} className="flex items-center space-x-2">
+                  <div key={service} className="flex items-center gap-2.5">
                     <Checkbox
                       id={`edit-service-${service}`}
                       checked={editForm.supported_services.includes(service)}
@@ -782,7 +764,7 @@ export default function Printers() {
                     />
                     <Label
                       htmlFor={`edit-service-${service}`}
-                      className="cursor-pointer text-sm font-normal text-foreground"
+                      className="cursor-pointer text-sm font-normal"
                     >
                       {service}
                     </Label>
@@ -791,14 +773,13 @@ export default function Printers() {
               </div>
             </div>
 
-            {/* Supported Paper Sizes */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium text-foreground">
+              <Label className="text-sm font-medium">
                 Supported Paper Sizes
               </Label>
-              <div className="grid grid-cols-3 gap-3 p-4 border border-border rounded-lg bg-card">
+              <div className="grid grid-cols-3 gap-3 p-4 border border-border/60 rounded-xl bg-muted/20">
                 {PAPER_SIZES.map((size) => (
-                  <div key={size} className="flex items-center space-x-2">
+                  <div key={size} className="flex items-center gap-2.5">
                     <Checkbox
                       id={`edit-size-${size}`}
                       checked={editForm.supported_sizes.includes(size)}
@@ -806,7 +787,7 @@ export default function Printers() {
                     />
                     <Label
                       htmlFor={`edit-size-${size}`}
-                      className="cursor-pointer text-sm font-normal text-foreground"
+                      className="cursor-pointer text-sm font-normal"
                     >
                       {size}
                     </Label>
@@ -816,7 +797,7 @@ export default function Printers() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               variant="outline"
               onClick={() => setEditDialogOpen(false)}
@@ -824,8 +805,19 @@ export default function Printers() {
             >
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} disabled={editLoading}>
-              {editLoading ? "Saving..." : "Save Changes"}
+            <Button
+              onClick={handleSaveEdit}
+              disabled={editLoading}
+              className="gap-2"
+            >
+              {editLoading ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -13,13 +13,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Store, Database, Save, Camera } from "lucide-react";
+import {
+  Store,
+  Database,
+  Save,
+  Camera,
+  Package,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
 import { fetchFullShopProfile } from "@/backend/shops/fetchFullShopProfile";
 import fetchShopServices from "@/backend/shops/fetchShopServices";
 import { useToast } from "@/components/toast/useToast";
-
 import updateShop from "@/backend/shops/updateShop";
 import updateServicePrice from "@/backend/shops/updateServicePrice";
 import addNewService from "@/backend/shops/addNewService";
@@ -27,6 +34,7 @@ import deleteService from "@/backend/shops/deleteService";
 import addResource from "@/backend/shops/addResource";
 import deleteResource from "@/backend/shops/deleteResource";
 import fetchShopResources from "@/backend/shops/fetchShopResources";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -81,34 +89,25 @@ export default function Settings() {
     "Scanner",
   ];
 
-  // Shop Profile Settings - Initialize with empty values, will be populated from API
   const [shopProfile, setShopProfile] = useState({
     name: "",
     phone: "",
     address: "",
     description: "",
     logo: null as string | null,
-    workingHours: {
-      start: "09:00",
-      end: "18:00",
-    },
+    workingHours: { start: "09:00", end: "18:00" },
   });
 
-  // Pricing Settings - will be populated from API
   const [pricingSettings, setPricingSettings] = useState<
     Record<string, number>
   >({});
   const [services, setServices] = useState<any[]>([]);
 
-  // Load shop data on component mount
   useEffect(() => {
     const loadShopData = async () => {
       try {
         if (!user) return;
-
         const { shop } = await fetchFullShopProfile();
-
-        // Update shop profile with real data
         setShopProfile({
           name: shop.shop_name || "",
           phone: shop.phone || "",
@@ -120,20 +119,12 @@ export default function Settings() {
             end: shop.end_time || "18:00",
           },
         });
-
-        // Load services and pricing
         const shopServices = await fetchShopServices(shop.id);
         setServices(shopServices);
-
-        // Set selected services
         setSelectedServices(shopServices.map((s: any) => s.service_name));
-
-        // Load resources
         const shopResources = await fetchShopResources(shop.id);
         setResources(shopResources);
         setSelectedResources(shopResources.map((r: any) => r.resource_name));
-
-        // Convert services to pricing settings
         const pricing: Record<string, number> = {};
         shopServices.forEach((service: any) => {
           pricing[service.service_name] = service.price || 0;
@@ -145,14 +136,12 @@ export default function Settings() {
         setLoading(false);
       }
     };
-
     loadShopData();
   }, [user]);
 
   const handleSaveShop = async () => {
     try {
       const { shop } = await fetchFullShopProfile();
-
       await updateShop({
         shop_id: shop.id,
         shop_name: shopProfile.name,
@@ -163,7 +152,6 @@ export default function Settings() {
         start_time: shopProfile.workingHours.start,
         end_time: shopProfile.workingHours.end,
       });
-
       setUnsavedChanges(false);
       showToast({
         title: "Success",
@@ -171,7 +159,6 @@ export default function Settings() {
         variant: "success",
       });
     } catch (err) {
-      console.error(err);
       showToast({
         title: "Error",
         description: "Failed to update shop",
@@ -188,7 +175,6 @@ export default function Settings() {
           pricingSettings[service.service_name],
         );
       }
-
       setUnsavedChanges(false);
       showToast({
         title: "Success",
@@ -196,7 +182,6 @@ export default function Settings() {
         variant: "success",
       });
     } catch (err) {
-      console.error(err);
       showToast({
         title: "Error",
         description: "Failed to update pricing",
@@ -213,10 +198,7 @@ export default function Settings() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setShopProfile((prev) => ({
-          ...prev,
-          logo: reader.result as string,
-        }));
+        setShopProfile((prev) => ({ ...prev, logo: reader.result as string }));
         setUnsavedChanges(true);
       };
       reader.readAsDataURL(file);
@@ -225,84 +207,100 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-6 py-8 animate-slide-up">
+        {/* ── Header ── */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Settings</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
               Manage your shop preferences and configuration
             </p>
           </div>
           {unsavedChanges && (
-            <Badge variant="secondary" className="animate-pulse">
+            <Badge
+              variant="secondary"
+              className="animate-pulse rounded-full px-3 text-xs font-semibold"
+            >
               Unsaved Changes
             </Badge>
           )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading settings...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">
+                Loading settings...
+              </p>
             </div>
           </div>
         ) : (
           <Tabs defaultValue="shop" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="shop" className="flex items-center space-x-2">
-                <Store className="h-4 w-4" />
-                <span className="hidden sm:inline">Shop</span>
+            <TabsList className="h-11 p-1 rounded-xl bg-muted/50 border border-border/60">
+              <TabsTrigger
+                value="shop"
+                className="rounded-lg gap-2 text-sm font-medium"
+              >
+                <Store className="h-3.5 w-3.5" />
+                Shop
               </TabsTrigger>
-
               <TabsTrigger
                 value="resources"
-                className="flex items-center space-x-2"
+                className="rounded-lg gap-2 text-sm font-medium"
               >
-                <Store className="h-4 w-4" />
-                <span className="hidden sm:inline">Resources</span>
+                <Package className="h-3.5 w-3.5" />
+                Resources
               </TabsTrigger>
-
               <TabsTrigger
                 value="services"
-                className="flex items-center space-x-2"
+                className="rounded-lg gap-2 text-sm font-medium"
               >
-                <Store className="h-4 w-4" />
-                <span className="hidden sm:inline">Services</span>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Services
               </TabsTrigger>
-
               <TabsTrigger
                 value="pricing"
-                className="flex items-center space-x-2"
+                className="rounded-lg gap-2 text-sm font-medium"
               >
-                <Database className="h-4 w-4" />
-                <span className="hidden sm:inline">Pricing</span>
+                <Database className="h-3.5 w-3.5" />
+                Pricing
               </TabsTrigger>
             </TabsList>
 
-            {/* Shop Settings */}
+            {/* ── Shop Settings ── */}
             <TabsContent value="shop" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Shop Information</CardTitle>
-                  <CardDescription>
+              <Card className="border-border/60">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <CardTitle className="text-base font-semibold">
+                    Shop Information
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
                     Update your shop details and branding
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center space-x-6">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src={shopProfile.logo || ""} />
-                      <AvatarFallback className="text-2xl">
-                        {shopProfile.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+                <CardContent className="pt-6 space-y-6">
+                  {/* Logo upload */}
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <Avatar className="h-20 w-20 ring-2 ring-border">
+                        <AvatarImage src={shopProfile.logo || ""} />
+                        <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
+                          {shopProfile.name.charAt(0) || "S"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
                     <div>
                       <Label htmlFor="shop-logo" className="cursor-pointer">
-                        <Button variant="outline" asChild>
-                          <span className="flex items-center space-x-2">
-                            <Camera className="h-4 w-4" />
-                            <span>Upload Logo</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="gap-2"
+                        >
+                          <span>
+                            <Camera className="h-3.5 w-3.5" />
+                            Upload Logo
                           </span>
                         </Button>
                         <Input
@@ -313,154 +311,191 @@ export default function Settings() {
                           onChange={(e) => handleImageUpload("logo", e)}
                         />
                       </Label>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Recommended: 200x200px, PNG or JPG
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        Recommended: 200×200px, PNG or JPG
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <Label htmlFor="shop-name">Shop Name</Label>
+                      <Label
+                        htmlFor="shop-name"
+                        className="text-sm font-medium"
+                      >
+                        Shop Name
+                      </Label>
                       <Input
                         id="shop-name"
                         value={shopProfile.name}
                         onChange={(e) => {
-                          setShopProfile((prev) => ({
-                            ...prev,
+                          setShopProfile((p) => ({
+                            ...p,
                             name: e.target.value,
                           }));
                           setUnsavedChanges(true);
                         }}
+                        className="rounded-xl"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="shop-phone">Phone</Label>
+                      <Label
+                        htmlFor="shop-phone"
+                        className="text-sm font-medium"
+                      >
+                        Phone
+                      </Label>
                       <Input
                         id="shop-phone"
                         value={shopProfile.phone}
                         onChange={(e) => {
-                          setShopProfile((prev) => ({
-                            ...prev,
+                          setShopProfile((p) => ({
+                            ...p,
                             phone: e.target.value,
                           }));
                           setUnsavedChanges(true);
                         }}
+                        className="rounded-xl"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="shop-address">Address</Label>
+                    <Label
+                      htmlFor="shop-address"
+                      className="text-sm font-medium"
+                    >
+                      Address
+                    </Label>
                     <Textarea
                       id="shop-address"
                       value={shopProfile.address}
                       onChange={(e) => {
-                        setShopProfile((prev) => ({
-                          ...prev,
+                        setShopProfile((p) => ({
+                          ...p,
                           address: e.target.value,
                         }));
                         setUnsavedChanges(true);
                       }}
                       rows={3}
+                      className="rounded-xl resize-none"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="shop-description">Description</Label>
+                    <Label
+                      htmlFor="shop-description"
+                      className="text-sm font-medium"
+                    >
+                      Description
+                    </Label>
                     <Textarea
                       id="shop-description"
                       value={shopProfile.description}
                       onChange={(e) => {
-                        setShopProfile((prev) => ({
-                          ...prev,
+                        setShopProfile((p) => ({
+                          ...p,
                           description: e.target.value,
                         }));
                         setUnsavedChanges(true);
                       }}
                       rows={4}
+                      className="rounded-xl resize-none"
                     />
                   </div>
 
                   {/* Working Hours */}
-                  <div className="space-y-4">
-                    <Label className="text-base font-medium">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
                       Working Hours
                     </Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="work-start">Start Time</Label>
+                        <Label
+                          htmlFor="work-start"
+                          className="text-xs text-muted-foreground font-medium"
+                        >
+                          Start Time
+                        </Label>
                         <Input
                           id="work-start"
                           type="time"
                           value={shopProfile.workingHours.start}
                           onChange={(e) => {
-                            setShopProfile((prev) => ({
-                              ...prev,
+                            setShopProfile((p) => ({
+                              ...p,
                               workingHours: {
-                                ...prev.workingHours,
+                                ...p.workingHours,
                                 start: e.target.value,
                               },
                             }));
                             setUnsavedChanges(true);
                           }}
+                          className="rounded-xl"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="work-end">End Time</Label>
+                        <Label
+                          htmlFor="work-end"
+                          className="text-xs text-muted-foreground font-medium"
+                        >
+                          End Time
+                        </Label>
                         <Input
                           id="work-end"
                           type="time"
                           value={shopProfile.workingHours.end}
                           onChange={(e) => {
-                            setShopProfile((prev) => ({
-                              ...prev,
+                            setShopProfile((p) => ({
+                              ...p,
                               workingHours: {
-                                ...prev.workingHours,
+                                ...p.workingHours,
                                 end: e.target.value,
                               },
                             }));
                             setUnsavedChanges(true);
                           }}
+                          className="rounded-xl"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <Button onClick={handleSaveShop} className="w-full md:w-auto">
-                    <Save className="h-4 w-4 mr-2" />
+                  <Button onClick={handleSaveShop} className="gap-2">
+                    <Save className="h-4 w-4" />
                     Save Shop Settings
                   </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Services Tab */}
+            {/* ── Services Tab ── */}
             <TabsContent value="services" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Manage Services</CardTitle>
-                  <CardDescription>
-                    Select the services your shop provides
+              <Card className="border-border/60">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <CardTitle className="text-base font-semibold">
+                    Manage Services
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Select the services your shop provides — click to toggle
                   </CardDescription>
                 </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="pt-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {AVAILABLE_SERVICES.map((service) => {
                       const isSelected = selectedServices.includes(service);
-
                       return (
                         <div
                           key={service}
-                          className={`p-4 rounded-lg border cursor-pointer transition ${
+                          className={cn(
+                            "p-3.5 rounded-xl border cursor-pointer transition-all duration-150 flex items-center justify-between gap-3",
                             isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-muted"
-                          }`}
+                              ? "border-primary/40 bg-primary/5 dark:bg-primary/10"
+                              : "border-border/60 hover:border-border hover:bg-muted/30",
+                          )}
                           onClick={async () => {
                             if (isSelected) {
-                              // Delete
                               const existing = services.find(
                                 (s) => s.service_name === service,
                               );
@@ -470,46 +505,37 @@ export default function Settings() {
                                   prev.filter((s) => s.id !== existing.id),
                                 );
                               }
-
                               setSelectedServices((prev) =>
                                 prev.filter((s) => s !== service),
                               );
                             } else {
-                              // Add with default price
                               const { shop } = await fetchFullShopProfile();
-
-                              // Set default price based on service type (same logic as onboarding)
-                              let defaultPrice = 10; // default fallback
+                              let defaultPrice = 10;
                               if (
                                 service.includes("Black & White") ||
                                 service.includes("Photocopy")
-                              ) {
+                              )
                                 defaultPrice = 2;
-                              } else if (service.includes("Color")) {
+                              else if (service.includes("Color"))
                                 defaultPrice = 5;
-                              } else if (service.includes("Binding")) {
+                              else if (service.includes("Binding"))
                                 defaultPrice = 20;
-                              } else if (service.includes("Lamination")) {
+                              else if (service.includes("Lamination"))
                                 defaultPrice = 10;
-                              } else if (service.includes("Scanning")) {
+                              else if (service.includes("Scanning"))
                                 defaultPrice = 3;
-                              } else if (service.includes("Card")) {
+                              else if (service.includes("Card"))
                                 defaultPrice = 15;
-                              }
-
                               await addNewService(
                                 shop.id,
                                 service,
                                 defaultPrice,
                               );
-
                               const updatedServices = await fetchShopServices(
                                 shop.id,
                               );
                               setServices(updatedServices);
                               setSelectedServices((prev) => [...prev, service]);
-
-                              // Update pricing settings with the default price
                               setPricingSettings((prev) => ({
                                 ...prev,
                                 [service]: defaultPrice,
@@ -517,12 +543,21 @@ export default function Settings() {
                             }
                           }}
                         >
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{service}</span>
-                            {isSelected && (
-                              <Badge variant="secondary">Selected</Badge>
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              isSelected ? "text-primary" : "text-foreground",
                             )}
-                          </div>
+                          >
+                            {service}
+                          </span>
+                          {isSelected ? (
+                            <div className="p-1 rounded-full bg-primary/15 flex-shrink-0">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                          ) : (
+                            <div className="h-5 w-5 rounded-full border-2 border-border/60 flex-shrink-0" />
+                          )}
                         </div>
                       );
                     })}
@@ -531,49 +566,48 @@ export default function Settings() {
               </Card>
             </TabsContent>
 
-            {/* Resources Tab */}
+            {/* ── Resources Tab ── */}
             <TabsContent value="resources" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Manage Resources</CardTitle>
-                  <CardDescription>
-                    Select the resources available in your shop
+              <Card className="border-border/60">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <CardTitle className="text-base font-semibold">
+                    Manage Resources
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Select the resources available in your shop — click to
+                    toggle
                   </CardDescription>
                 </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="pt-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {AVAILABLE_RESOURCES.map((resource) => {
                       const isSelected = selectedResources.includes(resource);
-
                       return (
                         <div
                           key={resource}
-                          className={`p-4 rounded-lg border cursor-pointer transition ${
+                          className={cn(
+                            "p-3.5 rounded-xl border cursor-pointer transition-all duration-150 flex items-center justify-between gap-3",
                             isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-muted"
-                          }`}
+                              ? "border-primary/40 bg-primary/5 dark:bg-primary/10"
+                              : "border-border/60 hover:border-border hover:bg-muted/30",
+                          )}
                           onClick={async () => {
                             if (isSelected) {
                               const existing = resources.find(
                                 (r) => r.resource_name === resource,
                               );
-
                               if (existing) {
                                 await deleteResource(existing.id);
                                 setResources((prev) =>
                                   prev.filter((r) => r.id !== existing.id),
                                 );
                               }
-
                               setSelectedResources((prev) =>
                                 prev.filter((r) => r !== resource),
                               );
                             } else {
                               const { shop } = await fetchFullShopProfile();
                               await addResource(shop.id, resource);
-
                               const updatedResources = await fetchShopResources(
                                 shop.id,
                               );
@@ -585,12 +619,21 @@ export default function Settings() {
                             }
                           }}
                         >
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">{resource}</span>
-                            {isSelected && (
-                              <Badge variant="secondary">Selected</Badge>
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              isSelected ? "text-primary" : "text-foreground",
                             )}
-                          </div>
+                          >
+                            {resource}
+                          </span>
+                          {isSelected ? (
+                            <div className="p-1 rounded-full bg-primary/15 flex-shrink-0">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                          ) : (
+                            <div className="h-5 w-5 rounded-full border-2 border-border/60 flex-shrink-0" />
+                          )}
                         </div>
                       );
                     })}
@@ -599,33 +642,40 @@ export default function Settings() {
               </Card>
             </TabsContent>
 
-            {/* Pricing Settings */}
+            {/* ── Pricing Tab ── */}
             <TabsContent value="pricing" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Service Pricing</CardTitle>
-                  <CardDescription>
-                    Set your service rates and pricing for all available
-                    services
+              <Card className="border-border/60">
+                <CardHeader className="border-b border-border/50 pb-4">
+                  <CardTitle className="text-base font-semibold">
+                    Service Pricing
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Set your service rates for all available services
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="pt-6">
                   {services.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">
+                    <div className="text-center py-10">
+                      <div className="inline-flex p-4 rounded-2xl bg-muted/40 mb-3">
+                        <Database className="h-7 w-7 text-muted-foreground/40" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
                         No services found. Add services to your shop to set
                         pricing.
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {services.map((service) => (
                         <div key={service.id} className="space-y-2">
-                          <Label htmlFor={`price-${service.id}`}>
+                          <Label
+                            htmlFor={`price-${service.id}`}
+                            className="text-sm font-medium"
+                          >
                             {service.service_name}
                           </Label>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-muted-foreground">
+                          <div className="flex items-center rounded-xl border border-border/60 overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-0">
+                            <span className="px-3 py-2.5 bg-muted/50 text-sm font-semibold text-muted-foreground border-r border-border/60 flex-shrink-0">
                               ₹
                             </span>
                             <Input
@@ -642,7 +692,7 @@ export default function Settings() {
                                 }));
                                 setUnsavedChanges(true);
                               }}
-                              className="flex-1"
+                              className="border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
                             />
                           </div>
                         </div>
@@ -650,14 +700,16 @@ export default function Settings() {
                     </div>
                   )}
 
-                  <Button
-                    onClick={handleSavePricing}
-                    className="w-full md:w-auto"
-                    disabled={services.length === 0}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Pricing Settings
-                  </Button>
+                  {services.length > 0 && (
+                    <Button
+                      onClick={handleSavePricing}
+                      className="mt-6 gap-2"
+                      disabled={services.length === 0}
+                    >
+                      <Save className="h-4 w-4" />
+                      Save Pricing Settings
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

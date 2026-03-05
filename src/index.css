@@ -4,7 +4,7 @@
 
 /* Light mode - Modern & Clean */
 :root {
-  --background: #fafafa;
+  --background: #f8fafc;
   --foreground: #0a0a0a;
   --card: #ffffff;
   --card-foreground: #0a0a0a;
@@ -40,9 +40,9 @@
 .dark {
   --background: #09090b;
   --foreground: #fafafa;
-  --card: #0a0a0a;
+  --card: #111113;
   --card-foreground: #fafafa;
-  --popover: #0a0a0a;
+  --popover: #111113;
   --popover-foreground: #fafafa;
   --primary: #3b82f6;
   --primary-foreground: #f8fafc;
@@ -70,25 +70,72 @@
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
 }
 
-/* Custom scrollbar */
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.7;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease both;
+}
+.animate-slide-up {
+  animation: slideUp 0.35s ease both;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
+  height: 5px;
 }
-
 ::-webkit-scrollbar-track {
-  background: var(--muted);
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 99px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-foreground);
+  background: var(--muted-foreground);
 }
 
-/* Smooth transitions - excluding text color for instant theme switching */
+/* ── Smooth transitions ──────────────────────────────────────────────────── */
 * {
   transition:
     background-color 0.2s ease,
@@ -96,23 +143,27 @@
     box-shadow 0.2s ease;
 }
 
-/* Enhanced card styling */
+/* ── Card variants ───────────────────────────────────────────────────────── */
 .enhanced-card {
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .enhanced-card:hover {
+  transform: translateY(-2px);
   border-color: var(--primary);
   box-shadow:
-    0 12px 35px -8px rgba(0, 0, 0, 0.15),
-    0 0 20px rgba(59, 130, 246, 0.08);
+    0 12px 35px -8px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 0 20px rgba(59, 130, 246, 0.06);
 }
 
 .dark .enhanced-card {
-  background: var(--card);
-  border: 1px solid var(--border);
   box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.6);
 }
 
@@ -120,54 +171,89 @@
   border-color: var(--primary);
   box-shadow:
     0 12px 35px -8px rgba(0, 0, 0, 0.7),
-    0 0 20px rgba(59, 130, 246, 0.1);
+    0 0 0 1px rgba(59, 130, 246, 0.12),
+    0 0 24px rgba(59, 130, 246, 0.08);
 }
 
-/* Glass effect for special cards */
+/* ── Stat card hover lift ────────────────────────────────────────────────── */
+.stat-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.12);
+}
+.dark .stat-card:hover {
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Glass effect ────────────────────────────────────────────────────────── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
-
 .dark .glass-card {
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(12px);
+  background: rgba(17, 17, 19, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Gradient backgrounds */
+/* ── Gradient backgrounds ────────────────────────────────────────────────── */
 .gradient-bg {
   background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
 }
-
 .dark .gradient-bg {
   background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
 }
 
-/* Status colors */
+/* ── Status colors ───────────────────────────────────────────────────────── */
 .status-online {
   color: #10b981;
   background-color: rgba(16, 185, 129, 0.1);
 }
-
 .status-offline {
   color: #f59e0b;
   background-color: rgba(245, 158, 11, 0.1);
 }
-
 .status-error {
   color: #ef4444;
   background-color: rgba(239, 68, 68, 0.1);
 }
 
-/* Enhanced focus states */
+/* ── Focus states ────────────────────────────────────────────────────────── */
 .focus-ring {
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
-
 .focus-ring:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* ── Pill period selector ────────────────────────────────────────────────── */
+.period-pill {
+  border-radius: 99px;
+  padding: 0.25rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.period-pill:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.period-pill.active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
 }
