@@ -25,7 +25,7 @@ interface NavItem {
   badge?: string;
   path?: string;
   color: string;
-  glow: string;
+  glow?: string;
 }
 
 const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
@@ -42,13 +42,6 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         onClick: () => navigate("/dashboard"),
         color: "text-blue-500",
         glow: "rgba(59,130,246,0.15)",
-      },
-      {
-        title: "Printers",
-        icon: Printer,
-        path: "/printers",
-        onClick: () => navigate("/printers"),
-        color: "text-green-500",
       },
       {
         title: "Pending Orders",
