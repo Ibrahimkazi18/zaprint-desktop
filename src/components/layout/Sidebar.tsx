@@ -44,18 +44,18 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         color: "text-blue-500",
       },
       {
-        title: "Pending Orders",
-        icon: Package,
-        path: "/pending-orders",
-        onClick: () => navigate("/pending-orders"),
-        color: "text-amber-500",
-      },
-      {
         title: "Printers",
         icon: Printer,
         path: "/printers",
         onClick: () => navigate("/printers"),
         color: "text-green-500",
+      },
+      {
+        title: "Pending Orders",
+        icon: Package,
+        path: "/pending-orders",
+        onClick: () => navigate("/pending-orders"),
+        color: "text-amber-500",
       },
       {
         title: "Analytics",
