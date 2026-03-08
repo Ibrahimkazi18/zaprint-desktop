@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -15,16 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Store,
   Database,
   Save,
@@ -32,7 +21,6 @@ import {
   Package,
   CheckCircle2,
   Clock,
-  User,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -51,28 +39,12 @@ import { cn } from "@/lib/utils";
 export default function Settings() {
   const { user } = useAuth();
   const { show: showToast } = useToast();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
-
-  // Account management state
-  const [shopId, setShopId] = useState<string>("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [checkingOrders, setCheckingOrders] = useState(false);
-  const [pendingOrdersInfo, setPendingOrdersInfo] = useState<{
-    hasPending: boolean;
-    count: number;
-    statuses: string[];
-  }>({ hasPending: false, count: 0, statuses: [] });
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const AVAILABLE_SERVICES = [
     "Black & White Printing",
@@ -136,7 +108,6 @@ export default function Settings() {
       try {
         if (!user) return;
         const { shop } = await fetchFullShopProfile();
-        setShopId(shop.id);
         setShopProfile({
           name: shop.shop_name || "",
           phone: shop.phone || "",
@@ -159,9 +130,6 @@ export default function Settings() {
           pricing[service.service_name] = service.price || 0;
         });
         setPricingSettings(pricing);
-        
-        // Check pending orders for delete account feature
-        await checkPendingOrdersStatus(shop.id);
       } catch (error) {
         console.error("Error loading shop data:", error);
       } finally {
@@ -237,109 +205,6 @@ export default function Settings() {
     }
   };
 
-  // Account management functions
-  const checkPendingOrdersStatus = async (shopIdParam: string) => {
-    try {
-      setCheckingOrders(true);
-      const { checkPendingOrders } = await import("@/backend/account/checkPendingOrders");
-      const result = await checkPendingOrders(shopIdParam);
-      setPendingOrdersInfo({
-        hasPending: result.hasPendingOrders,
-        count: result.pendingCount,
-        statuses: result.statuses,
-      });
-    } catch (error) {
-      console.error("Error checking pending orders:", error);
-    } finally {
-      setCheckingOrders(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!newPassword || !currentPassword) {
-      showToast({
-        title: "Error",
-        description: "Please fill in all password fields",
-        variant: "error",
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast({
-        title: "Error",
-        description: "New passwords do not match",
-        variant: "error",
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      showToast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "error",
-      });
-      return;
-    }
-
-    try {
-      setChangingPassword(true);
-      const { changePassword } = await import("@/backend/account/changePassword");
-      await changePassword({
-        currentPassword,
-        newPassword,
-      });
-
-      showToast({
-        title: "Success",
-        description: "Password changed successfully",
-        variant: "success",
-      });
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error: any) {
-      showToast({
-        title: "Error",
-        description: error.message || "Failed to change password",
-        variant: "error",
-      });
-    } finally {
-      setChangingPassword(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!user || !shopId) return;
-
-    try {
-      setDeletingAccount(true);
-      const { deleteAccount } = await import("@/backend/account/deleteAccount");
-      const { supabase } = await import("@/auth/supabase");
-      
-      await deleteAccount(shopId, user.id);
-
-      showToast({
-        title: "Success",
-        description: "Account deleted successfully",
-        variant: "success",
-      });
-
-      await supabase.auth.signOut();
-      navigate("/auth");
-    } catch (error: any) {
-      showToast({
-        title: "Error",
-        description: error.message || "Failed to delete account",
-        variant: "error",
-      });
-      setDeletingAccount(false);
-      setShowDeleteDialog(false);
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="container mx-auto px-6 py-8 animate-slide-up">
@@ -400,13 +265,6 @@ export default function Settings() {
               >
                 <Database className="h-3.5 w-3.5" />
                 Pricing
-              </TabsTrigger>
-              <TabsTrigger
-                value="account"
-                className="rounded-lg gap-2 text-sm font-medium"
-              >
-                <User className="h-3.5 w-3.5" />
-                Account
               </TabsTrigger>
             </TabsList>
 
@@ -855,171 +713,8 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* ── Account Tab ── */}
-            <TabsContent value="account" className="space-y-6">
-              {/* Change Password Card */}
-              <Card className="border-border/60">
-                <CardHeader className="border-b border-border/50 pb-4">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Change Password
-                  </CardTitle>
-                  <CardDescription>
-                    Update your account password. Make sure to use a strong password.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input
-                      id="current-password"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Enter current password"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password (min 6 characters)"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleChangePassword}
-                    disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
-                    className="gap-2"
-                  >
-                    <Clock className="h-4 w-4" />
-                    {changingPassword ? "Changing Password..." : "Change Password"}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Delete Account Card */}
-              <Card className="border-destructive/50">
-                <CardHeader className="border-b border-destructive/20 pb-4">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2 text-destructive">
-                    <User className="h-4 w-4" />
-                    Delete Account
-                  </CardTitle>
-                  <CardDescription>
-                    Permanently delete your shop account and all associated data. This action cannot be undone.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                  {checkingOrders ? (
-                    <div className="flex items-center space-x-2 text-muted-foreground">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span>Checking pending orders...</span>
-                    </div>
-                  ) : pendingOrdersInfo.hasPending ? (
-                    <div className="bg-amber-500/10 border border-amber-500/50 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <span className="text-2xl">⚠️</span>
-                        <div className="flex-1">
-                          <p className="font-medium text-amber-600 dark:text-amber-400">
-                            Cannot Delete Account
-                          </p>
-                          <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-1">
-                            You have {pendingOrdersInfo.count} pending order(s) with status:{" "}
-                            {pendingOrdersInfo.statuses.join(", ")}. Please complete all orders before deleting your account.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-green-500/10 border border-green-500/50 rounded-lg p-4">
-                      <div className="flex items-start space-x-3">
-                        <span className="text-2xl">✓</span>
-                        <div className="flex-1">
-                          <p className="font-medium text-green-600 dark:text-green-400">
-                            Account Can Be Deleted
-                          </p>
-                          <p className="text-sm text-green-600/80 dark:text-green-400/80 mt-1">
-                            All orders are completed. You can safely delete your account.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="bg-destructive/10 border border-destructive/50 rounded-lg p-4">
-                    <p className="text-sm text-destructive font-medium mb-2">
-                      Warning: This will permanently delete:
-                    </p>
-                    <ul className="text-sm text-destructive/80 space-y-1 list-disc list-inside">
-                      <li>Your shop profile and settings</li>
-                      <li>All registered printers</li>
-                      <li>All services and pricing</li>
-                      <li>All resources</li>
-                      <li>Completed order history</li>
-                      <li>Your user account</li>
-                    </ul>
-                  </div>
-
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={pendingOrdersInfo.hasPending || checkingOrders}
-                    className="gap-2"
-                  >
-                    <User className="h-4 w-4" />
-                    Delete Account
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         )}
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center space-x-2 text-destructive">
-                <span className="text-2xl">⚠️</span>
-                <span>Are you absolutely sure?</span>
-              </AlertDialogTitle>
-              <AlertDialogDescription className="space-y-2">
-                <p>
-                  This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
-                </p>
-                <p className="font-medium text-foreground">
-                  All shop data, printers, services, resources, and order history will be permanently deleted.
-                </p>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deletingAccount}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteAccount}
-                disabled={deletingAccount}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {deletingAccount ? "Deleting..." : "Yes, Delete My Account"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </DashboardLayout>
   );
