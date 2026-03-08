@@ -1,7 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Home,
   Settings,
@@ -10,8 +8,8 @@ import {
   ChevronRight,
   Printer,
   Plus,
-  Activity,
   Package,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -26,7 +24,8 @@ interface NavItem {
   onClick: () => void;
   badge?: string;
   path?: string;
-  color?: string;
+  color: string;
+  glow: string;
 }
 
 const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
@@ -42,6 +41,7 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         path: "/dashboard",
         onClick: () => navigate("/dashboard"),
         color: "text-blue-500",
+        glow: "rgba(59,130,246,0.15)",
       },
       {
         title: "Printers",
@@ -56,6 +56,15 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         path: "/pending-orders",
         onClick: () => navigate("/pending-orders"),
         color: "text-amber-500",
+        glow: "rgba(245,158,11,0.15)",
+      },
+      {
+        title: "Printers",
+        icon: Printer,
+        path: "/printers",
+        onClick: () => navigate("/printers"),
+        color: "text-emerald-500",
+        glow: "rgba(16,185,129,0.15)",
       },
       {
         title: "Analytics",
@@ -63,6 +72,7 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         path: "/analytics",
         onClick: () => navigate("/analytics"),
         color: "text-orange-500",
+        glow: "rgba(249,115,22,0.15)",
       },
     ],
     [navigate],
@@ -76,13 +86,15 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         path: "/register-printer",
         onClick: () => navigate("/register-printer"),
         color: "text-emerald-500",
+        glow: "rgba(16,185,129,0.15)",
       },
       {
         title: "Settings",
         icon: Settings,
         path: "/settings",
         onClick: () => navigate("/settings"),
-        color: "text-gray-500",
+        color: "text-slate-500",
+        glow: "rgba(100,116,139,0.15)",
       },
     ],
     [navigate],
@@ -93,105 +105,138 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
     const isActive = item.path && location.pathname === item.path;
 
     return (
-      <Button
-        variant="ghost"
-        className={cn(
-          "w-full justify-start h-12 px-4 transition-all duration-200 group relative",
-          collapsed && "px-3 justify-center",
-          isActive
-            ? "bg-primary/10 text-primary border-r-2 border-primary shadow-lg dark:bg-primary/20 dark:shadow-primary/25"
-            : "hover:bg-accent/50 hover:text-accent-foreground",
-          !collapsed && "rounded-xl mx-2",
-          collapsed && "rounded-lg mx-1",
+      <div className="relative px-2">
+        {/* Active left accent bar */}
+        {isActive && (
+          <div
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-r-full bg-primary"
+            style={{ boxShadow: `0 0 8px var(--primary)` }}
+          />
         )}
-        onClick={item.onClick}
-      >
-        <Icon
+        <button
           className={cn(
-            "h-5 w-5 transition-colors",
-            !collapsed && "mr-4",
-            isActive ? "text-primary" : item.color,
-            "group-hover:scale-110 transition-transform",
+            "w-full flex items-center h-11 rounded-xl px-3 transition-all duration-200 group relative",
+            collapsed && "justify-center px-2",
+            isActive
+              ? "bg-primary/10 text-primary dark:bg-primary/15"
+              : "hover:bg-accent/60 text-muted-foreground hover:text-foreground",
           )}
-        />
-        {!collapsed && (
-          <div className="flex items-center justify-between w-full">
-            <span className="font-medium truncate">{item.title}</span>
-            {item.badge && (
-              <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-2 py-1 font-semibold shadow-sm">
-                {item.badge}
-              </span>
+          style={
+            isActive
+              ? { boxShadow: `inset 0 0 0 1px rgba(59,130,246,0.18)` }
+              : {}
+          }
+          onClick={item.onClick}
+        >
+          <Icon
+            className={cn(
+              "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
+              isActive ? "text-primary" : item.color,
+              "group-hover:scale-110",
             )}
-          </div>
-        )}
+          />
+          {!collapsed && (
+            <div className="flex items-center justify-between w-full ml-3">
+              <span
+                className={cn(
+                  "font-medium text-sm truncate",
+                  isActive ? "text-primary" : "",
+                )}
+              >
+                {item.title}
+              </span>
+              {item.badge && (
+                <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5 font-semibold leading-tight">
+                  {item.badge}
+                </span>
+              )}
+            </div>
+          )}
 
-        {/* Tooltip for collapsed state */}
-        {collapsed && (
-          <div className="absolute left-full ml-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
-            {item.title}
-            {item.badge && (
-              <span className="ml-2 text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
-                {item.badge}
-              </span>
-            )}
-          </div>
-        )}
-      </Button>
+          {/* Tooltip for collapsed state */}
+          {collapsed && (
+            <div className="absolute left-full ml-3 px-3 py-2 bg-popover text-popover-foreground text-xs font-medium rounded-lg shadow-lg border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+              {item.title}
+              {item.badge && (
+                <span className="ml-2 bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px]">
+                  {item.badge}
+                </span>
+              )}
+            </div>
+          )}
+        </button>
+      </div>
     );
   };
 
   return (
     <div
       className={cn(
-        "flex flex-col border-r border-border bg-card/30 backdrop-blur-sm transition-all duration-300 shadow-sm dark:shadow-lg dark:shadow-primary/5",
-        collapsed ? "w-20" : "w-72",
+        "flex flex-col border-r border-border bg-card/50 backdrop-blur-sm transition-all duration-300",
+        collapsed ? "w-[64px]" : "w-64",
         className,
       )}
     >
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between p-6 border-b border-border">
+      {/* ── Sidebar Header / Logo ── */}
+      <div
+        className={cn(
+          "flex items-center border-b border-border h-16",
+          collapsed ? "justify-center px-3" : "px-4 justify-between",
+        )}
+      >
         {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <Activity className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold text-foreground">Menu</h2>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-1.5 rounded-lg bg-primary/10 flex-shrink-0">
+              <Zap className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex flex-col leading-tight min-w-0">
+              <span className="text-base font-bold tracking-tight text-foreground truncate">
+                Zaprint
+              </span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+                Dashboard
+              </span>
+            </div>
           </div>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={() => setCollapsed(!collapsed)}
-          className="h-9 w-9 hover:bg-accent/50 rounded-lg"
+          className={cn(
+            "flex items-center justify-center rounded-lg h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-all flex-shrink-0",
+            collapsed && "mx-auto",
+          )}
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
           ) : (
             <ChevronLeft className="h-4 w-4" />
           )}
-        </Button>
+        </button>
       </div>
 
-      <ScrollArea className="flex-1 px-2 py-6">
-        <div className="space-y-8">
+      <ScrollArea className="flex-1 py-4">
+        <div className="space-y-6">
           {/* Main Navigation */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             {!collapsed && (
-              <h3 className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+              <p className="px-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
                 Main Menu
-              </h3>
+              </p>
             )}
             {mainNavItems.map((item, index) => (
               <NavButton key={index} item={item} />
             ))}
           </div>
 
-          <Separator className="mx-4" />
+          {/* Divider */}
+          <div className="mx-4 h-px bg-border/60" />
 
           {/* System Section */}
-          <div className="space-y-2">
+          <div className="space-y-1">
             {!collapsed && (
-              <h3 className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+              <p className="px-4 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">
                 System
-              </h3>
+              </p>
             )}
             {systemNavItems.map((item, index) => (
               <NavButton key={index} item={item} />
@@ -201,14 +246,19 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border">
+      <div className="p-3 border-t border-border">
         {!collapsed ? (
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground">Zaprint v1.0.0</p>
+          <div className="px-2 py-1.5 rounded-lg bg-muted/40 text-center">
+            <p className="text-[10px] text-muted-foreground font-medium">
+              Zaprint v1.0.0
+            </p>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <div
+              className="w-2 h-2 bg-primary rounded-full"
+              style={{ boxShadow: "0 0 6px var(--primary)" }}
+            />
           </div>
         )}
       </div>

@@ -1,7 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sun, Moon, User, LogOut, Wifi, WifiOff } from "lucide-react";
+import { User, LogOut } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
+import { cn } from "@/lib/utils";
 
 interface NavbarProps {
   darkMode: boolean;
@@ -33,153 +34,124 @@ const Navbar = React.memo(function Navbar({
     navigate("/");
   };
 
-  const getStatusBadge = () => {
-    if (loading)
-      return (
-        <Badge variant="secondary" className="animate-pulse">
-          Loading...
-        </Badge>
-      );
+  // Determine shop connectivity status
+  const hasOnline = printers?.some((p: any) => p.status === "online");
+  const hasError = printers?.some((p: any) => p.status === "error");
+  const noPrinters = !printers || printers.length === 0;
 
-    // Check if there are any printers at all
-    if (!printers || printers.length === 0) {
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-gray-500 hover:bg-gray-600 text-white shadow-lg dark:shadow-gray-500/25"
-          title="No printers registered"
-        >
-          <WifiOff className="h-3 w-3 mr-1" />
-          No Printers
-        </Badge>
-      );
-    }
-
-    // Shop is open if at least one printer is online
-    const hasOnlinePrinter = printers.some((p: any) => p.status === "online");
-    const hasErrorPrinter = printers.some((p: any) => p.status === "error");
-
-    if (hasOnlinePrinter) {
-      return (
-        <Badge
-          variant="default"
-          className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg dark:shadow-emerald-500/25"
-          title="Shop is open - at least one printer is online"
-        >
-          <Wifi className="h-3 w-3 mr-1" />
-          Online
-        </Badge>
-      );
-    } else if (hasErrorPrinter) {
-      return (
-        <Badge
-          variant="destructive"
-          title="Shop has printer errors"
-          className="shadow-lg dark:shadow-red-500/25"
-        >
-          <WifiOff className="h-3 w-3 mr-1" />
-          Error
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge
-          variant="secondary"
-          className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg dark:shadow-amber-500/25"
-          title="Shop is closed - no printers online"
-        >
-          <WifiOff className="h-3 w-3 mr-1" />
-          Offline
-        </Badge>
-      );
-    }
-  };
+  const statusConfig = loading
+    ? { dot: "bg-muted-foreground", label: "Loading", ring: "" }
+    : noPrinters
+      ? { dot: "bg-slate-400", label: "No printers", ring: "" }
+      : hasOnline
+        ? {
+            dot: "bg-emerald-500",
+            label: "Online",
+            ring: "ring-emerald-500/30",
+          }
+        : hasError
+          ? { dot: "bg-red-500", label: "Error", ring: "ring-red-500/30" }
+          : {
+              dot: "bg-amber-500",
+              label: "Offline",
+              ring: "ring-amber-500/30",
+            };
 
   return (
-    <header className="border-b border-border bg-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 sticky top-0 z-50 shadow-sm dark:shadow-lg dark:shadow-primary/5">
-      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-6">
-          <h1 className="text-2xl font-bold text-foreground">Zaprint</h1>
-
+    <header className="border-b border-border bg-card/90 backdrop-blur-xl supports-[backdrop-filter]:bg-card/70 sticky top-0 z-50 shadow-sm dark:shadow-none">
+      <div className="px-5 h-16 flex items-center justify-between">
+        {/* Left: shop info */}
+        <div className="flex items-center gap-4 min-w-0">
           {shop && (
-            <div className="flex items-center space-x-3 pl-6 border-l border-border/50">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Status dot */}
+              <div className="relative flex-shrink-0">
+                <div
+                  className={cn(
+                    "w-2.5 h-2.5 rounded-full",
+                    statusConfig.dot,
+                    hasOnline && !loading && "animate-pulse",
+                  )}
+                />
+                {hasOnline && !loading && (
+                  <div
+                    className={cn(
+                      "absolute inset-0 rounded-full animate-ping opacity-60",
+                      statusConfig.dot,
+                    )}
+                  />
+                )}
+              </div>
+
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
                   {shop.shop_name}
                 </span>
-                <span className="text-xs text-muted-foreground">Dashboard</span>
+                <span className="text-[10px] font-medium text-muted-foreground">
+                  {statusConfig.label}
+                </span>
               </div>
-              <div className="cursor-help">{getStatusBadge()}</div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleDarkMode}
-            aria-label="Toggle dark mode"
-            className="h-10 w-10 hover:bg-accent/50"
-          >
-            {darkMode ? (
-              <Sun className="h-4 w-4 text-amber-500" />
-            ) : (
-              <Moon className="h-4 w-4 text-slate-600" />
-            )}
-          </Button>
+        {/* Right: actions */}
+        <div className="flex items-center gap-2">
+          <ThemeToggle isDark={darkMode} onToggle={toggleDarkMode} />
 
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-10 w-10 rounded-full hover:bg-accent/50"
+                className="relative h-9 w-9 rounded-full hover:bg-accent/60 p-0"
               >
-                <Avatar className="h-8 w-8 ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
+                <Avatar
+                  className={cn(
+                    "h-8 w-8 ring-2 ring-border hover:ring-primary/40 transition-all",
+                    statusConfig.ring,
+                  )}
+                >
                   <AvatarImage src={user?.avatar_url} alt={user?.email} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
                     {user?.email?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal p-3">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user?.avatar_url} alt={user?.email} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-                        {user?.email?.charAt(0).toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-semibold leading-none">
-                        {user?.user_metadata?.full_name || "User"}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground mt-1">
-                        {user?.email}
-                      </p>
-                    </div>
+            <DropdownMenuContent className="w-60 p-2" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal p-3 rounded-lg bg-muted/40 mb-1">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9 flex-shrink-0">
+                    <AvatarImage src={user?.avatar_url} alt={user?.email} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xs font-bold">
+                      {user?.email?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <p className="text-sm font-semibold leading-tight truncate">
+                      {user?.user_metadata?.full_name || "User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {user?.email}
+                    </p>
                   </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer p-3 rounded-lg"
-                onClick={() => console.log("Profile clicked")}
+                className="cursor-pointer p-3 rounded-lg gap-3"
+                onClick={() => console.log("Profile")}
               >
-                <User className="mr-3 h-4 w-4" />
+                <User className="h-4 w-4 text-muted-foreground" />
                 <span>Profile Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer p-3 rounded-lg text-destructive focus:text-destructive"
+                className="cursor-pointer p-3 rounded-lg text-destructive focus:text-destructive gap-3"
                 onClick={handleLogout}
               >
-                <LogOut className="mr-3 h-4 w-4" />
+                <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

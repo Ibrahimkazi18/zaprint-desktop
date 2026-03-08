@@ -28,39 +28,62 @@ import {
   Download,
   Clock,
   Target,
+  LayoutList,
 } from "lucide-react";
+import {
+  RevenueChart,
+  DailyChart,
+  HourlyChart,
+  CustomerChart,
+} from "@/components/ui/analytics-charts";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import fetchAnalyticsOverview, { AnalyticsOverview } from "@/backend/analytics/fetchAnalyticsOverview";
-import fetchMonthlyRevenue, { MonthlyRevenue } from "@/backend/analytics/fetchMonthlyRevenue";
-import fetchTopCustomers, { TopCustomer } from "@/backend/analytics/fetchTopCustomers";
-import fetchDailyPerformance, { DailyPerformance } from "@/backend/analytics/fetchDailyPerformance";
-import fetchGrowthMetrics, { GrowthMetrics } from "@/backend/analytics/fetchGrowthMetrics";
-import fetchHourlyPerformance, { HourlyPerformance } from "@/backend/analytics/fetchHourlyPerformance";
+import fetchAnalyticsOverview, {
+  AnalyticsOverview,
+} from "@/backend/analytics/fetchAnalyticsOverview";
+import fetchMonthlyRevenue, {
+  MonthlyRevenue,
+} from "@/backend/analytics/fetchMonthlyRevenue";
+import fetchTopCustomers, {
+  TopCustomer,
+} from "@/backend/analytics/fetchTopCustomers";
+import fetchDailyPerformance, {
+  DailyPerformance,
+} from "@/backend/analytics/fetchDailyPerformance";
+import fetchGrowthMetrics, {
+  GrowthMetrics,
+} from "@/backend/analytics/fetchGrowthMetrics";
+import fetchHourlyPerformance, {
+  HourlyPerformance,
+} from "@/backend/analytics/fetchHourlyPerformance";
 import toast from "react-hot-toast";
 import { exportAnalyticsPDF } from "@/utils/exportAnalyticsPDF";
+import { cn } from "@/lib/utils";
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const [viewMode, setViewMode] = useState<"table" | "graph">("table");
   const { shop } = useShopDashboard();
-  
-  // State for analytics data
+
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([]);
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
-  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>([]);
-  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetrics | null>(null);
-  const [hourlyPerformance, setHourlyPerformance] = useState<HourlyPerformance[]>([]);
+  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>(
+    [],
+  );
+  const [growthMetrics, setGrowthMetrics] = useState<GrowthMetrics | null>(
+    null,
+  );
+  const [hourlyPerformance, setHourlyPerformance] = useState<
+    HourlyPerformance[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
-  // Load all analytics data
   useEffect(() => {
     const loadAnalytics = async () => {
       if (!shop?.id) return;
-
       try {
         setLoading(true);
-        
         const [
           overviewData,
           monthlyData,
@@ -70,13 +93,15 @@ export default function Analytics() {
           hourlyData,
         ] = await Promise.all([
           fetchAnalyticsOverview(shop.id),
-          fetchMonthlyRevenue(shop.id, selectedPeriod === "30d" ? 6 : selectedPeriod === "90d" ? 12 : 3),
+          fetchMonthlyRevenue(
+            shop.id,
+            selectedPeriod === "30d" ? 6 : selectedPeriod === "90d" ? 12 : 3,
+          ),
           fetchTopCustomers(shop.id, 10),
           fetchDailyPerformance(shop.id),
           fetchGrowthMetrics(shop.id),
           fetchHourlyPerformance(shop.id),
         ]);
-
         setOverview(overviewData);
         setMonthlyRevenue(monthlyData);
         setTopCustomers(customersData);
@@ -90,20 +115,22 @@ export default function Analytics() {
         setLoading(false);
       }
     };
-
     loadAnalytics();
   }, [shop?.id, selectedPeriod]);
 
   const formatCurrency = (amount: number) => `₹${amount.toLocaleString()}`;
-  
+
   const formatChange = (change: number) => (
     <span
-      className={`flex items-center ${change >= 0 ? "text-green-600" : "text-red-600"}`}
+      className={cn(
+        "flex items-center text-xs font-medium",
+        change >= 0 ? "text-emerald-600" : "text-red-500",
+      )}
     >
       {change >= 0 ? (
-        <TrendingUp className="h-4 w-4 mr-1" />
+        <TrendingUp className="h-3.5 w-3.5 mr-1" />
       ) : (
-        <TrendingDown className="h-4 w-4 mr-1" />
+        <TrendingDown className="h-3.5 w-3.5 mr-1" />
       )}
       {Math.abs(change).toFixed(1)}%
     </span>
@@ -117,9 +144,9 @@ export default function Analytics() {
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
+    const diffDays = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
+    );
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -132,10 +159,8 @@ export default function Analytics() {
       toast.error("Shop information not available");
       return;
     }
-
     try {
       toast.loading("Generating PDF report...", { id: "export-pdf" });
-
       exportAnalyticsPDF({
         shopName: shop.shop_name,
         overview,
@@ -144,31 +169,49 @@ export default function Analytics() {
         dailyPerformance,
         growthMetrics,
         hourlyPerformance,
-        period: selectedPeriod === "7d" ? "Last 7 Days" : selectedPeriod === "30d" ? "Last 30 Days" : "Last 90 Days",
+        period:
+          selectedPeriod === "7d"
+            ? "Last 7 Days"
+            : selectedPeriod === "30d"
+              ? "Last 30 Days"
+              : "Last 90 Days",
       });
-
-      toast.success("PDF report downloaded successfully!", { id: "export-pdf" });
+      toast.success("PDF report downloaded!", { id: "export-pdf" });
     } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast.error("Failed to generate PDF report", { id: "export-pdf" });
+      toast.error("Failed to generate PDF", { id: "export-pdf" });
     }
   };
+
+  const ViewToggle = ({ onToggle }: { onToggle: () => void }) => (
+    <button
+      onClick={onToggle}
+      className="absolute bottom-3 right-3 p-2 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+      title={
+        viewMode === "graph" ? "Switch to table view" : "Switch to graph view"
+      }
+    >
+      {viewMode === "graph" ? (
+        <LayoutList className="h-3.5 w-3.5" />
+      ) : (
+        <BarChart3 className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-6 py-8 animate-fade-in">
           <div className="flex items-center justify-between mb-8">
             <div>
               <Skeleton className="h-9 w-64 mb-2" />
-              <Skeleton className="h-5 w-96" />
+              <Skeleton className="h-5 w-80" />
             </div>
             <Skeleton className="h-10 w-48" />
           </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 mb-8">
             {[...Array(4)].map((_, i) => (
-              <Card key={i}>
+              <Card key={i} className="stat-card">
                 <CardHeader>
                   <Skeleton className="h-4 w-24 mb-2" />
                   <Skeleton className="h-8 w-32" />
@@ -176,13 +219,12 @@ export default function Analytics() {
               </Card>
             ))}
           </div>
-
           <Card>
             <CardHeader>
               <Skeleton className="h-6 w-48" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-64 w-full rounded-xl" />
             </CardContent>
           </Card>
         </div>
@@ -192,154 +234,209 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="container mx-auto px-6 py-8 animate-slide-up">
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
               Track your business performance and insights
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={selectedPeriod === "7d" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedPeriod("7d")}
-              >
-                7 Days
-              </Button>
-              <Button
-                variant={selectedPeriod === "30d" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedPeriod("30d")}
-              >
-                30 Days
-              </Button>
-              <Button
-                variant={selectedPeriod === "90d" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedPeriod("90d")}
-              >
-                90 Days
-              </Button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* Pill period selector */}
+            <div className="flex items-center gap-1.5 p-1 rounded-full bg-muted/50 border border-border/60">
+              {[
+                { value: "7d", label: "7 Days" },
+                { value: "30d", label: "30 Days" },
+                { value: "90d", label: "90 Days" },
+              ].map((period) => (
+                <button
+                  key={period.value}
+                  onClick={() => setSelectedPeriod(period.value)}
+                  className={cn(
+                    "period-pill",
+                    selectedPeriod === period.value && "active",
+                  )}
+                >
+                  {period.label}
+                </button>
+              ))}
             </div>
-            <Button variant="outline" onClick={handleExportPDF}>
-              <Download className="h-4 w-4 mr-2" />
-              Export Report
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              className="h-9 gap-1.5 text-sm"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export PDF
             </Button>
           </div>
         </div>
 
-        {/* Overview Stats */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Revenue
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(overview?.quarter_revenue || 0)}
+        {/* ── Overview Stat Cards ── */}
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          {/* Total Revenue */}
+          <Card className="stat-card relative overflow-hidden border-border/60">
+            <div className="absolute inset-0 bg-emerald-500 opacity-[0.03]" />
+            <CardHeader className="flex flex-row items-start justify-between pb-2 relative">
+              <div>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Total Revenue
+                </CardTitle>
+                <p className="text-2xl font-bold mt-1.5 text-foreground">
+                  {formatCurrency(overview?.quarter_revenue || 0)}
+                </p>
+                <div className="mt-1.5">
+                  {formatChange(
+                    growthMetrics ? growthMetrics.mom_revenue_growth : 0,
+                  )}
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    vs last month
+                  </span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {formatChange(
-                  growthMetrics
-                    ? growthMetrics.mom_revenue_growth
-                    : 0
-                )}{" "}
-                from last month
-              </p>
-            </CardContent>
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 flex-shrink-0">
+                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </CardHeader>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {overview?.quarter_orders || 0}
+          {/* Total Jobs */}
+          <Card className="stat-card relative overflow-hidden border-border/60">
+            <div className="absolute inset-0 bg-blue-500 opacity-[0.03]" />
+            <CardHeader className="flex flex-row items-start justify-between pb-2 relative">
+              <div>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Total Jobs
+                </CardTitle>
+                <p className="text-2xl font-bold mt-1.5">
+                  {overview?.quarter_orders || 0}
+                </p>
+                <div className="mt-1.5">
+                  {formatChange(
+                    growthMetrics ? growthMetrics.mom_orders_growth : 0,
+                  )}
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    vs last month
+                  </span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {formatChange(
-                  growthMetrics
-                    ? growthMetrics.mom_orders_growth
-                    : 0
-                )}{" "}
-                from last month
-              </p>
-            </CardContent>
+              <div className="p-2.5 rounded-xl bg-blue-500/10 flex-shrink-0">
+                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Customers
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {overview?.total_customers || 0}
+          {/* Total Customers */}
+          <Card className="stat-card relative overflow-hidden border-border/60">
+            <div className="absolute inset-0 bg-purple-500 opacity-[0.03]" />
+            <CardHeader className="flex flex-row items-start justify-between pb-2 relative">
+              <div>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Total Customers
+                </CardTitle>
+                <p className="text-2xl font-bold mt-1.5">
+                  {overview?.total_customers || 0}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  {overview?.active_customers_month || 0} active this month
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {overview?.active_customers_month || 0} active this month
-              </p>
-            </CardContent>
+              <div className="p-2.5 rounded-xl bg-purple-500/10 flex-shrink-0">
+                <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </CardHeader>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Avg Job Value
-              </CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(overview?.avg_order_value || 0)}
+          {/* Avg Job Value */}
+          <Card className="stat-card relative overflow-hidden border-border/60">
+            <div className="absolute inset-0 bg-orange-500 opacity-[0.03]" />
+            <CardHeader className="flex flex-row items-start justify-between pb-2 relative">
+              <div>
+                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Avg Job Value
+                </CardTitle>
+                <p className="text-2xl font-bold mt-1.5">
+                  {formatCurrency(overview?.avg_order_value || 0)}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  {overview?.completion_rate || 0}% completion rate
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {overview?.completion_rate || 0}% completion rate
-              </p>
-            </CardContent>
+              <div className="p-2.5 rounded-xl bg-orange-500/10 flex-shrink-0">
+                <Target className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
+            </CardHeader>
           </Card>
         </div>
 
+        {/* ── Tabs ── */}
         <Tabs defaultValue="revenue" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="revenue">Revenue Analysis</TabsTrigger>
-            <TabsTrigger value="customers">Customer Insights</TabsTrigger>
-            <TabsTrigger value="daily">Daily Trends</TabsTrigger>
-            <TabsTrigger value="hourly">Peak Hours</TabsTrigger>
+          <TabsList className="h-11 p-1 rounded-xl bg-muted/50 border border-border/60">
+            <TabsTrigger
+              value="revenue"
+              className="rounded-lg text-sm font-medium"
+            >
+              Revenue Analysis
+            </TabsTrigger>
+            <TabsTrigger
+              value="customers"
+              className="rounded-lg text-sm font-medium"
+            >
+              Customer Insights
+            </TabsTrigger>
+            <TabsTrigger
+              value="daily"
+              className="rounded-lg text-sm font-medium"
+            >
+              Daily Trends
+            </TabsTrigger>
+            <TabsTrigger
+              value="hourly"
+              className="rounded-lg text-sm font-medium"
+            >
+              Peak Hours
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="revenue" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Revenue Trend</CardTitle>
-                  <CardDescription>
+          {/* ── Revenue Tab ── */}
+          <TabsContent value="revenue" className="space-y-5">
+            <div className="grid gap-5 md:grid-cols-2">
+              <Card className="relative border-border/60">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-base font-semibold">
+                    Monthly Revenue Trend
+                  </CardTitle>
+                  <CardDescription className="text-xs">
                     Revenue and job count over time
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {monthlyRevenue.length > 0 ? (
-                      monthlyRevenue.map((item, index) => {
-                        const maxRevenue = Math.max(...monthlyRevenue.map(m => m.total_revenue));
-                        return (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="flex items-center space-x-4 flex-1">
-                              <div className="w-16 text-sm font-medium">
-                                {item.month_label.split(' ')[0]}
+                  {viewMode === "graph" ? (
+                    monthlyRevenue.length > 0 ? (
+                      <RevenueChart data={monthlyRevenue} />
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground text-sm">
+                        No revenue data available
+                      </div>
+                    )
+                  ) : (
+                    <div className="space-y-3">
+                      {monthlyRevenue.length > 0 ? (
+                        monthlyRevenue.map((item, index) => {
+                          const maxRevenue = Math.max(
+                            ...monthlyRevenue.map((m) => m.total_revenue),
+                          );
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-4"
+                            >
+                              <div className="w-12 text-xs font-semibold text-muted-foreground flex-shrink-0">
+                                {item.month_label.split(" ")[0]}
                               </div>
                               <div className="flex-1">
                                 <div className="w-full bg-muted rounded-full h-2">
@@ -351,269 +448,369 @@ export default function Analytics() {
                                   />
                                 </div>
                               </div>
-                            </div>
-                            <div className="text-right ml-4">
-                              <div className="text-sm font-medium">
-                                {formatCurrency(item.total_revenue)}
+                              <div className="text-right flex-shrink-0 w-24">
+                                <div className="text-xs font-semibold">
+                                  {formatCurrency(item.total_revenue)}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground">
+                                  {item.order_count} jobs
+                                </div>
                               </div>
-                              <div className="text-xs text-muted-foreground">
-                                {item.order_count} jobs
-                              </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No revenue data available
-                      </div>
-                    )}
-                  </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground text-sm">
+                          No revenue data available
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
+                <ViewToggle
+                  onToggle={() =>
+                    setViewMode(viewMode === "graph" ? "table" : "graph")
+                  }
+                />
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Breakdown</CardTitle>
-                  <CardDescription>
+              <Card className="border-border/60">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-base font-semibold">
+                    Revenue Breakdown
+                  </CardTitle>
+                  <CardDescription className="text-xs">
                     Current period performance metrics
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">This Month</p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(overview?.month_revenue || 0)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {overview?.month_orders || 0} jobs
-                      </p>
-                      {growthMetrics && (
-                        <p className={`text-sm ${growthMetrics.mom_revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {growthMetrics.mom_revenue_growth >= 0 ? '+' : ''}
-                          {growthMetrics.mom_revenue_growth.toFixed(1)}% vs last month
+                <CardContent className="space-y-3">
+                  {[
+                    {
+                      label: "This Month",
+                      revenue: overview?.month_revenue || 0,
+                      orders: overview?.month_orders || 0,
+                      change: growthMetrics
+                        ? growthMetrics.mom_revenue_growth
+                        : null,
+                      vsLabel: "vs last month",
+                    },
+                    {
+                      label: "This Week",
+                      revenue: overview?.week_revenue || 0,
+                      orders: overview?.week_orders || 0,
+                      change: growthMetrics
+                        ? growthMetrics.wow_revenue_growth
+                        : null,
+                      vsLabel: "vs last week",
+                    },
+                    {
+                      label: "Today",
+                      revenue: overview?.today_revenue || 0,
+                      orders: overview?.today_orders || 0,
+                      change:
+                        overview && overview.yesterday_revenue > 0
+                          ? calculateChange(
+                              overview.today_revenue,
+                              overview.yesterday_revenue,
+                            )
+                          : null,
+                      vsLabel: "vs yesterday",
+                    },
+                  ].map(({ label, revenue, orders, change, vsLabel }) => (
+                    <div
+                      key={label}
+                      className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors"
+                    >
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          {label}
                         </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">This Week</p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(overview?.week_revenue || 0)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {overview?.week_orders || 0} jobs
-                      </p>
-                      {growthMetrics && (
-                        <p className={`text-sm ${growthMetrics.wow_revenue_growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {growthMetrics.wow_revenue_growth >= 0 ? '+' : ''}
-                          {growthMetrics.wow_revenue_growth.toFixed(1)}% vs last week
+                        <p className="text-xl font-bold mt-0.5">
+                          {formatCurrency(revenue)}
                         </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="text-sm font-medium">Today</p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(overview?.today_revenue || 0)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {overview?.today_orders || 0} jobs
-                      </p>
-                      {overview && overview.yesterday_revenue > 0 && (
-                        <p className={`text-sm ${
-                          calculateChange(overview.today_revenue, overview.yesterday_revenue) >= 0 
-                            ? 'text-green-600' 
-                            : 'text-red-600'
-                        }`}>
-                          {calculateChange(overview.today_revenue, overview.yesterday_revenue) >= 0 ? '+' : ''}
-                          {calculateChange(overview.today_revenue, overview.yesterday_revenue).toFixed(1)}% vs yesterday
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">
+                          {orders} jobs
                         </p>
-                      )}
+                        {change !== null && (
+                          <div className="flex items-center justify-end gap-1 mt-0.5">
+                            <span
+                              className={cn(
+                                "text-xs font-medium",
+                                change >= 0
+                                  ? "text-emerald-600"
+                                  : "text-red-500",
+                              )}
+                            >
+                              {change >= 0 ? "+" : ""}
+                              {change.toFixed(1)}%
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {vsLabel}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="customers" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Customers</CardTitle>
-                <CardDescription>
+          {/* ── Customers Tab ── */}
+          <TabsContent value="customers" className="space-y-5">
+            <Card className="relative border-border/60">
+              <CardHeader className="border-b border-border/50 pb-4">
+                <CardTitle className="text-base font-semibold">
+                  Top Customers
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
                   Your most valuable customers by revenue and job count
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {topCustomers.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Total Jobs</TableHead>
-                        <TableHead>Total Revenue</TableHead>
-                        <TableHead>Avg per Job</TableHead>
-                        <TableHead>Last Order</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {topCustomers.map((customer, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {customer.customer_name || "Unknown"}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {customer.customer_phone || "N/A"}
-                          </TableCell>
-                          <TableCell>{customer.total_orders}</TableCell>
-                          <TableCell>
-                            {formatCurrency(customer.total_revenue)}
-                          </TableCell>
-                          <TableCell>
-                            {formatCurrency(customer.avg_order_value)}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {formatTimeAgo(customer.last_order_date)}
-                          </TableCell>
+                  viewMode === "graph" ? (
+                    <div className="p-6">
+                      <CustomerChart data={topCustomers} />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-border/50 hover:bg-transparent">
+                          <TableHead className="text-xs font-semibold pl-6">
+                            Customer
+                          </TableHead>
+                          <TableHead className="text-xs font-semibold">
+                            Contact
+                          </TableHead>
+                          <TableHead className="text-xs font-semibold">
+                            Total Jobs
+                          </TableHead>
+                          <TableHead className="text-xs font-semibold">
+                            Total Revenue
+                          </TableHead>
+                          <TableHead className="text-xs font-semibold">
+                            Avg / Job
+                          </TableHead>
+                          <TableHead className="text-xs font-semibold">
+                            Last Order
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {topCustomers.map((customer, index) => (
+                          <TableRow
+                            key={index}
+                            className="border-border/40 hover:bg-muted/30 transition-colors"
+                          >
+                            <TableCell className="font-semibold text-sm pl-6">
+                              {customer.customer_name || "Unknown"}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {customer.customer_phone || "N/A"}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {customer.total_orders}
+                            </TableCell>
+                            <TableCell className="font-semibold text-sm text-emerald-600 dark:text-emerald-400">
+                              {formatCurrency(customer.total_revenue)}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {formatCurrency(customer.avg_order_value)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] rounded-full"
+                              >
+                                {formatTimeAgo(customer.last_order_date)}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No customer data available yet</p>
+                  <div className="text-center py-16">
+                    <div className="inline-flex p-5 rounded-2xl bg-muted/40 mb-4">
+                      <Users className="h-9 w-9 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      No customer data available yet
+                    </p>
                   </div>
                 )}
               </CardContent>
+              <ViewToggle
+                onToggle={() =>
+                  setViewMode(viewMode === "graph" ? "table" : "graph")
+                }
+              />
             </Card>
           </TabsContent>
 
-          <TabsContent value="daily" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Daily Performance</CardTitle>
-                <CardDescription>
+          {/* ── Daily Tab ── */}
+          <TabsContent value="daily" className="space-y-5">
+            <Card className="relative border-border/60">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold">
+                  Daily Performance
+                </CardTitle>
+                <CardDescription className="text-xs">
                   Average jobs and revenue by day of the week
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {dailyPerformance.length > 0 ? (
-                  <div className="space-y-4">
-                    {dailyPerformance.map((day, index) => {
-                      const maxOrders = Math.max(...dailyPerformance.map(d => d.total_orders));
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div className="w-24 text-sm font-medium">
+                  viewMode === "graph" ? (
+                    <DailyChart data={dailyPerformance} />
+                  ) : (
+                    <div className="space-y-2">
+                      {dailyPerformance.map((day, index) => {
+                        const maxOrders = Math.max(
+                          ...dailyPerformance.map((d) => d.total_orders),
+                        );
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-4 p-3 rounded-xl border border-border/40 hover:bg-muted/30 transition-colors"
+                          >
+                            <div className="w-24 text-sm font-semibold flex-shrink-0">
                               {day.day_name}
                             </div>
                             <div className="flex-1">
-                              <div className="w-full bg-muted rounded-full h-3">
+                              <div className="w-full bg-muted rounded-full h-2">
                                 <div
-                                  className="bg-primary h-3 rounded-full transition-all"
-                                  style={{ width: `${(day.total_orders / maxOrders) * 100}%` }}
+                                  className="bg-primary h-2 rounded-full transition-all"
+                                  style={{
+                                    width: `${(day.total_orders / maxOrders) * 100}%`,
+                                  }}
                                 />
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right ml-4">
-                            <div className="text-sm font-medium">
-                              {formatCurrency(day.total_revenue)}
+                            <div className="text-right flex-shrink-0 w-28">
+                              <div className="text-xs font-semibold">
+                                {formatCurrency(day.total_revenue)}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                {day.total_orders} jobs
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {day.total_orders} jobs
-                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No daily performance data available</p>
+                  <div className="text-center py-12">
+                    <div className="inline-flex p-4 rounded-2xl bg-muted/40 mb-3">
+                      <BarChart3 className="h-8 w-8 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      No daily performance data available
+                    </p>
                   </div>
                 )}
               </CardContent>
+              <ViewToggle
+                onToggle={() =>
+                  setViewMode(viewMode === "graph" ? "table" : "graph")
+                }
+              />
             </Card>
           </TabsContent>
 
-          <TabsContent value="hourly" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Peak Hours Analysis</CardTitle>
-                <CardDescription>
+          {/* ── Hourly Tab ── */}
+          <TabsContent value="hourly" className="space-y-5">
+            <Card className="relative border-border/60">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold">
+                  Peak Hours Analysis
+                </CardTitle>
+                <CardDescription className="text-xs">
                   Busiest hours of the day for your shop
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {hourlyPerformance.length > 0 ? (
-                  <div className="space-y-3">
-                    {hourlyPerformance.map((hour, index) => {
-                      const maxOrders = Math.max(...hourlyPerformance.map(h => h.order_count));
-                      const isPeakHour = hour.order_count === maxOrders && maxOrders > 0;
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center justify-between p-3 border rounded-lg ${
-                            isPeakHour ? 'bg-primary/5 border-primary' : 'hover:bg-muted/50'
-                          } transition-colors`}
-                        >
-                          <div className="flex items-center space-x-4 flex-1">
-                            <div className="w-20 text-sm font-medium flex items-center">
-                              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                  viewMode === "graph" ? (
+                    <HourlyChart data={hourlyPerformance} />
+                  ) : (
+                    <div className="space-y-2">
+                      {hourlyPerformance.map((hour, index) => {
+                        const maxOrders = Math.max(
+                          ...hourlyPerformance.map((h) => h.order_count),
+                        );
+                        const isPeak =
+                          hour.order_count === maxOrders && maxOrders > 0;
+                        return (
+                          <div
+                            key={index}
+                            className={cn(
+                              "flex items-center gap-4 p-3 rounded-xl border transition-colors",
+                              isPeak
+                                ? "bg-primary/5 border-primary/30"
+                                : "border-border/40 hover:bg-muted/30",
+                            )}
+                          >
+                            <div className="w-20 text-sm font-semibold flex-shrink-0 flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                               {hour.hour}:00
                             </div>
                             <div className="flex-1">
                               <div className="w-full bg-muted rounded-full h-2">
                                 <div
-                                  className={`h-2 rounded-full transition-all ${
-                                    isPeakHour ? 'bg-primary' : 'bg-primary/60'
-                                  }`}
-                                  style={{ width: `${(hour.order_count / maxOrders) * 100}%` }}
+                                  className={cn(
+                                    "h-2 rounded-full transition-all",
+                                    isPeak ? "bg-primary" : "bg-primary/50",
+                                  )}
+                                  style={{
+                                    width: `${(hour.order_count / maxOrders) * 100}%`,
+                                  }}
                                 />
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right ml-4">
-                            <div className="text-sm font-medium">
-                              {hour.order_count} orders
+                            <div className="text-right flex-shrink-0 w-24">
+                              <div className="text-xs font-semibold">
+                                {hour.order_count} orders
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                {formatCurrency(hour.total_revenue)}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {formatCurrency(hour.total_revenue)}
-                            </div>
+                            {isPeak && (
+                              <Badge
+                                variant="default"
+                                className="text-[10px] rounded-full flex-shrink-0"
+                              >
+                                Peak
+                              </Badge>
+                            )}
                           </div>
-                          {isPeakHour && (
-                            <Badge variant="default" className="ml-2">
-                              Peak
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No hourly performance data available</p>
+                  <div className="text-center py-12">
+                    <div className="inline-flex p-4 rounded-2xl bg-muted/40 mb-3">
+                      <Clock className="h-8 w-8 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      No hourly performance data available
+                    </p>
                   </div>
                 )}
               </CardContent>
+              <ViewToggle
+                onToggle={() =>
+                  setViewMode(viewMode === "graph" ? "table" : "graph")
+                }
+              />
             </Card>
           </TabsContent>
         </Tabs>
