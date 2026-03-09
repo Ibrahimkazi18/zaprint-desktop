@@ -10,8 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -26,6 +24,7 @@ import fetchMyShop from "@/backend/shops/fetchMyShop";
 import registerPrinter from "@/backend/printers/registerPrinter";
 import fetchShopPrinters from "@/backend/printers/fetchPrinters";
 import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 const PRINTER_TYPES = [
   {
@@ -207,293 +206,309 @@ export default function RegisterPrinter() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="flex items-center space-x-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/printers")}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Printers</span>
-          </Button>
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl animate-fade-in">
+        
+        {/* Sticky Header with Back Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4 -mt-4 border-b border-border/40">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate("/printers")}
+              className="rounded-full h-10 w-10 border-border/60 hover:bg-muted/50 hover:border-black/20 dark:hover:border-white/20 transition-all"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Register Printer</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Add a physical printer to your shop's digital inventory
+              </p>
+            </div>
+          </div>
+          
+          <div className="hidden sm:flex items-center gap-3">
+             <Button
+                variant="outline"
+                onClick={() => navigate("/printers")}
+                disabled={loading}
+                className="rounded-full px-6 border-border/60 font-medium"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-semibold"
+              >
+                {loading ? "Registering..." : "Register Printer"}
+              </Button>
+          </div>
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Register New Printer</h1>
-          <p className="text-muted-foreground mt-2">
-            Add a new printer to your shop. One printer = one real physical
-            printer.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Printer Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Printer className="h-5 w-5" />
-                  <span>Printer Details</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          
+          {/* ── Main Form Area (Left Column) ── */}
+          <div className="lg:col-span-8 space-y-8 pb-20 sm:pb-0">
+            
+            {/* 1. Printer Details */}
+            <Card className="border-border/40 shadow-xl bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-primary/80" />
+              <CardHeader className="pb-4 pt-6 px-6 sm:px-8">
+                <CardTitle className="flex items-center space-x-2 text-xl font-bold">
+                  <Printer className="h-5 w-5 text-primary" />
+                  <span>Basic Details</span>
                 </CardTitle>
-                <CardDescription>
-                  Basic information about your printer
+                <CardDescription className="text-sm mt-1">
+                  Name and categorize this specific printer unit.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="printer-name">Printer Name *</Label>
-                  <Input
-                    id="printer-name"
-                    placeholder="e.g. HP LaserJet Pro, Canon Color Printer"
-                    value={printerName}
-                    onChange={(e) => {
-                      setPrinterName(e.target.value);
-                      if (validationErrors.printerName) {
-                        setValidationErrors((prev) => ({
-                          ...prev,
-                          printerName: undefined,
-                        }));
-                      }
-                    }}
-                    className={
-                      validationErrors.printerName ? "border-red-500" : ""
-                    }
-                  />
-                  {validationErrors.printerName && (
-                    <p className="text-sm text-red-500 flex items-center space-x-1">
-                      <AlertCircle className="h-3 w-3" />
-                      <span>{validationErrors.printerName}</span>
-                    </p>
-                  )}
-                </div>
+              <CardContent className="px-6 sm:px-8 pb-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Name Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="printer-name" className="text-sm font-semibold flex justify-between">
+                      Printer Name
+                      {validationErrors.printerName && (
+                        <span className="text-xs text-destructive flex items-center gap-1 font-medium animate-pulse">
+                          <AlertCircle className="h-3 w-3" /> {validationErrors.printerName}
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="printer-name"
+                      placeholder="e.g. Front Desk LaserJet"
+                      value={printerName}
+                      onChange={(e) => {
+                        setPrinterName(e.target.value);
+                        if (validationErrors.printerName) {
+                          setValidationErrors((prev) => ({ ...prev, printerName: undefined }));
+                        }
+                      }}
+                      className={cn(
+                        "rounded-xl bg-background/50 h-12 border-border/60 focus-visible:ring-primary/30 focus-visible:border-primary transition-all shadow-sm",
+                        validationErrors.printerName && "border-destructive focus-visible:ring-destructive/30 focus-visible:border-destructive"
+                      )}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="printer-type">Printer Type *</Label>
-                  <Select
-                    value={printerType}
-                    onValueChange={(value) => {
-                      setPrinterType(value);
-                      if (validationErrors.printerType) {
-                        setValidationErrors((prev) => ({
-                          ...prev,
-                          printerType: undefined,
-                        }));
-                      }
-                    }}
-                  >
-                    <SelectTrigger
-                      className={
-                        validationErrors.printerType ? "border-red-500" : ""
-                      }
+                  {/* Type Select */}
+                  <div className="space-y-2">
+                    <Label htmlFor="printer-type" className="text-sm font-semibold flex justify-between">
+                      Printer Capability Type
+                      {validationErrors.printerType && (
+                        <span className="text-xs text-destructive flex items-center gap-1 font-medium animate-pulse">
+                          <AlertCircle className="h-3 w-3" /> {validationErrors.printerType}
+                        </span>
+                      )}
+                    </Label>
+                    <Select
+                      value={printerType}
+                      onValueChange={(value) => {
+                        setPrinterType(value);
+                        if (validationErrors.printerType) {
+                          setValidationErrors((prev) => ({ ...prev, printerType: undefined }));
+                        }
+                      }}
                     >
-                      <SelectValue placeholder="Select printer type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRINTER_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          <div>
-                            <div className="font-medium">{type.label}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {type.description}
+                      <SelectTrigger
+                        className={cn(
+                          "rounded-xl bg-background/50 h-12 border-border/60 focus:ring-primary/30 focus:border-primary transition-all shadow-sm",
+                          validationErrors.printerType && "border-destructive focus:ring-destructive/30 focus:border-destructive"
+                        )}
+                      >
+                        <SelectValue placeholder="Select primary capability" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl shadow-xl border-border/40">
+                        {PRINTER_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value} className="py-3 px-4 cursor-pointer focus:bg-primary/5 focus:text-primary rounded-lg transition-colors my-1 mx-1">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-semibold text-sm select-none">{type.label}</span>
+                              <span className="text-xs text-muted-foreground select-none">{type.description}</span>
                             </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {validationErrors.printerType && (
-                    <p className="text-sm text-red-500 flex items-center space-x-1">
-                      <AlertCircle className="h-3 w-3" />
-                      <span>{validationErrors.printerType}</span>
-                    </p>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 2. Supported Services */}
+            <Card className="border-border/40 shadow-xl bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/80" />
+              <CardHeader className="pb-4 pt-6 px-6 sm:px-8">
+                <CardTitle className="text-xl font-bold flex items-center justify-between">
+                  <span>Supported Services</span>
+                  {validationErrors.services && (
+                      <span className="text-xs text-destructive flex items-center gap-1 font-medium bg-destructive/10 px-2 py-1 rounded-full">
+                        <AlertCircle className="h-3 w-3" /> Required
+                      </span>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Supported Services */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Supported Services *</CardTitle>
-                <CardDescription>
-                  Select all services this printer can provide
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
+                  What print jobs can you assign to this machine?
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {SERVICES.map((service) => (
-                    <div
-                      key={service.id}
-                      className="flex items-center space-x-3"
-                    >
-                      <Checkbox
-                        id={service.id}
-                        checked={services.includes(service.id)}
-                        onCheckedChange={() => toggleService(service.id)}
-                      />
-                      <Label
-                        htmlFor={service.id}
-                        className="flex items-center space-x-2 cursor-pointer"
-                      >
-                        <span>{service.label}</span>
-                        {service.popular && (
-                          <Badge variant="secondary" className="text-xs">
-                            Popular
-                          </Badge>
+              <CardContent className="px-6 sm:px-8 pb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {SERVICES.map((service) => {
+                    const isSelected = services.includes(service.id);
+                    return (
+                      <div
+                        key={service.id}
+                        onClick={() => toggleService(service.id)}
+                        className={cn(
+                          "group p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 flex flex-col items-start gap-3 shadow-sm hover:shadow-md relative overflow-hidden",
+                          isSelected
+                            ? "border-primary bg-primary/5 dark:bg-primary/10"
+                            : "border-border/40 hover:border-primary/40 bg-background/50"
                         )}
-                      </Label>
-                    </div>
-                  ))}
+                      >
+                        {service.popular && !isSelected && (
+                           <div className="absolute top-0 right-0 py-0.5 px-2 bg-muted/60 text-[10px] font-medium text-muted-foreground rounded-bl-lg border-l border-b border-border/40">
+                             Popular
+                           </div>
+                        )}
+                        <div className="flex items-start justify-between w-full">
+                           <span className={cn("text-sm font-semibold select-none z-10", isSelected ? "text-primary" : "text-foreground")}>
+                            {service.label}
+                           </span>
+                           <div className={cn("h-5 w-5 rounded-full flex items-center justify-center transition-all flex-shrink-0 z-10", isSelected ? "bg-primary text-primary-foreground scale-110" : "bg-muted text-muted-foreground border border-border/60 group-hover:border-primary/50")}>
+                             {isSelected && <CheckCircle className="h-3.5 w-3.5" />}
+                           </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                {validationErrors.services && (
-                  <p className="text-sm text-red-500 flex items-center space-x-1 mt-2">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>{validationErrors.services}</span>
-                  </p>
-                )}
               </CardContent>
             </Card>
 
-            {/* Supported Paper Sizes */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Supported Paper Sizes *</CardTitle>
-                <CardDescription>
-                  Select all paper sizes this printer supports
+            {/* 3. Supported Paper Sizes */}
+            <Card className="border-border/40 shadow-xl bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/80" />
+              <CardHeader className="pb-4 pt-6 px-6 sm:px-8">
+                <CardTitle className="text-xl font-bold flex items-center justify-between">
+                  <span>Paper Source Capacities</span>
+                  {validationErrors.sizes && (
+                      <span className="text-xs text-destructive flex items-center gap-1 font-medium bg-destructive/10 px-2 py-1 rounded-full">
+                        <AlertCircle className="h-3 w-3" /> Required
+                      </span>
+                  )}
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
+                  Which physical paper dimensions does the tray support?
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {PAPER_SIZES.map((size) => (
-                    <div key={size.id} className="flex items-center space-x-3">
-                      <Checkbox
-                        id={size.id}
-                        checked={sizes.includes(size.id)}
-                        onCheckedChange={() => toggleSize(size.id)}
-                      />
-                      <Label
-                        htmlFor={size.id}
-                        className="flex items-center space-x-2 cursor-pointer"
-                      >
-                        <span>{size.label}</span>
-                        {size.popular && (
-                          <Badge variant="secondary" className="text-xs">
-                            Popular
-                          </Badge>
-                        )}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-                {validationErrors.sizes && (
-                  <p className="text-sm text-red-500 flex items-center space-x-1 mt-2">
-                    <AlertCircle className="h-3 w-3" />
-                    <span>{validationErrors.sizes}</span>
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Summary Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registration Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Printer Name</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {printerName || "Not specified"}
-                  </p>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium">Type</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {printerType
-                      ? PRINTER_TYPES.find((t) => t.value === printerType)
-                          ?.label
-                      : "Not selected"}
-                  </p>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium">
-                    Services ({services.length})
-                  </Label>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {services.length > 0 ? (
-                      services.map((service) => (
-                        <Badge
-                          key={service}
-                          variant="outline"
-                          className="text-xs"
+              <CardContent className="px-6 sm:px-8 pb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {PAPER_SIZES.map((size) => {
+                     const isSelected = sizes.includes(size.id);
+                     return (
+                        <div
+                          key={size.id}
+                          onClick={() => toggleSize(size.id)}
+                          className={cn(
+                            "group p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 flex items-center justify-between shadow-sm hover:shadow-md",
+                            isSelected
+                              ? "border-primary bg-primary/5 dark:bg-primary/10"
+                              : "border-border/40 hover:border-primary/40 bg-background/50"
+                          )}
                         >
-                          {service}
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        None selected
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium">
-                    Paper Sizes ({sizes.length})
-                  </Label>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {sizes.length > 0 ? (
-                      sizes.map((size) => (
-                        <Badge key={size} variant="outline" className="text-xs">
-                          {size}
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        None selected
-                      </p>
-                    )}
-                  </div>
+                          <span className={cn("text-base font-bold select-none", isSelected ? "text-primary" : "text-foreground/80")}>
+                            {size.label}
+                          </span>
+                           <div className={cn("h-5 w-5 rounded flex items-center justify-center transition-all flex-shrink-0", isSelected ? "bg-primary text-primary-foreground scale-110" : "bg-muted border border-border/60 group-hover:border-primary/50")}>
+                             {isSelected && <CheckCircle className="h-3.5 w-3.5" />}
+                           </div>
+                        </div>
+                     )
+                  })}
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            <Alert>
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Remember:</strong> One printer registration = one real
-                physical printer. Make sure all details are accurate before
-                registering.
-              </AlertDescription>
-            </Alert>
+          {/* ── Summary Sidebar (Right Column) ── */}
+          <div className="lg:col-span-4 h-full relative">
+            <div className="sticky top-32 space-y-6">
+              
+              <Card className="border-border/60 shadow-lg bg-card overflow-hidden rounded-2xl">
+                <CardHeader className="bg-muted/30 border-b border-border/40 pb-4">
+                  <CardTitle className="text-lg font-bold">Summary</CardTitle>
+                  <CardDescription className="text-xs">Live configuration overview</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0 divide-y divide-border/40">
+                  
+                  {/* Name Summary */}
+                  <div className="p-5 flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identity</span>
+                    <div className="flex items-center gap-3 mt-1">
+                       <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                         <Printer className="h-4 w-4" />
+                       </div>
+                       <p className="font-semibold text-foreground line-clamp-1">
+                         {printerName || "Unnamed Printer"}
+                       </p>
+                    </div>
+                  </div>
+
+                  {/* Type Summary */}
+                  <div className="p-5 flex flex-col gap-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Type</span>
+                    <p className="font-semibold text-foreground mt-1">
+                      {printerType
+                        ? PRINTER_TYPES.find((t) => t.value === printerType)?.label
+                        : "Not selected"}
+                    </p>
+                  </div>
+
+                  {/* Arrays Summary */}
+                  <div className="p-5 grid grid-cols-2 gap-4">
+                    <div className="bg-muted/30 rounded-xl p-3 text-center border border-border/40">
+                      <p className="text-2xl font-bold text-primary">{services.length}</p>
+                      <p className="text-xs font-medium text-muted-foreground mt-0.5">Services</p>
+                    </div>
+                    <div className="bg-muted/30 rounded-xl p-3 text-center border border-border/40">
+                      <p className="text-2xl font-bold text-primary">{sizes.length}</p>
+                      <p className="text-xs font-medium text-muted-foreground mt-0.5">Sizes</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Alert className="border-border/60 bg-muted/40 backdrop-blur-sm rounded-xl py-3 px-4">
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                <AlertDescription className="text-xs text-muted-foreground leading-relaxed ml-2">
+                  Double check selections. You can always edit this printer's configuration later from the Printers dashboard.
+                </AlertDescription>
+              </Alert>
+
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 mt-8">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/printers")}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="min-w-[140px]"
-          >
-            {loading ? "Registering..." : "Register Printer"}
-          </Button>
+        {/* Mobile Action Bar (Sticky Bottom) */}
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-lg border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.05)] p-4 z-50 flex items-center gap-3 justify-end">
+           <Button
+              variant="outline"
+              onClick={() => navigate("/printers")}
+              disabled={loading}
+              className="rounded-xl flex-1 border-border/60 font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="rounded-xl flex-1 shadow-lg shadow-primary/25 font-bold"
+            >
+              {loading ? "..." : "Confirm"}
+            </Button>
         </div>
+
       </div>
     </DashboardLayout>
   );

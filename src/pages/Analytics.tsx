@@ -57,8 +57,86 @@ import fetchHourlyPerformance, {
   HourlyPerformance,
 } from "@/backend/analytics/fetchHourlyPerformance";
 import toast from "react-hot-toast";
-import { exportAnalyticsPDF } from "@/utils/exportAnalyticsPDF";
+import { exportAnalyticsPDF, type ExportType } from "@/utils/exportAnalyticsPDF";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+
+
+// Reusable Paginated Table Component
+const PaginatedTable = ({ data, columns, itemsPerPage = 5 }: any) => {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(data.length / itemsPerPage));
+  const startIndex = (page - 1) * itemsPerPage;
+  const currentData = data.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset page if data length changes drastically
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [totalPages, page]);
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border/60 overflow-hidden bg-background/30">
+        <Table>
+          <TableHeader className="bg-muted/40">
+            <TableRow className="border-border/60">
+              {columns.map((col: any, i: number) => (
+                <TableHead key={i} className={col.className}>{col.header}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentData.length > 0 ? (
+              currentData.map((row: any, i: number) => (
+                <TableRow key={i} className="border-border/40 hover:bg-muted/30 transition-colors">
+                  {columns.map((col: any, j: number) => (
+                    <TableCell key={j} className={col.className}>{col.cell(row)}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center h-24 text-muted-foreground">
+                  No data available.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{startIndex + 1}</span> to <span className="font-medium text-foreground">{Math.min(startIndex + itemsPerPage, data.length)}</span> of <span className="font-medium text-foreground">{data.length}</span> entries
+          </p>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 border-border/60 hover:bg-muted/50"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 border-border/60 hover:bg-muted/50"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
@@ -78,6 +156,12 @@ export default function Analytics() {
     HourlyPerformance[]
   >([]);
   const [loading, setLoading] = useState(true);
+  
+  // Export Dialog State
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportType, setExportType] = useState<ExportType>("lightweight");
+  const [exportPeriod, setExportPeriod] = useState("30d");
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -154,51 +238,90 @@ export default function Analytics() {
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  const handleExportPDF = () => {
-    if (!shop?.shop_name) {
+  const processExport = async () => {
+    if (!shop?.id) {
       toast.error("Shop information not available");
       return;
     }
+
     try {
-      toast.loading("Generating PDF report...", { id: "export-pdf" });
+      setIsExporting(true);
+      toast.loading("Generating premium PDF report...", { id: "export-pdf" });
+
+      // If the user selected a different period for the export, fetch that specific data
+      let exportOverview = overview;
+      let exportMonthly = monthlyRevenue;
+      let exportCustomers = topCustomers;
+      let exportDaily = dailyPerformance;
+      let exportGrowth = growthMetrics;
+      let exportHourly = hourlyPerformance;
+
+      if (exportPeriod !== selectedPeriod) {
+        toast.loading("Fetching historical data...", { id: "export-pdf" });
+        const [o, m, c, d, g, h] = await Promise.all([
+          fetchAnalyticsOverview(shop.id),
+          fetchMonthlyRevenue(shop.id, exportPeriod === "30d" ? 6 : exportPeriod === "90d" ? 12 : 3),
+          fetchTopCustomers(shop.id, 10),
+          fetchDailyPerformance(shop.id),
+          fetchGrowthMetrics(shop.id),
+          fetchHourlyPerformance(shop.id),
+        ]);
+        exportOverview = o;
+        exportMonthly = m;
+        exportCustomers = c;
+        exportDaily = d;
+        exportGrowth = g;
+        exportHourly = h;
+      }
+
+      // Collect Chart Images if Heavyweight
+      let chartImages = {};
+      if (exportType === "heavyweight") {
+        toast.loading("Rendering high-quality charts...", { id: "export-pdf" });
+        // We delay slightly to ensure charts are rendered if they were hidden in tabs
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        const getChartImage = (containerId: string) => {
+           const container = document.getElementById(containerId);
+           if (!container) return undefined;
+           const canvas = container.querySelector('canvas');
+           return canvas ? canvas.toDataURL("image/png", 1.0) : undefined;
+        };
+
+        // Note: Chart components will need id attributes added to their wrappers
+        chartImages = {
+          revenue: getChartImage('revenue-chart-container'),
+          customers: getChartImage('customers-chart-container'),
+          daily: getChartImage('daily-chart-container'),
+          hourly: getChartImage('hourly-chart-container')
+        };
+      }
+
+      toast.loading("Assembling document...", { id: "export-pdf" });
+
       exportAnalyticsPDF({
         shopName: shop.shop_name,
-        overview,
-        monthlyRevenue,
-        topCustomers,
-        dailyPerformance,
-        growthMetrics,
-        hourlyPerformance,
-        period:
-          selectedPeriod === "7d"
-            ? "Last 7 Days"
-            : selectedPeriod === "30d"
-              ? "Last 30 Days"
-              : "Last 90 Days",
+        overview: exportOverview,
+        monthlyRevenue: exportMonthly,
+        topCustomers: exportCustomers,
+        dailyPerformance: exportDaily,
+        growthMetrics: exportGrowth,
+        hourlyPerformance: exportHourly,
+      }, {
+        type: exportType,
+        period: exportPeriod === "7d" ? "Last 7 Days" : exportPeriod === "30d" ? "Last 30 Days" : "Last 90 Days",
+        chartImages
       });
-      toast.success("PDF report downloaded!", { id: "export-pdf" });
+
+      toast.success("PDF report downloaded perfectly!", { id: "export-pdf" });
+      setIsExportOpen(false);
     } catch (error) {
+      console.error(error);
       toast.error("Failed to generate PDF", { id: "export-pdf" });
+    } finally {
+      setIsExporting(false);
     }
-  };
-
-  const ViewToggle = ({ onToggle }: { onToggle: () => void }) => (
-    <button
-      onClick={onToggle}
-      className="absolute bottom-3 right-3 p-2 rounded-lg bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-      title={
-        viewMode === "graph" ? "Switch to table view" : "Switch to graph view"
-      }
-    >
-      {viewMode === "graph" ? (
-        <LayoutList className="h-3.5 w-3.5" />
-      ) : (
-        <BarChart3 className="h-3.5 w-3.5" />
-      )}
-    </button>
-  );
-
-  if (loading) {
+  };if (loading) {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-6 py-8 animate-fade-in">
@@ -265,13 +388,16 @@ export default function Analytics() {
             </div>
 
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              onClick={handleExportPDF}
-              className="h-9 gap-1.5 text-sm"
+              onClick={() => {
+                setExportPeriod(selectedPeriod);
+                setIsExportOpen(true);
+              }}
+              className="h-9 gap-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
             >
-              <Download className="h-3.5 w-3.5" />
-              Export PDF
+              <Download className="h-4 w-4" />
+              Generate Report
             </Button>
           </div>
         </div>
@@ -374,181 +500,95 @@ export default function Analytics() {
         </div>
 
         {/* ── Tabs ── */}
-        <Tabs defaultValue="revenue" className="space-y-6">
-          <TabsList className="h-11 p-1 rounded-xl bg-muted/50 border border-border/60">
-            <TabsTrigger
-              value="revenue"
-              className="rounded-lg text-sm font-medium"
-            >
-              Revenue Analysis
-            </TabsTrigger>
-            <TabsTrigger
-              value="customers"
-              className="rounded-lg text-sm font-medium"
-            >
-              Customer Insights
-            </TabsTrigger>
-            <TabsTrigger
-              value="daily"
-              className="rounded-lg text-sm font-medium"
-            >
-              Daily Trends
-            </TabsTrigger>
-            <TabsTrigger
-              value="hourly"
-              className="rounded-lg text-sm font-medium"
-            >
-              Peak Hours
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="revenue" className="space-y-8">
+          {/* Enhanced Horizontal Scrollable Tabs */}
+          <div className="relative border-b border-border/60">
+            <TabsList className="bg-transparent h-auto p-0 flex space-x-8 overflow-x-auto no-scrollbar w-full justify-start rounded-none">
+              {[
+                { value: "revenue", label: "Revenue Analysis", icon: DollarSign },
+                { value: "customers", label: "Customer Insights", icon: Users },
+                { value: "daily", label: "Daily Trends", icon: TrendingUp },
+                { value: "hourly", label: "Peak Hours", icon: Clock },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="relative rounded-none border-b-2 border-transparent px-2 pb-4 pt-2 font-semibold text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none hover:text-foreground"
+                >
+                  <div className="flex items-center gap-2">
+                    <tab.icon className="h-4 w-4" />
+                    <span>{tab.label}</span>
+                  </div>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {/* ── Revenue Tab ── */}
-          <TabsContent value="revenue" className="space-y-5">
-            <div className="grid gap-5 md:grid-cols-2">
-              <Card className="relative border-border/60">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base font-semibold">
-                    Monthly Revenue Trend
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Revenue and job count over time
-                  </CardDescription>
+          <TabsContent value="revenue" className="space-y-6 animate-fade-in">
+            {/* Chart Graph */}
+            <Card className="border-border/60 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold">Monthly Revenue Trend</CardTitle>
+                <CardDescription>Graphical representation of income and operations over time</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {monthlyRevenue.length > 0 ? (
+                  <div id="revenue-chart-container" className="p-2 rounded-xl border border-border/40 bg-background/50">
+                    <RevenueChart data={monthlyRevenue} />
+                  </div>
+                ) : (
+                  <div className="text-center py-16 text-muted-foreground text-sm border border-dashed rounded-xl border-border/60">
+                    No revenue data available for this defined period.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-6 md:grid-cols-3">
+              <Card className="md:col-span-2 border-border/60 shadow-md rounded-2xl overflow-hidden">
+                <CardHeader className="pb-4 bg-muted/20">
+                  <CardTitle className="text-lg font-bold">Detailed Records</CardTitle>
+                  <CardDescription>Tabular data view of monthly revenue performance</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  {viewMode === "graph" ? (
-                    monthlyRevenue.length > 0 ? (
-                      <RevenueChart data={monthlyRevenue} />
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground text-sm">
-                        No revenue data available
-                      </div>
-                    )
-                  ) : (
-                    <div className="space-y-3">
-                      {monthlyRevenue.length > 0 ? (
-                        monthlyRevenue.map((item, index) => {
-                          const maxRevenue = Math.max(
-                            ...monthlyRevenue.map((m) => m.total_revenue),
-                          );
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center gap-4"
-                            >
-                              <div className="w-12 text-xs font-semibold text-muted-foreground flex-shrink-0">
-                                {item.month_label.split(" ")[0]}
-                              </div>
-                              <div className="flex-1">
-                                <div className="w-full bg-muted rounded-full h-2">
-                                  <div
-                                    className="bg-primary h-2 rounded-full transition-all"
-                                    style={{
-                                      width: `${(item.total_revenue / maxRevenue) * 100}%`,
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                              <div className="text-right flex-shrink-0 w-24">
-                                <div className="text-xs font-semibold">
-                                  {formatCurrency(item.total_revenue)}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                  {item.order_count} jobs
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground text-sm">
-                          No revenue data available
-                        </div>
-                      )}
-                    </div>
-                  )}
+                <CardContent className="pt-6">
+                  <PaginatedTable
+                    data={monthlyRevenue}
+                    itemsPerPage={5}
+                    columns={[
+                      { header: "Month", cell: (r: any) => <span className="font-semibold">{r.month_label}</span> },
+                      { header: "Total Revenue", cell: (r: any) => <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatCurrency(r.total_revenue)}</span> },
+                      { header: "Jobs Completed", cell: (r: any) => r.order_count },
+                      { 
+                        header: "Avg Value / Job", 
+                        cell: (r: any) => r.order_count ? formatCurrency(r.total_revenue / r.order_count) : formatCurrency(0) 
+                      },
+                    ]}
+                  />
                 </CardContent>
-                <ViewToggle
-                  onToggle={() =>
-                    setViewMode(viewMode === "graph" ? "table" : "graph")
-                  }
-                />
               </Card>
 
-              <Card className="border-border/60">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base font-semibold">
-                    Revenue Breakdown
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Current period performance metrics
-                  </CardDescription>
+              <Card className="border-border/60 shadow-md rounded-2xl h-fit">
+                <CardHeader className="pb-4 border-b border-border/40">
+                  <CardTitle className="text-lg font-bold">Growth Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2 pt-4">
                   {[
-                    {
-                      label: "This Month",
-                      revenue: overview?.month_revenue || 0,
-                      orders: overview?.month_orders || 0,
-                      change: growthMetrics
-                        ? growthMetrics.mom_revenue_growth
-                        : null,
-                      vsLabel: "vs last month",
-                    },
-                    {
-                      label: "This Week",
-                      revenue: overview?.week_revenue || 0,
-                      orders: overview?.week_orders || 0,
-                      change: growthMetrics
-                        ? growthMetrics.wow_revenue_growth
-                        : null,
-                      vsLabel: "vs last week",
-                    },
-                    {
-                      label: "Today",
-                      revenue: overview?.today_revenue || 0,
-                      orders: overview?.today_orders || 0,
-                      change:
-                        overview && overview.yesterday_revenue > 0
-                          ? calculateChange(
-                              overview.today_revenue,
-                              overview.yesterday_revenue,
-                            )
-                          : null,
-                      vsLabel: "vs yesterday",
-                    },
+                    { label: "This Month", revenue: overview?.month_revenue || 0, orders: overview?.month_orders || 0, change: growthMetrics?.mom_revenue_growth, vsLabel: "vs last month" },
+                    { label: "This Week", revenue: overview?.week_revenue || 0, orders: overview?.week_orders || 0, change: growthMetrics?.wow_revenue_growth, vsLabel: "vs last week" },
+                    { label: "Today", revenue: overview?.today_revenue || 0, orders: overview?.today_orders || 0, change: overview && overview.yesterday_revenue > 0 ? calculateChange(overview.today_revenue, overview.yesterday_revenue) : null, vsLabel: "vs yesterday" },
                   ].map(({ label, revenue, orders, change, vsLabel }) => (
-                    <div
-                      key={label}
-                      className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors"
-                    >
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">
-                          {label}
-                        </p>
-                        <p className="text-xl font-bold mt-0.5">
-                          {formatCurrency(revenue)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-muted-foreground">
-                          {orders} jobs
-                        </p>
-                        {change !== null && (
-                          <div className="flex items-center justify-end gap-1 mt-0.5">
-                            <span
-                              className={cn(
-                                "text-xs font-medium",
-                                change >= 0
-                                  ? "text-emerald-600"
-                                  : "text-red-500",
-                              )}
-                            >
-                              {change >= 0 ? "+" : ""}
-                              {change.toFixed(1)}%
+                    <div key={label} className="p-4 rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors">
+                      <p className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">{label}</p>
+                      <p className="text-xl font-bold mt-1 text-foreground">{formatCurrency(revenue)}</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-xs text-muted-foreground">{orders} jobs</p>
+                        {change !== null && change !== undefined && (
+                          <div className="flex flex-col items-end">
+                            <span className={cn("text-xs font-bold", change >= 0 ? "text-emerald-600" : "text-red-500")}>
+                              {change >= 0 ? "+" : ""}{change.toFixed(1)}%
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
-                              {vsLabel}
-                            </span>
+                            <span className="text-[9px] text-muted-foreground uppercase">{vsLabel}</span>
                           </div>
                         )}
                       </div>
@@ -560,260 +600,221 @@ export default function Analytics() {
           </TabsContent>
 
           {/* ── Customers Tab ── */}
-          <TabsContent value="customers" className="space-y-5">
-            <Card className="relative border-border/60">
-              <CardHeader className="border-b border-border/50 pb-4">
-                <CardTitle className="text-base font-semibold">
-                  Top Customers
-                </CardTitle>
-                <CardDescription className="text-xs mt-0.5">
-                  Your most valuable customers by revenue and job count
-                </CardDescription>
+          <TabsContent value="customers" className="space-y-6 animate-fade-in">
+            <Card className="border-border/60 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold">Top Customers Overview</CardTitle>
+                <CardDescription>Most valuable clients by revenue and job count</CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="pt-2">
                 {topCustomers.length > 0 ? (
-                  viewMode === "graph" ? (
-                    <div className="p-6">
-                      <CustomerChart data={topCustomers} />
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-border/50 hover:bg-transparent">
-                          <TableHead className="text-xs font-semibold pl-6">
-                            Customer
-                          </TableHead>
-                          <TableHead className="text-xs font-semibold">
-                            Contact
-                          </TableHead>
-                          <TableHead className="text-xs font-semibold">
-                            Total Jobs
-                          </TableHead>
-                          <TableHead className="text-xs font-semibold">
-                            Total Revenue
-                          </TableHead>
-                          <TableHead className="text-xs font-semibold">
-                            Avg / Job
-                          </TableHead>
-                          <TableHead className="text-xs font-semibold">
-                            Last Order
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {topCustomers.map((customer, index) => (
-                          <TableRow
-                            key={index}
-                            className="border-border/40 hover:bg-muted/30 transition-colors"
-                          >
-                            <TableCell className="font-semibold text-sm pl-6">
-                              {customer.customer_name || "Unknown"}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {customer.customer_phone || "N/A"}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {customer.total_orders}
-                            </TableCell>
-                            <TableCell className="font-semibold text-sm text-emerald-600 dark:text-emerald-400">
-                              {formatCurrency(customer.total_revenue)}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {formatCurrency(customer.avg_order_value)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px] rounded-full"
-                              >
-                                {formatTimeAgo(customer.last_order_date)}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )
+                  <div id="customers-chart-container" className="p-2 rounded-xl border border-border/40 bg-background/50">
+                     <CustomerChart data={topCustomers} />
+                  </div>
                 ) : (
-                  <div className="text-center py-16">
-                    <div className="inline-flex p-5 rounded-2xl bg-muted/40 mb-4">
-                      <Users className="h-9 w-9 text-muted-foreground/40" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      No customer data available yet
-                    </p>
+                  <div className="text-center py-16 text-muted-foreground border border-dashed rounded-xl border-border/60">
+                    <Users className="h-8 w-8 mx-auto mb-3 opacity-20" />
+                    No customer data available yet
                   </div>
                 )}
               </CardContent>
-              <ViewToggle
-                onToggle={() =>
-                  setViewMode(viewMode === "graph" ? "table" : "graph")
-                }
-              />
+            </Card>
+
+            <Card className="border-border/60 shadow-md rounded-2xl overflow-hidden">
+              <CardHeader className="pb-4 bg-muted/20">
+                <CardTitle className="text-lg font-bold">Client Directory</CardTitle>
+                <CardDescription>Ranked tabular view of your customer base</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                 {topCustomers.length > 0 ? (
+                    <PaginatedTable
+                      data={topCustomers}
+                      itemsPerPage={10}
+                      columns={[
+                        { header: "Customer Name", cell: (r: any) => <span className="font-semibold">{r.customer_name || "Unknown"}</span> },
+                        { header: "Contact", cell: (r: any) => <span className="text-muted-foreground text-sm">{r.customer_phone || "N/A"}</span> },
+                        { header: "Total Jobs", cell: (r: any) => <Badge variant="secondary">{r.total_orders}</Badge> },
+                        { header: "Total Revenue", cell: (r: any) => <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(r.total_revenue)}</span> },
+                        { header: "Avg / Job", cell: (r: any) => <span className="text-sm">{formatCurrency(r.avg_order_value)}</span> },
+                        { header: "Last Order", cell: (r: any) => <span className="text-xs text-muted-foreground">{formatTimeAgo(r.last_order_date)}</span> },
+                      ]}
+                    />
+                 ) : (
+                    <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-xl border-border/60">
+                      No customer data available.
+                    </div>
+                 )}
+              </CardContent>
             </Card>
           </TabsContent>
 
           {/* ── Daily Tab ── */}
-          <TabsContent value="daily" className="space-y-5">
-            <Card className="relative border-border/60">
+          <TabsContent value="daily" className="space-y-6 animate-fade-in">
+             <Card className="border-border/60 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base font-semibold">
-                  Daily Performance
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Average jobs and revenue by day of the week
-                </CardDescription>
+                <CardTitle className="text-xl font-bold">Daily Performance Trends</CardTitle>
+                <CardDescription>Average jobs and revenue indexed by the day of the week</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-2">
                 {dailyPerformance.length > 0 ? (
-                  viewMode === "graph" ? (
+                  <div id="daily-chart-container" className="p-2 rounded-xl border border-border/40 bg-background/50">
                     <DailyChart data={dailyPerformance} />
-                  ) : (
-                    <div className="space-y-2">
-                      {dailyPerformance.map((day, index) => {
-                        const maxOrders = Math.max(
-                          ...dailyPerformance.map((d) => d.total_orders),
-                        );
-                        return (
-                          <div
-                            key={index}
-                            className="flex items-center gap-4 p-3 rounded-xl border border-border/40 hover:bg-muted/30 transition-colors"
-                          >
-                            <div className="w-24 text-sm font-semibold flex-shrink-0">
-                              {day.day_name}
-                            </div>
-                            <div className="flex-1">
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div
-                                  className="bg-primary h-2 rounded-full transition-all"
-                                  style={{
-                                    width: `${(day.total_orders / maxOrders) * 100}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0 w-28">
-                              <div className="text-xs font-semibold">
-                                {formatCurrency(day.total_revenue)}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">
-                                {day.total_orders} jobs
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )
+                  </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="inline-flex p-4 rounded-2xl bg-muted/40 mb-3">
-                      <BarChart3 className="h-8 w-8 text-muted-foreground/40" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      No daily performance data available
-                    </p>
+                  <div className="text-center py-16 text-muted-foreground border border-dashed rounded-xl border-border/60">
+                    <TrendingUp className="h-8 w-8 mx-auto mb-3 opacity-20" />
+                    No daily performance data available
                   </div>
                 )}
               </CardContent>
-              <ViewToggle
-                onToggle={() =>
-                  setViewMode(viewMode === "graph" ? "table" : "graph")
-                }
-              />
+            </Card>
+
+            <Card className="border-border/60 shadow-md rounded-2xl overflow-hidden">
+              <CardHeader className="pb-4 bg-muted/20">
+                <CardTitle className="text-lg font-bold">Daily Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <PaginatedTable
+                  data={dailyPerformance}
+                  itemsPerPage={7}
+                  columns={[
+                    { header: "Day", cell: (r: any) => <span className="font-semibold">{r.day_name}</span> },
+                    { header: "Average Revenue", cell: (r: any) => <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatCurrency(r.total_revenue)}</span> },
+                    { header: "Average Jobs", cell: (r: any) => r.total_orders },
+                  ]}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
 
           {/* ── Hourly Tab ── */}
-          <TabsContent value="hourly" className="space-y-5">
-            <Card className="relative border-border/60">
+          <TabsContent value="hourly" className="space-y-6 animate-fade-in">
+            <Card className="border-border/60 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base font-semibold">
-                  Peak Hours Analysis
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Busiest hours of the day for your shop
-                </CardDescription>
+                <CardTitle className="text-xl font-bold">Peak Hours Analysis</CardTitle>
+                <CardDescription>Busiest hours throughout the operational day</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-2">
                 {hourlyPerformance.length > 0 ? (
-                  viewMode === "graph" ? (
+                  <div id="hourly-chart-container" className="p-2 rounded-xl border border-border/40 bg-background/50">
                     <HourlyChart data={hourlyPerformance} />
-                  ) : (
-                    <div className="space-y-2">
-                      {hourlyPerformance.map((hour, index) => {
-                        const maxOrders = Math.max(
-                          ...hourlyPerformance.map((h) => h.order_count),
-                        );
-                        const isPeak =
-                          hour.order_count === maxOrders && maxOrders > 0;
-                        return (
-                          <div
-                            key={index}
-                            className={cn(
-                              "flex items-center gap-4 p-3 rounded-xl border transition-colors",
-                              isPeak
-                                ? "bg-primary/5 border-primary/30"
-                                : "border-border/40 hover:bg-muted/30",
-                            )}
-                          >
-                            <div className="w-20 text-sm font-semibold flex-shrink-0 flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                              {hour.hour}:00
-                            </div>
-                            <div className="flex-1">
-                              <div className="w-full bg-muted rounded-full h-2">
-                                <div
-                                  className={cn(
-                                    "h-2 rounded-full transition-all",
-                                    isPeak ? "bg-primary" : "bg-primary/50",
-                                  )}
-                                  style={{
-                                    width: `${(hour.order_count / maxOrders) * 100}%`,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0 w-24">
-                              <div className="text-xs font-semibold">
-                                {hour.order_count} orders
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">
-                                {formatCurrency(hour.total_revenue)}
-                              </div>
-                            </div>
-                            {isPeak && (
-                              <Badge
-                                variant="default"
-                                className="text-[10px] rounded-full flex-shrink-0"
-                              >
-                                Peak
-                              </Badge>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )
+                  </div>
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="inline-flex p-4 rounded-2xl bg-muted/40 mb-3">
-                      <Clock className="h-8 w-8 text-muted-foreground/40" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      No hourly performance data available
-                    </p>
+                  <div className="text-center py-16 text-muted-foreground border border-dashed rounded-xl border-border/60">
+                    <Clock className="h-8 w-8 mx-auto mb-3 opacity-20" />
+                    No hourly data available
                   </div>
                 )}
               </CardContent>
-              <ViewToggle
-                onToggle={() =>
-                  setViewMode(viewMode === "graph" ? "table" : "graph")
-                }
-              />
+            </Card>
+
+            <Card className="border-border/60 shadow-md rounded-2xl overflow-hidden">
+               <CardHeader className="pb-4 bg-muted/20">
+                <CardTitle className="text-lg font-bold">Hourly Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <PaginatedTable
+                  data={hourlyPerformance}
+                  itemsPerPage={8}
+                  columns={[
+                    { header: "Time", cell: (r: any) => (
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="font-semibold">{r.hour}:00</span>
+                        </div>
+                    )},
+                    { header: "Orders Handled", cell: (r: any) => {
+                       const maxOrders = Math.max(...hourlyPerformance.map((h: any) => h.order_count));
+                       const isPeak = r.order_count === maxOrders && maxOrders > 0;
+                       return (
+                         <div className="flex items-center gap-3">
+                           <span className="font-medium">{r.order_count}</span>
+                           {isPeak && <Badge variant="default" className="text-[10px] h-5 rounded-full px-2">Peak</Badge>}
+                         </div>
+                       )
+                    }},
+                    { header: "Total Revenue Generated", cell: (r: any) => <span className="font-bold text-amber-500">{formatCurrency(r.total_revenue)}</span> },
+                  ]}
+                />
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+      
+        {/* ── Export Export Dialog ── */}
+        <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+          <DialogContent className="sm:max-w-[500px] border-border/60 bg-background/95 backdrop-blur-xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Generate Analytics Report</DialogTitle>
+              <DialogDescription>
+                Customize how your insights are exported to PDF.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-6 py-4">
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Report Format</Label>
+                <RadioGroup value={exportType} onValueChange={(v: ExportType) => setExportType(v)} className="grid grid-cols-2 gap-4">
+                   <div>
+                    <RadioGroupItem value="lightweight" id="lightweight" className="peer sr-only" />
+                    <Label
+                      htmlFor="lightweight"
+                      className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-transparent p-4 hover:bg-muted/50 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer"
+                    >
+                      <FileText className="mb-3 h-6 w-6 text-muted-foreground" />
+                      <div className="font-semibold text-sm text-foreground">Lightweight</div>
+                      <div className="text-xs text-muted-foreground mt-1 text-center">Tables & Summaries</div>
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="heavyweight" id="heavyweight" className="peer sr-only" />
+                    <Label
+                      htmlFor="heavyweight"
+                      className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-transparent p-4 hover:bg-muted/50 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer"
+                    >
+                      <BarChart3 className="mb-3 h-6 w-6 text-muted-foreground" />
+                      <div className="font-semibold text-sm text-foreground">Heavyweight</div>
+                      <div className="text-xs text-muted-foreground mt-1 text-center">High-Res Charts & Tables</div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Data Period</Label>
+                <Select value={exportPeriod} onValueChange={setExportPeriod}>
+                  <SelectTrigger className="w-full h-11 rounded-xl">
+                    <SelectValue placeholder="Select timeframe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Last 7 Days (Short Term)</SelectItem>
+                    <SelectItem value="30d">Last 30 Days (Monthly)</SelectItem>
+                    <SelectItem value="90d">Last 90 Days (Quarterly)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {exportPeriod !== selectedPeriod && (
+                  <p className="text-[11px] text-amber-500 flex items-center gap-1.5 mt-2">
+                    <TrendingUp className="h-3 w-3" />
+                    Historical data will be fetched for this export.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsExportOpen(false)} disabled={isExporting} className="rounded-xl">
+                Cancel
+              </Button>
+              <Button 
+                onClick={processExport} 
+                disabled={isExporting}
+                className="rounded-xl px-8 shadow-md"
+              >
+                {isExporting ? "Generating..." : "Download PDF"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -143,7 +143,15 @@ export function RevenueChart({ data }: RevenueChartProps) {
         label: "Revenue (₹)",
         data: data.map((d) => d.total_revenue),
         borderColor: theme.primaryColor,
-        backgroundColor: theme.primaryBg,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.primaryBg;
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, "rgba(59,130,246,0.6)");
+          gradient.addColorStop(1, "rgba(59,130,246,0.0)");
+          return gradient;
+        },
         fill: true,
         tension: 0.4,
         pointRadius: 4,
@@ -231,7 +239,15 @@ export function DailyChart({ data }: DailyChartProps) {
       {
         label: "Revenue (₹)",
         data: data.map((d) => d.total_revenue),
-        backgroundColor: theme.primaryBg,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.primaryBg;
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, "rgba(59,130,246,0.8)");
+          gradient.addColorStop(1, "rgba(59,130,246,0.2)");
+          return gradient;
+        },
         borderColor: theme.primaryColor,
         borderWidth: 1.5,
         borderRadius: 8,
@@ -240,7 +256,15 @@ export function DailyChart({ data }: DailyChartProps) {
       {
         label: "Jobs",
         data: data.map((d) => d.total_orders),
-        backgroundColor: theme.emeraldBg,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.emeraldBg;
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, "rgba(16,185,129,0.8)");
+          gradient.addColorStop(1, "rgba(16,185,129,0.2)");
+          return gradient;
+        },
         borderColor: theme.emeraldColor,
         borderWidth: 1.5,
         borderRadius: 8,
@@ -316,12 +340,25 @@ export function HourlyChart({ data }: HourlyChartProps) {
       {
         label: "Orders",
         data: data.map((d) => d.order_count),
-        backgroundColor: data.map((d) => {
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.primaryBg;
+          
           const max = Math.max(...data.map((h) => h.order_count));
-          return d.order_count === max && max > 0
-            ? theme.primaryColor
-            : theme.primaryBg;
-        }),
+          const val = data[context.dataIndex]?.order_count;
+          const isMax = val === max && max > 0;
+          
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          if (isMax) {
+            gradient.addColorStop(0, "rgba(59,130,246,0.9)");
+            gradient.addColorStop(1, "rgba(59,130,246,0.4)");
+          } else {
+            gradient.addColorStop(0, "rgba(59,130,246,0.4)");
+            gradient.addColorStop(1, "rgba(59,130,246,0.1)");
+          }
+          return gradient;
+        },
         borderColor: theme.primaryColor,
         borderWidth: 1,
         borderRadius: 6,
@@ -332,7 +369,15 @@ export function HourlyChart({ data }: HourlyChartProps) {
         label: "Revenue (₹)",
         data: data.map((d) => d.total_revenue),
         borderColor: theme.amberColor,
-        backgroundColor: theme.amberBg,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.amberBg;
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, "rgba(245,158,11,0.5)");
+          gradient.addColorStop(1, "rgba(245,158,11,0.0)");
+          return gradient;
+        },
         fill: true,
         tension: 0.4,
         pointRadius: 3,
@@ -413,7 +458,15 @@ export function CustomerChart({ data }: CustomerChartProps) {
       {
         label: "Revenue (₹)",
         data: top.map((d) => d.total_revenue),
-        backgroundColor: theme.primaryBg,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.primaryBg;
+          const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+          gradient.addColorStop(0, "rgba(59,130,246,0.3)");
+          gradient.addColorStop(1, "rgba(59,130,246,0.8)");
+          return gradient;
+        },
         borderColor: theme.primaryColor,
         borderWidth: 1.5,
         borderRadius: 6,
@@ -421,7 +474,15 @@ export function CustomerChart({ data }: CustomerChartProps) {
       {
         label: "Jobs",
         data: top.map((d) => d.total_orders),
-        backgroundColor: theme.emeraldBg,
+        backgroundColor: (context: any) => {
+          const chart = context.chart;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return theme.emeraldBg;
+          const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+          gradient.addColorStop(0, "rgba(16,185,129,0.3)");
+          gradient.addColorStop(1, "rgba(16,185,129,0.8)");
+          return gradient;
+        },
         borderColor: theme.emeraldColor,
         borderWidth: 1.5,
         borderRadius: 6,

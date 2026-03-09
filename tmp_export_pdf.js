@@ -1,4 +1,8 @@
-import jsPDF from "jspdf";
+const fs = require('fs');
+
+const targetFile = 'c:\\Users\\Ibrahim\\Desktop\\Zaprint\\zaprint-desktop\\src\\utils\\exportAnalyticsPDF.ts';
+
+const newCode = `import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { AnalyticsOverview } from "@/backend/analytics/fetchAnalyticsOverview";
 import type { MonthlyRevenue } from "@/backend/analytics/fetchMonthlyRevenue";
@@ -46,7 +50,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
     return false;
   };
 
-  const formatCurrency = (amount: number) => `₹${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number) => \`₹\${amount.toLocaleString()}\`;
 
   const formatDate = () => {
     const now = new Date();
@@ -96,7 +100,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 116, 139); // slate-500
-  doc.text(`Generated: ${formatDate()}`, pageWidth - 14, 32, { align: "right" });
+  doc.text(\`Generated: \${formatDate()}\`, pageWidth - 14, 32, { align: "right" });
   
   // Mode & Period Badge
   doc.setFillColor(239, 246, 255); // blue-50
@@ -104,7 +108,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
   doc.roundedRect(pageWidth - 75, 36, 61, 6, 1, 1, "FD");
   doc.setFontSize(8);
   doc.setTextColor(37, 99, 235); // blue-600
-  doc.text(`${options.type.toUpperCase()} • ${options.period.toUpperCase()}`, pageWidth - 45, 40.5, { align: "center" });
+  doc.text(\`\${options.type.toUpperCase()} • \${options.period.toUpperCase()}\`, pageWidth - 45, 40.5, { align: "center" });
 
   doc.setDrawColor(226, 232, 240); // slate-200
   doc.line(14, 52, pageWidth - 14, 52);
@@ -141,7 +145,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
       ],
       [
         "Completion Rate",
-        `${data.overview.completion_rate}%`,
+        \`\${data.overview.completion_rate}%\`,
         "Quarter",
       ],
     ];
@@ -176,13 +180,13 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
     const growthData = [
       [
         "Month over Month",
-        `${data.growthMetrics.mom_orders_growth >= 0 ? "+" : ""}${data.growthMetrics.mom_orders_growth}%`,
-        `${data.growthMetrics.mom_revenue_growth >= 0 ? "+" : ""}${data.growthMetrics.mom_revenue_growth}%`,
+        \`\${data.growthMetrics.mom_orders_growth >= 0 ? "+" : ""}\${data.growthMetrics.mom_orders_growth}%\`,
+        \`\${data.growthMetrics.mom_revenue_growth >= 0 ? "+" : ""}\${data.growthMetrics.mom_revenue_growth}%\`,
       ],
       [
         "Week over Week",
-        `${data.growthMetrics.wow_orders_growth >= 0 ? "+" : ""}${data.growthMetrics.wow_orders_growth}%`,
-        `${data.growthMetrics.wow_revenue_growth >= 0 ? "+" : ""}${data.growthMetrics.wow_revenue_growth}%`,
+        \`\${data.growthMetrics.wow_orders_growth >= 0 ? "+" : ""}\${data.growthMetrics.wow_orders_growth}%\`,
+        \`\${data.growthMetrics.wow_revenue_growth >= 0 ? "+" : ""}\${data.growthMetrics.wow_revenue_growth}%\`,
       ],
     ];
 
@@ -209,7 +213,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
       doc.setFontSize(12);
       doc.setFont("helvetica", "italic");
       doc.setTextColor(100, 116, 139);
-      doc.text(`Chart: ${title}`, 14, yPosition);
+      doc.text(\`Chart: \${title}\`, 14, yPosition);
       yPosition += 5;
       
       const imgProps = doc.getImageProperties(base64Image);
@@ -235,7 +239,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.revenue, "Revenue Trend (Selected Period)");
 
-  if (options.type === "lightweight" && data.monthlyRevenue.length > 0) {
+  if (data.monthlyRevenue.length > 0) {
     checkNewPage(40);
     const revenueData = data.monthlyRevenue.map((item) => [
       item.month_label,
@@ -270,7 +274,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.customers, "Client Revenue Distribution");
 
-  if (options.type === "lightweight" && data.topCustomers.length > 0) {
+  if (data.topCustomers.length > 0) {
     checkNewPage(40);
     const customerData = data.topCustomers.slice(0, 15).map((customer) => [
       customer.customer_name || "Unknown",
@@ -305,7 +309,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.daily, "Average Volume by Day");
 
-  if (options.type === "lightweight" && data.dailyPerformance.length > 0) {
+  if (data.dailyPerformance.length > 0) {
     checkNewPage(40);
     const dailyData = data.dailyPerformance.map((day) => [
       day.day_name,
@@ -341,13 +345,13 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.hourly, "Operational Traffic Timeline");
 
-  if (options.type === "lightweight" && data.hourlyPerformance.length > 0) {
+  if (data.hourlyPerformance.length > 0) {
     checkNewPage(40);
     const activeHours = data.hourlyPerformance.filter((h) => h.order_count > 0);
 
     if (activeHours.length > 0) {
       const hourlyData = activeHours.map((hour) => [
-        `${hour.hour}:00 - ${hour.hour + 1}:00`,
+        \`\${hour.hour}:00 - \${hour.hour + 1}:00\`,
         hour.order_count.toString(),
         formatCurrency(hour.total_revenue),
       ]);
@@ -382,7 +386,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
     doc.setTextColor(148, 163, 184); // slate-400
     doc.setFont("helvetica", "bold");
     doc.text(
-      `Page ${i} of ${totalPages}`,
+      \`Page \${i} of \${totalPages}\`,
       pageWidth / 2,
       pageHeight - 8,
       { align: "center" }
@@ -396,7 +400,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
       pageHeight - 8
     );
     doc.text(
-      `${data.shopName} - Confidential`,
+      \`\${data.shopName} - Confidential\`,
       pageWidth - 14,
       pageHeight - 8,
       { align: "right" }
@@ -406,6 +410,10 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
   // ============================================
   // FINAL SAVE
   // ============================================
-  const fileName = `Zaprint_${options.type}_${new Date().toISOString().split("T")[0]}.pdf`;
+  const fileName = \`Zaprint_\${options.type}_\${new Date().toISOString().split("T")[0]}.pdf\`;
   doc.save(fileName);
 }
+`;
+
+fs.writeFileSync(targetFile, newCode);
+console.log('File written.');
