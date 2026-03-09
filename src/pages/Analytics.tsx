@@ -747,7 +747,7 @@ export default function Analytics() {
         <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
           <DialogContent className="sm:max-w-[450px] border-border/40 bg-card backdrop-blur-xl shadow-2xl">
             <DialogHeader className="pb-2">
-              <DialogTitle className="text-xl">Generate Analytics Report</DialogTitle>
+              <DialogTitle className="text-xl dark:text-white">Generate Analytics Report</DialogTitle>
               <DialogDescription>
                 Customize how your insights are exported to PDF.
               </DialogDescription>
@@ -804,7 +804,7 @@ export default function Analytics() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button variant="outline" onClick={() => setIsExportOpen(false)} disabled={isExporting} className="rounded-xl h-10 border-border/50 hover:bg-muted/50">
+              <Button variant="outline" onClick={() => setIsExportOpen(false)} disabled={isExporting} className="rounded-xl h-10 border-border/50 hover:bg-muted/50 dark:text-white">
                 Cancel
               </Button>
               <Button
