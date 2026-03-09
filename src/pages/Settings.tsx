@@ -20,6 +20,14 @@ import {
   Package,
   CheckCircle2,
   Clock,
+  UserCog,
+  KeyRound,
+  Trash2,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  ShieldAlert,
+  Loader2,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -33,10 +41,13 @@ import deleteService from "@/backend/shops/deleteService";
 import addResource from "@/backend/shops/addResource";
 import deleteResource from "@/backend/shops/deleteResource";
 import fetchShopResources from "@/backend/shops/fetchShopResources";
+import changePassword from "@/backend/account/changePassword";
+import deleteAccount from "@/backend/account/deleteAccount";
+import fetchIncompleteOrders, { type IncompleteOrdersResult } from "@/backend/account/fetchIncompleteOrders";
 import { cn } from "@/lib/utils";
 
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { show: showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [unsavedChanges, setUnsavedChanges] = useState(false);
@@ -44,6 +55,19 @@ export default function Settings() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
+
+  // Account tab state
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [incompleteOrders, setIncompleteOrders] = useState<IncompleteOrdersResult | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [shopId, setShopId] = useState<string | null>(null);
 
   const AVAILABLE_SERVICES = [
     "Black & White Printing",
@@ -107,6 +131,7 @@ export default function Settings() {
       try {
         if (!user) return;
         const { shop } = await fetchFullShopProfile();
+        setShopId(shop.id);
         setShopProfile({
           name: shop.shop_name || "",
           phone: shop.phone || "",
@@ -129,6 +154,14 @@ export default function Settings() {
           pricing[service.service_name] = service.price || 0;
         });
         setPricingSettings(pricing);
+
+        // Fetch incomplete orders for account deletion check
+        try {
+          const result = await fetchIncompleteOrders(shop.id);
+          setIncompleteOrders(result);
+        } catch {
+          setIncompleteOrders(null);
+        }
       } catch (error) {
         console.error("Error loading shop data:", error);
       } finally {
@@ -204,6 +237,61 @@ export default function Settings() {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!oldPassword) {
+      showToast({ title: "Error", description: "Please enter your current password", variant: "error" });
+      return;
+    }
+    if (!newPassword || !confirmPassword) {
+      showToast({ title: "Error", description: "Please fill in both new password fields", variant: "error" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      showToast({ title: "Error", description: "New password must be at least 6 characters", variant: "error" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showToast({ title: "Error", description: "New passwords do not match", variant: "error" });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await changePassword(oldPassword, newPassword);
+      showToast({ title: "Success", description: "Password changed successfully", variant: "success" });
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      showToast({ title: "Error", description: err.message || "Failed to change password", variant: "error" });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!shopId || !user) return;
+    if (deleteConfirmText !== "DELETE") {
+      showToast({ title: "Error", description: 'Please type "DELETE" to confirm', variant: "error" });
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      await deleteAccount(shopId, user.id);
+      await logout();
+    } catch (err: any) {
+      showToast({ title: "Error", description: err.message || "Failed to delete account", variant: "error" });
+      setDeletingAccount(false);
+    }
+  };
+
+  const canDeleteAccount = incompleteOrders !== null && incompleteOrders.count === 0;
+
+  const formatStatusLabel = (status: string) => {
+    return status
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl animate-fade-in relative">
@@ -269,6 +357,13 @@ export default function Settings() {
               >
                 <Database className="h-5 w-5" />
                 Pricing List
+              </TabsTrigger>
+              <TabsTrigger
+                value="account"
+                className="w-full justify-start gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm hover:bg-muted/60"
+              >
+                <UserCog className="h-5 w-5" />
+                Account
               </TabsTrigger>
             </TabsList>
 
@@ -647,6 +742,220 @@ export default function Settings() {
                       Tip: These base rates will be used as defaults when generating invoices or new print jobs.
                     </div>
                   )}
+                </Card>
+              </TabsContent>
+
+              {/* ── Account Tab ── */}
+              <TabsContent value="account" className="space-y-6 mt-0 animate-slide-up focus-visible:outline-none focus-visible:ring-0">
+                {/* Change Password Card */}
+                <Card className="border-border/40 shadow-xl bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden">
+                  <div className="h-2 w-full bg-gradient-to-r from-amber-500 via-orange-500 to-primary" />
+                  <CardHeader className="border-b border-border/40 pb-6 pt-8 px-8 bg-muted/5">
+                    <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                      <KeyRound className="h-6 w-6 text-primary" />
+                      Change Password
+                    </CardTitle>
+                    <CardDescription className="text-base mt-2">
+                      Update your account password. You'll remain logged in after changing it.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                    {/* Old Password */}
+                    <div className="space-y-2">
+                      <Label htmlFor="old-password" className="text-sm font-semibold">Current Password</Label>
+                      <div className="relative max-w-md">
+                        <Input
+                          id="old-password"
+                          type={showOldPassword ? "text" : "password"}
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          placeholder="Enter your current password"
+                          className="rounded-xl bg-background/50 h-11 border-border/60 focus-visible:ring-primary/30 focus-visible:border-primary transition-all shadow-sm pr-11"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowOldPassword(!showOldPassword)}
+                        >
+                          {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border/40" />
+
+                    {/* New + Confirm Password */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password" className="text-sm font-semibold">New Password</Label>
+                        <div className="relative">
+                          <Input
+                            id="new-password"
+                            type={showNewPassword ? "text" : "password"}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Minimum 6 characters"
+                            className="rounded-xl bg-background/50 h-11 border-border/60 focus-visible:ring-primary/30 focus-visible:border-primary transition-all shadow-sm pr-11"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password" className="text-sm font-semibold">Confirm New Password</Label>
+                        <div className="relative">
+                          <Input
+                            id="confirm-password"
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Re-enter your new password"
+                            className={cn(
+                              "rounded-xl bg-background/50 h-11 border-border/60 focus-visible:ring-primary/30 focus-visible:border-primary transition-all shadow-sm pr-11",
+                              confirmPassword && confirmPassword !== newPassword && "border-destructive focus-visible:ring-destructive/30"
+                            )}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {confirmPassword && confirmPassword !== newPassword && (
+                          <p className="text-xs text-destructive font-medium mt-1">Passwords do not match</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-border/40 flex justify-end">
+                      <Button
+                        onClick={handleChangePassword}
+                        disabled={changingPassword || !oldPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                        className="h-11 px-8 rounded-full shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all gap-2 text-base font-semibold"
+                      >
+                        {changingPassword ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Changing...</>
+                        ) : (
+                          <><KeyRound className="h-4 w-4" /> Update Password</>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Delete Account Card */}
+                <Card className="border-destructive/20 shadow-xl bg-card/50 backdrop-blur-sm rounded-2xl overflow-hidden">
+                  <div className="h-2 w-full bg-gradient-to-r from-red-600 via-red-500 to-orange-500" />
+                  <CardHeader className="border-b border-destructive/10 pb-6 pt-8 px-8 bg-destructive/[0.02]">
+                    <CardTitle className="text-2xl font-bold flex items-center gap-3 text-destructive">
+                      <ShieldAlert className="h-6 w-6" />
+                      Danger Zone
+                    </CardTitle>
+                    <CardDescription className="text-base mt-2">
+                      Permanently delete your account and all associated data. This action is irreversible.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                    {/* Warning about what gets deleted */}
+                    <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                        <div className="space-y-2">
+                          <p className="font-semibold text-foreground">Deleting your account will permanently remove:</p>
+                          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                            <li>Your user profile and authentication credentials</li>
+                            <li>Your shop and all shop settings</li>
+                            <li>All registered printers and configurations</li>
+                            <li>All services and pricing data</li>
+                            <li>All resources and inventory records</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Incomplete orders blocker */}
+                    {!canDeleteAccount && incompleteOrders !== null && incompleteOrders.count > 0 && (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 space-y-4">
+                        <div className="flex items-start gap-4">
+                          <AlertTriangle className="h-6 w-6 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div className="space-y-3 flex-1">
+                            <p className="font-semibold text-foreground">Account deletion is currently blocked</p>
+                            <p className="text-sm text-muted-foreground">
+                              You have <span className="font-bold text-amber-500">{incompleteOrders.count}</span> incomplete order{incompleteOrders.count !== 1 ? 's' : ''}.
+                              All orders must be completed or picked up before you can delete your account.
+                            </p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                              {incompleteOrders.breakdown.map((item) => (
+                                <div key={item.status} className="flex items-center gap-2 bg-background/60 rounded-lg px-3 py-2 border border-border/40">
+                                  <span className="h-2 w-2 rounded-full bg-amber-500 flex-shrink-0" />
+                                  <span className="text-sm font-medium text-foreground">{item.count}</span>
+                                  <span className="text-xs text-muted-foreground truncate">{formatStatusLabel(item.status)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback when we couldn't fetch order data */}
+                    {incompleteOrders === null && (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 flex items-start gap-4">
+                        <AlertTriangle className="h-6 w-6 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-foreground">Unable to verify order status</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            We couldn't check your pending orders. Please try refreshing the page. Account deletion is disabled until order status can be verified.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delete confirmation */}
+                    {canDeleteAccount && (
+                      <div className="space-y-4 pt-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="delete-confirm" className="text-sm font-semibold">
+                            Type <span className="font-mono text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">DELETE</span> to confirm
+                          </Label>
+                          <Input
+                            id="delete-confirm"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            placeholder='Type "DELETE" here'
+                            className="rounded-xl bg-background/50 h-11 border-border/60 focus-visible:ring-destructive/30 focus-visible:border-destructive transition-all shadow-sm max-w-sm font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t border-border/40 flex justify-end">
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                        disabled={!canDeleteAccount || deleteConfirmText !== "DELETE" || deletingAccount}
+                        className="h-11 px-8 rounded-full shadow-lg shadow-destructive/25 hover:shadow-destructive/40 transition-all gap-2 text-base font-semibold disabled:opacity-40"
+                      >
+                        {deletingAccount ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Deleting...</>
+                        ) : (
+                          <><Trash2 className="h-4 w-4" /> Delete Account Permanently</>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
                 </Card>
               </TabsContent>
             </div>
