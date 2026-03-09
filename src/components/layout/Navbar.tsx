@@ -141,7 +141,7 @@ const Navbar = React.memo(function Navbar({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer p-3 rounded-lg gap-3"
-                onClick={() => console.log("Profile")}
+                onClick={() => navigate("/settings")}
               >
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span>Profile Settings</span>
