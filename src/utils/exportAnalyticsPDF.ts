@@ -62,7 +62,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
   // ============================================
   // BACKGROUND & LETTERHEAD
   // ============================================
-  
+
   // Subtle top border color bar
   doc.setFillColor(37, 99, 235); // Tailwind blue-600
   doc.rect(0, 0, pageWidth, 6, "F");
@@ -70,17 +70,17 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
   // Premium Header Area Background
   doc.setFillColor(248, 250, 252); // Tailwind slate-50
   doc.rect(0, 6, pageWidth, 40, "F");
-  
+
   // Zaprint Logo/Typography
   doc.setTextColor(15, 23, 42); // slate-900
   doc.setFontSize(28);
   doc.setFont("helvetica", "bold");
   doc.text("Z A P R I N T", 14, 28);
-  
+
   // Aesthetic dot
   doc.setFillColor(59, 130, 246); // blue-500
   doc.circle(73, 26, 2, "F");
-  
+
   // Subtitle
   doc.setTextColor(100, 116, 139); // slate-500
   doc.setFontSize(10);
@@ -92,12 +92,12 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(30, 41, 59); // slate-800
   doc.text(data.shopName, pageWidth - 14, 25, { align: "right" });
-  
+
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 116, 139); // slate-500
   doc.text(`Generated: ${formatDate()}`, pageWidth - 14, 32, { align: "right" });
-  
+
   // Mode & Period Badge
   doc.setFillColor(239, 246, 255); // blue-50
   doc.setDrawColor(191, 219, 254); // blue-200
@@ -211,7 +211,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
       doc.setTextColor(100, 116, 139);
       doc.text(`Chart: ${title}`, 14, yPosition);
       yPosition += 5;
-      
+
       const imgProps = doc.getImageProperties(base64Image);
       const maxWidth = pageWidth - 28; // Margins
       const ratio = imgProps.height / imgProps.width;
@@ -235,7 +235,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.revenue, "Revenue Trend (Selected Period)");
 
-  if (options.type === "lightweight" && data.monthlyRevenue.length > 0) {
+  if (data.monthlyRevenue.length > 0) {
     checkNewPage(40);
     const revenueData = data.monthlyRevenue.map((item) => [
       item.month_label,
@@ -270,7 +270,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.customers, "Client Revenue Distribution");
 
-  if (options.type === "lightweight" && data.topCustomers.length > 0) {
+  if (data.topCustomers.length > 0) {
     checkNewPage(40);
     const customerData = data.topCustomers.slice(0, 15).map((customer) => [
       customer.customer_name || "Unknown",
@@ -305,7 +305,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.daily, "Average Volume by Day");
 
-  if (options.type === "lightweight" && data.dailyPerformance.length > 0) {
+  if (data.dailyPerformance.length > 0) {
     checkNewPage(40);
     const dailyData = data.dailyPerformance.map((day) => [
       day.day_name,
@@ -341,7 +341,7 @@ export function exportAnalyticsPDF(data: ExportData, options: ExportOptions) {
 
   insertChartImage(options.chartImages?.hourly, "Operational Traffic Timeline");
 
-  if (options.type === "lightweight" && data.hourlyPerformance.length > 0) {
+  if (data.hourlyPerformance.length > 0) {
     checkNewPage(40);
     const activeHours = data.hourlyPerformance.filter((h) => h.order_count > 0);
 

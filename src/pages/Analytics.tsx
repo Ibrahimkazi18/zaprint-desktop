@@ -28,7 +28,6 @@ import {
   Download,
   Clock,
   Target,
-  LayoutList,
 } from "lucide-react";
 import {
   RevenueChart,
@@ -140,7 +139,6 @@ const PaginatedTable = ({ data, columns, itemsPerPage = 5 }: any) => {
 
 export default function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
-  const [viewMode, setViewMode] = useState<"table" | "graph">("table");
   const { shop } = useShopDashboard();
 
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
@@ -156,7 +154,7 @@ export default function Analytics() {
     HourlyPerformance[]
   >([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Export Dialog State
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportType, setExportType] = useState<ExportType>("lightweight");
@@ -280,12 +278,12 @@ export default function Analytics() {
         toast.loading("Rendering high-quality charts...", { id: "export-pdf" });
         // We delay slightly to ensure charts are rendered if they were hidden in tabs
         await new Promise((resolve) => setTimeout(resolve, 500));
-        
+
         const getChartImage = (containerId: string) => {
-           const container = document.getElementById(containerId);
-           if (!container) return undefined;
-           const canvas = container.querySelector('canvas');
-           return canvas ? canvas.toDataURL("image/png", 1.0) : undefined;
+          const container = document.getElementById(containerId);
+          if (!container) return undefined;
+          const canvas = container.querySelector('canvas');
+          return canvas ? canvas.toDataURL("image/png", 1.0) : undefined;
         };
 
         // Note: Chart components will need id attributes added to their wrappers
@@ -321,7 +319,7 @@ export default function Analytics() {
     } finally {
       setIsExporting(false);
     }
-  };if (loading) {
+  }; if (loading) {
     return (
       <DashboardLayout>
         <div className="container mx-auto px-6 py-8 animate-fade-in">
@@ -559,9 +557,9 @@ export default function Analytics() {
                       { header: "Month", cell: (r: any) => <span className="font-semibold">{r.month_label}</span> },
                       { header: "Total Revenue", cell: (r: any) => <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatCurrency(r.total_revenue)}</span> },
                       { header: "Jobs Completed", cell: (r: any) => r.order_count },
-                      { 
-                        header: "Avg Value / Job", 
-                        cell: (r: any) => r.order_count ? formatCurrency(r.total_revenue / r.order_count) : formatCurrency(0) 
+                      {
+                        header: "Avg Value / Job",
+                        cell: (r: any) => r.order_count ? formatCurrency(r.total_revenue / r.order_count) : formatCurrency(0)
                       },
                     ]}
                   />
@@ -609,7 +607,7 @@ export default function Analytics() {
               <CardContent className="pt-2">
                 {topCustomers.length > 0 ? (
                   <div id="customers-chart-container" className="p-2 rounded-xl border border-border/40 bg-background/50">
-                     <CustomerChart data={topCustomers} />
+                    <CustomerChart data={topCustomers} />
                   </div>
                 ) : (
                   <div className="text-center py-16 text-muted-foreground border border-dashed rounded-xl border-border/60">
@@ -626,31 +624,31 @@ export default function Analytics() {
                 <CardDescription>Ranked tabular view of your customer base</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                 {topCustomers.length > 0 ? (
-                    <PaginatedTable
-                      data={topCustomers}
-                      itemsPerPage={10}
-                      columns={[
-                        { header: "Customer Name", cell: (r: any) => <span className="font-semibold">{r.customer_name || "Unknown"}</span> },
-                        { header: "Contact", cell: (r: any) => <span className="text-muted-foreground text-sm">{r.customer_phone || "N/A"}</span> },
-                        { header: "Total Jobs", cell: (r: any) => <Badge variant="secondary">{r.total_orders}</Badge> },
-                        { header: "Total Revenue", cell: (r: any) => <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(r.total_revenue)}</span> },
-                        { header: "Avg / Job", cell: (r: any) => <span className="text-sm">{formatCurrency(r.avg_order_value)}</span> },
-                        { header: "Last Order", cell: (r: any) => <span className="text-xs text-muted-foreground">{formatTimeAgo(r.last_order_date)}</span> },
-                      ]}
-                    />
-                 ) : (
-                    <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-xl border-border/60">
-                      No customer data available.
-                    </div>
-                 )}
+                {topCustomers.length > 0 ? (
+                  <PaginatedTable
+                    data={topCustomers}
+                    itemsPerPage={10}
+                    columns={[
+                      { header: "Customer Name", cell: (r: any) => <span className="font-semibold">{r.customer_name || "Unknown"}</span> },
+                      { header: "Contact", cell: (r: any) => <span className="text-muted-foreground text-sm">{r.customer_phone || "N/A"}</span> },
+                      { header: "Total Jobs", cell: (r: any) => <Badge variant="secondary">{r.total_orders}</Badge> },
+                      { header: "Total Revenue", cell: (r: any) => <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(r.total_revenue)}</span> },
+                      { header: "Avg / Job", cell: (r: any) => <span className="text-sm">{formatCurrency(r.avg_order_value)}</span> },
+                      { header: "Last Order", cell: (r: any) => <span className="text-xs text-muted-foreground">{formatTimeAgo(r.last_order_date)}</span> },
+                    ]}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-xl border-border/60">
+                    No customer data available.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* ── Daily Tab ── */}
           <TabsContent value="daily" className="space-y-6 animate-fade-in">
-             <Card className="border-border/60 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
+            <Card className="border-border/60 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden rounded-2xl">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-bold">Daily Performance Trends</CardTitle>
                 <CardDescription>Average jobs and revenue indexed by the day of the week</CardDescription>
@@ -709,7 +707,7 @@ export default function Analytics() {
             </Card>
 
             <Card className="border-border/60 shadow-md rounded-2xl overflow-hidden">
-               <CardHeader className="pb-4 bg-muted/20">
+              <CardHeader className="pb-4 bg-muted/20">
                 <CardTitle className="text-lg font-bold">Hourly Metrics</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
@@ -717,22 +715,26 @@ export default function Analytics() {
                   data={hourlyPerformance}
                   itemsPerPage={8}
                   columns={[
-                    { header: "Time", cell: (r: any) => (
+                    {
+                      header: "Time", cell: (r: any) => (
                         <div className="flex items-center gap-2">
                           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="font-semibold">{r.hour}:00</span>
                         </div>
-                    )},
-                    { header: "Orders Handled", cell: (r: any) => {
-                       const maxOrders = Math.max(...hourlyPerformance.map((h: any) => h.order_count));
-                       const isPeak = r.order_count === maxOrders && maxOrders > 0;
-                       return (
-                         <div className="flex items-center gap-3">
-                           <span className="font-medium">{r.order_count}</span>
-                           {isPeak && <Badge variant="default" className="text-[10px] h-5 rounded-full px-2">Peak</Badge>}
-                         </div>
-                       )
-                    }},
+                      )
+                    },
+                    {
+                      header: "Orders Handled", cell: (r: any) => {
+                        const maxOrders = Math.max(...hourlyPerformance.map((h: any) => h.order_count));
+                        const isPeak = r.order_count === maxOrders && maxOrders > 0;
+                        return (
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium">{r.order_count}</span>
+                            {isPeak && <Badge variant="default" className="text-[10px] h-5 rounded-full px-2">Peak</Badge>}
+                          </div>
+                        )
+                      }
+                    },
                     { header: "Total Revenue Generated", cell: (r: any) => <span className="font-bold text-amber-500">{formatCurrency(r.total_revenue)}</span> },
                   ]}
                 />
@@ -740,77 +742,78 @@ export default function Analytics() {
             </Card>
           </TabsContent>
         </Tabs>
-      
+
         {/* ── Export Export Dialog ── */}
         <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
-          <DialogContent className="sm:max-w-[500px] border-border/60 bg-background/95 backdrop-blur-xl">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[450px] border-border/40 bg-card backdrop-blur-xl shadow-2xl">
+            <DialogHeader className="pb-2">
               <DialogTitle className="text-xl">Generate Analytics Report</DialogTitle>
               <DialogDescription>
                 Customize how your insights are exported to PDF.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="grid gap-6 py-4">
               <div className="space-y-3">
-                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Report Format</Label>
+                <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Report Format</Label>
                 <RadioGroup value={exportType} onValueChange={(v: ExportType) => setExportType(v)} className="grid grid-cols-2 gap-4">
-                   <div>
+                  <div className="relative">
                     <RadioGroupItem value="lightweight" id="lightweight" className="peer sr-only" />
                     <Label
                       htmlFor="lightweight"
-                      className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-transparent p-4 hover:bg-muted/50 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer"
+                      className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-border/40 bg-muted/20 p-4 hover:bg-muted/40 transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer text-muted-foreground peer-data-[state=checked]:text-primary peer-data-[state=checked]:shadow-sm"
                     >
-                      <FileText className="mb-3 h-6 w-6 text-muted-foreground" />
+                      <FileText className="h-7 w-7 mb-1" />
                       <div className="font-semibold text-sm text-foreground">Lightweight</div>
-                      <div className="text-xs text-muted-foreground mt-1 text-center">Tables & Summaries</div>
+                      <div className="text-[11px] text-center opacity-70">Tables & Summaries</div>
                     </Label>
                   </div>
-                  <div>
+                  <div className="relative">
                     <RadioGroupItem value="heavyweight" id="heavyweight" className="peer sr-only" />
                     <Label
                       htmlFor="heavyweight"
-                      className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-transparent p-4 hover:bg-muted/50 hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer"
+                      className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-border/40 bg-muted/20 p-4 hover:bg-muted/40 transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer text-muted-foreground peer-data-[state=checked]:text-primary peer-data-[state=checked]:shadow-sm"
                     >
-                      <BarChart3 className="mb-3 h-6 w-6 text-muted-foreground" />
+                      <BarChart3 className="h-7 w-7 mb-1" />
                       <div className="font-semibold text-sm text-foreground">Heavyweight</div>
-                      <div className="text-xs text-muted-foreground mt-1 text-center">High-Res Charts & Tables</div>
+                      <div className="text-[11px] text-center opacity-70">High-Res Charts & Tables</div>
                     </Label>
                   </div>
                 </RadioGroup>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Data Period</Label>
+                <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Data Period</Label>
                 <Select value={exportPeriod} onValueChange={setExportPeriod}>
-                  <SelectTrigger className="w-full h-11 rounded-xl">
+                  <SelectTrigger className="w-full h-[42px] rounded-xl bg-muted/30 border-border/40 hover:bg-muted/50 transition-colors text-foreground">
                     <SelectValue placeholder="Select timeframe" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Last 7 Days (Short Term)</SelectItem>
-                    <SelectItem value="30d">Last 30 Days (Monthly)</SelectItem>
-                    <SelectItem value="90d">Last 90 Days (Quarterly)</SelectItem>
+                  <SelectContent className="bg-popover border-border/60">
+                    <SelectItem value="7d" className="rounded-lg cursor-pointer">Last 7 Days (Short Term)</SelectItem>
+                    <SelectItem value="30d" className="rounded-lg cursor-pointer">Last 30 Days (Monthly)</SelectItem>
+                    <SelectItem value="90d" className="rounded-lg cursor-pointer">Last 90 Days (Quarterly)</SelectItem>
                   </SelectContent>
                 </Select>
                 {exportPeriod !== selectedPeriod && (
-                  <p className="text-[11px] text-amber-500 flex items-center gap-1.5 mt-2">
-                    <TrendingUp className="h-3 w-3" />
+                  <p className="text-[11px] text-orange-500 flex items-center gap-1.5 mt-2 font-medium">
+                    <TrendingUp className="h-3.5 w-3.5" />
                     Historical data will be fetched for this export.
                   </p>
                 )}
               </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsExportOpen(false)} disabled={isExporting} className="rounded-xl">
+            <DialogFooter className="pt-2">
+              <Button variant="outline" onClick={() => setIsExportOpen(false)} disabled={isExporting} className="rounded-xl h-10 border-border/50 hover:bg-muted/50">
                 Cancel
               </Button>
-              <Button 
-                onClick={processExport} 
+              <Button
+                onClick={processExport}
                 disabled={isExporting}
-                className="rounded-xl px-8 shadow-md"
+                className="rounded-xl px-8 h-10 shadow-md gap-2"
               >
                 {isExporting ? "Generating..." : "Download PDF"}
+                {!isExporting && <Download className="h-4 w-4" />}
               </Button>
             </DialogFooter>
           </DialogContent>
