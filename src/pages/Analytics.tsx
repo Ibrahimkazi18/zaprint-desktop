@@ -160,6 +160,12 @@ export default function Analytics() {
   const [exportType, setExportType] = useState<ExportType>("lightweight");
   const [exportPeriod, setExportPeriod] = useState("30d");
   const [isExporting, setIsExporting] = useState(false);
+  const [exportData, setExportData] = useState<{
+    monthly: MonthlyRevenue[];
+    customers: TopCustomer[];
+    daily: DailyPerformance[];
+    hourly: HourlyPerformance[];
+  } | null>(null);
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -276,8 +282,17 @@ export default function Analytics() {
       let chartImages = {};
       if (exportType === "heavyweight") {
         toast.loading("Rendering high-quality charts...", { id: "export-pdf" });
-        // We delay slightly to ensure charts are rendered if they were hidden in tabs
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        // Render export charts specially with the requested period's data
+        setExportData({
+          monthly: exportMonthly,
+          customers: exportCustomers,
+          daily: exportDaily,
+          hourly: exportHourly,
+        });
+
+        // Delay to allow Chart.js to mount and run its initial animation
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const getChartImage = (containerId: string) => {
           const container = document.getElementById(containerId);
@@ -286,13 +301,15 @@ export default function Analytics() {
           return canvas ? canvas.toDataURL("image/png", 1.0) : undefined;
         };
 
-        // Note: Chart components will need id attributes added to their wrappers
         chartImages = {
-          revenue: getChartImage('revenue-chart-container'),
-          customers: getChartImage('customers-chart-container'),
-          daily: getChartImage('daily-chart-container'),
-          hourly: getChartImage('hourly-chart-container')
+          revenue: getChartImage('export-revenue-chart'),
+          customers: getChartImage('export-customers-chart'),
+          daily: getChartImage('export-daily-chart'),
+          hourly: getChartImage('export-hourly-chart')
         };
+
+        // Clean up the hidden charts
+        setExportData(null);
       }
 
       toast.loading("Assembling document...", { id: "export-pdf" });
@@ -818,6 +835,24 @@ export default function Analytics() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Hidden Export Charts for PDF Generation */}
+        {exportData && (
+          <div className="fixed top-[-9999px] left-[-9999px] w-[900px] pointer-events-none opacity-0">
+            <div id="export-revenue-chart" className="bg-background p-4">
+              <RevenueChart data={exportData.monthly} />
+            </div>
+            <div id="export-customers-chart" className="bg-background p-4">
+              <CustomerChart data={exportData.customers} />
+            </div>
+            <div id="export-daily-chart" className="bg-background p-4">
+              <DailyChart data={exportData.daily} />
+            </div>
+            <div id="export-hourly-chart" className="bg-background p-4">
+              <HourlyChart data={exportData.hourly} />
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
