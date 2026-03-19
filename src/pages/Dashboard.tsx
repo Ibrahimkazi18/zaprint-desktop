@@ -40,6 +40,7 @@ import {
   ArrowUpRight,
   Package,
   CheckCircle2,
+  ShieldAlert,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
@@ -55,11 +56,13 @@ import fetchDashboardStats, {
   DashboardStats,
 } from "@/backend/dashboard/fetchDashboardStats";
 import { cn } from "@/lib/utils";
+import { useFeeReminder } from "@/hooks/useFeeReminder";
 
 export default function Dashboard() {
   const navigate = useNavigate();
 
   const { shop, printers, loading } = useShopDashboard();
+  useFeeReminder();
   const { addJob: addToQueue } = usePrintQueue(printers, {
     detectSystemPrinters: false,
   });
@@ -193,6 +196,34 @@ export default function Dashboard() {
                 onClick={() => navigate("/payment-onboarding")}
               >
                 Complete Setup
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Blocked Banner ── */}
+        {shop && shop.is_blocked && (
+          <div className="p-5 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-500/10">
+                  <ShieldAlert className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-red-900 dark:text-red-100">
+                    Your shop is temporarily blocked
+                  </p>
+                  <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                    {shop.blocked_reason || "You have overdue platform fees. Your shop is hidden from customers."}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => navigate("/platform-fees")}
+              >
+                Pay Fees
               </Button>
             </div>
           </div>

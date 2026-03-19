@@ -18,6 +18,7 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Settings = lazy(() => import("./pages/Settings"));
 const RegisterPrinter = lazy(() => import("./pages/RegisterPrinter"));
 const Printers = lazy(() => import("./pages/Printers"));
+const PlatformFees = lazy(() => import("./pages/PlatformFees"));
 
 // Loading fallback component
 function PageLoader() {
@@ -94,6 +95,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Printers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/platform-fees"
+            element={
+              <ProtectedRoute>
+                <PlatformFees />
               </ProtectedRoute>
             }
           />

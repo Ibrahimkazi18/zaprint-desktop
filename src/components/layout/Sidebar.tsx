@@ -10,6 +10,7 @@ import {
   Plus,
   Package,
   Zap,
+  IndianRupee,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -66,6 +67,14 @@ const Sidebar = React.memo(function Sidebar({ className }: SidebarProps) {
         onClick: () => navigate("/analytics"),
         color: "text-orange-500",
         glow: "rgba(249,115,22,0.15)",
+      },
+      {
+        title: "Platform Fees",
+        icon: IndianRupee,
+        path: "/platform-fees",
+        onClick: () => navigate("/platform-fees"),
+        color: "text-rose-500",
+        glow: "rgba(244,63,94,0.15)",
       },
     ],
     [navigate],
