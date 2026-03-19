@@ -54,6 +54,22 @@ const printerAPI = {
     ipcRenderer.removeAllListeners("printer:status-changed");
   }
 };
+const razorpayAPI = {
+  // Create a Razorpay order for fee payment
+  createFeeOrder: (params) => {
+    console.log("💳 Creating Razorpay fee order...");
+    return ipcRenderer.invoke("razorpay:create-fee-order", params);
+  },
+  // Verify a Razorpay payment
+  verifyFeePayment: (params) => {
+    console.log("✅ Verifying Razorpay payment...");
+    return ipcRenderer.invoke("razorpay:verify-fee-payment", params);
+  },
+  // Get Razorpay key ID (public key)
+  getKeyId: () => {
+    return ipcRenderer.invoke("razorpay:get-key-id");
+  }
+};
 const electronAPI = {
   platform: process.platform,
   // App version
@@ -68,6 +84,8 @@ try {
   console.log("✅ Printer API exposed to window.printerAPI");
   contextBridge.exposeInMainWorld("electronAPI", electronAPI);
   console.log("✅ Electron API exposed to window.electronAPI");
+  contextBridge.exposeInMainWorld("razorpayAPI", razorpayAPI);
+  console.log("✅ Razorpay API exposed to window.razorpayAPI");
   contextBridge.exposeInMainWorld("electron", {
     saveFile: (fileName, buffer) => ipcRenderer.invoke("save-file", fileName, buffer),
     deleteFile: (filePath) => ipcRenderer.invoke("delete-file", filePath),

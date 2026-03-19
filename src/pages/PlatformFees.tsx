@@ -11,16 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
   Table,
   TableBody,
   TableCell,
@@ -28,43 +18,38 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
   CreditCard,
   IndianRupee,
+  Loader2,
   Receipt,
+  Shield,
   ShieldAlert,
   ShieldCheck,
   Wallet,
-  Send,
+  Zap,
 } from "lucide-react";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
 import {
   fetchFeeSummary,
   fetchUnpaidFees,
   fetchFeePayments,
-  submitFeePayment,
   checkShopBlocked,
   type FeeSummary,
   type FeeLedgerEntry,
   type FeePayment,
 } from "@/backend/fees/platformFees";
+import { initiateRazorpayFeePayment } from "@/backend/fees/razorpayFeePayment";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PlatformFees() {
   const { shop, loading: shopLoading } = useShopDashboard();
+  const { user } = useAuth();
 
   const [summary, setSummary] = useState<FeeSummary | null>(null);
   const [unpaidFees, setUnpaidFees] = useState<FeeLedgerEntry[]>([]);
@@ -72,13 +57,7 @@ export default function PlatformFees() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Payment form state
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [paymentNotes, setPaymentNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!shop?.id) return;
@@ -109,43 +88,35 @@ export default function PlatformFees() {
     loadData();
   }, [loadData]);
 
-  const handleSubmitPayment = async () => {
-    if (!shop?.id || !summary) return;
-    if (!paymentMethod) {
-      toast.error("Please select a payment method");
-      return;
-    }
-    if (!paymentReference.trim()) {
-      toast.error("Please enter a payment/transaction reference");
-      return;
-    }
+  const handlePayWithRazorpay = async () => {
+    if (!shop?.id || !summary || summary.unpaidFees <= 0) return;
 
-    try {
-      setSubmitting(true);
-      await submitFeePayment(
-        shop.id,
-        summary.unpaidFees,
-        paymentMethod,
-        paymentReference.trim(),
-        paymentNotes.trim() || undefined
-      );
+    setPaying(true);
 
-      toast.success(
-        "Payment submitted! It will be verified by the admin shortly."
-      );
-      setPayDialogOpen(false);
-      setPaymentMethod("");
-      setPaymentReference("");
-      setPaymentNotes("");
+    await initiateRazorpayFeePayment({
+      shopId: shop.id,
+      shopName: shop.shop_name || "Shop",
+      amount: summary.unpaidFees,
+      unpaidCount: summary.unpaidCount,
+      userEmail: user?.email || undefined,
+      userName: user?.user_metadata?.full_name || shop.shop_name || undefined,
+      onSuccess: async () => {
+        setPaying(false);
+        toast.success(
+          "Payment successful! Your fees have been settled.",
+          { duration: 5000, icon: "🎉" }
+        );
+        // Refresh data
+        await loadData();
+      },
+      onError: (error) => {
+        setPaying(false);
+        toast.error(error || "Payment failed. Please try again.");
+      },
+    });
 
-      // Refresh data
-      await loadData();
-    } catch (error) {
-      console.error("Error submitting payment:", error);
-      toast.error("Failed to submit payment. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    // Reset paying state in case the modal was dismissed
+    setTimeout(() => setPaying(false), 1000);
   };
 
   if (shopLoading || loading) {
@@ -203,124 +174,41 @@ export default function PlatformFees() {
             </p>
           </div>
           {summary && summary.unpaidFees > 0 && (
-            <Dialog open={payDialogOpen} onOpenChange={setPayDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  size="lg"
-                  className={cn(
-                    "gap-2 font-semibold",
-                    urgencyLevel === "critical"
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-primary hover:bg-primary/90"
-                  )}
-                >
-                  <Wallet className="h-4 w-4" />
+            <Button
+              size="lg"
+              onClick={handlePayWithRazorpay}
+              disabled={paying}
+              className={cn(
+                "gap-2.5 font-semibold shadow-lg transition-all duration-200",
+                urgencyLevel === "critical"
+                  ? "bg-red-600 hover:bg-red-700 text-white shadow-red-200"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-200",
+                paying && "opacity-80 cursor-not-allowed"
+              )}
+            >
+              {paying ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4" />
                   Pay ₹{summary.unpaidFees.toFixed(2)}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    Submit Fee Payment
-                  </DialogTitle>
-                  <DialogDescription>
-                    Record your payment of ₹{summary.unpaidFees.toFixed(2)} to
-                    settle your platform fees. Admin will verify the payment.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-3">
-                  {/* Amount (read-only) */}
-                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">
-                      Amount to Pay
-                    </p>
-                    <p className="text-2xl font-bold text-primary">
-                      ₹{summary.unpaidFees.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Covering {summary.unpaidCount} pending fee
-                      {summary.unpaidCount !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-
-                  {/* Payment Method */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Payment Method *
-                    </Label>
-                    <Select
-                      value={paymentMethod}
-                      onValueChange={setPaymentMethod}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="upi">UPI</SelectItem>
-                        <SelectItem value="bank_transfer">
-                          Bank Transfer / NEFT / IMPS
-                        </SelectItem>
-                        <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Transaction Reference */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Transaction / Reference ID *
-                    </Label>
-                    <Input
-                      placeholder="e.g. UPI Ref: 312456789012"
-                      value={paymentReference}
-                      onChange={(e) => setPaymentReference(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter the UPI transaction ID, bank reference number, or
-                      receipt number
-                    </p>
-                  </div>
-
-                  {/* Notes */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Notes (Optional)
-                    </Label>
-                    <Input
-                      placeholder="Any additional details..."
-                      value={paymentNotes}
-                      onChange={(e) => setPaymentNotes(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <DialogFooter className="gap-2">
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button
-                    onClick={handleSubmitPayment}
-                    disabled={submitting}
-                    className="gap-2"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        Submit Payment
-                      </>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <Zap className="h-3.5 w-3.5 opacity-60" />
+                </>
+              )}
+            </Button>
           )}
         </div>
+
+        {/* Razorpay Security Badge */}
+        {summary && summary.unpaidFees > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Shield className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Payments secured by <strong>Razorpay</strong> — India's most trusted payment gateway</span>
+          </div>
+        )}
 
         {/* Blocked Banner */}
         {isBlocked && (
@@ -335,8 +223,8 @@ export default function PlatformFees() {
                 </p>
                 <p className="text-sm text-red-700 dark:text-red-300 mt-0.5">
                   {blockedReason ||
-                    "Your shop is hidden from customers due to overdue platform fees."}
-                  {" "}Pay your outstanding fees to unblock.
+                    "Your shop is hidden from customers due to overdue platform fees."}{" "}
+                  Pay your outstanding fees to unblock instantly.
                 </p>
               </div>
             </div>
@@ -656,7 +544,15 @@ export default function PlatformFees() {
                             </Badge>
                           </div>
                           <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {payment.payment_method.toUpperCase()} •{" "}
+                            {payment.payment_method === "razorpay" ? (
+                              <span className="inline-flex items-center gap-1">
+                                <CreditCard className="h-3 w-3" />
+                                Razorpay
+                              </span>
+                            ) : (
+                              payment.payment_method.toUpperCase()
+                            )}{" "}
+                            •{" "}
                             {new Date(payment.created_at).toLocaleDateString(
                               "en-IN",
                               {
@@ -697,17 +593,23 @@ export default function PlatformFees() {
                     <div className="flex gap-2">
                       <span className="text-primary font-bold">3.</span>
                       <span>
-                        Submit payment via UPI/Bank transfer with reference
+                        Click "Pay" to settle instantly via Razorpay (UPI, Cards, Net Banking)
                       </span>
                     </div>
                     <div className="flex gap-2">
                       <span className="text-primary font-bold">4.</span>
                       <span>
-                        Admin verifies and clears your fees
+                        Payment is verified automatically — no manual approval needed
                       </span>
                     </div>
                   </div>
                   <div className="pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-medium">
+                      <Shield className="h-3 w-3" />
+                      Secured by Razorpay — UPI, Cards, Net Banking accepted
+                    </div>
+                  </div>
+                  <div>
                     <p className="text-[11px] text-red-500 font-medium">
                       ⚠️ Shops with fees unpaid for more than 7 days will be
                       temporarily hidden from customers.

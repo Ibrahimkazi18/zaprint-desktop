@@ -1,4 +1,5 @@
 import { cleanupPrinterHandlers, setupPrinterHandlers } from "./main/printerHandlers";
+import { cleanupRazorpayHandlers, setupRazorpayHandlers } from "./main/razorpayHandlers";
 import { printFile } from "./main/printHandler";
 import { deleteFile, saveFile } from "./printing/fileManager";
 const { ipcMain, app: electronApp } = require('electron');
@@ -110,6 +111,7 @@ async function createWindow() {
 
     setupAuthHandlers()
     setupPrinterHandlers(mainWindow);
+    setupRazorpayHandlers();
 
     mainWindow.once('ready-to-show', () => {
       mainWindow?.show();
@@ -144,6 +146,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   cleanupPrinterHandlers();
+  cleanupRazorpayHandlers();
   
   if (process.platform !== 'darwin') {
     app.quit();
@@ -152,6 +155,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   cleanupPrinterHandlers();
+  cleanupRazorpayHandlers();
 });
 
 process.on('uncaughtException', (error) => {

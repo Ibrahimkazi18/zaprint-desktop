@@ -12275,6 +12275,91 @@ function cleanupPrinterHandlers() {
   printerService.stopMonitoring();
   monitoringActive = false;
 }
+const { ipcMain: ipcMain$1 } = require("electron");
+const crypto$1 = require("crypto");
+const RAZORPAY_KEY_ID = "rzp_test_SRQucg5K4cBDAm";
+const RAZORPAY_KEY_SECRET = "KHaKRGnRZl97L84Yhxrs9PoY";
+function setupRazorpayHandlers() {
+  console.log("[Razorpay] Setting up handlers...");
+  console.log("[Razorpay] Key ID present:", true);
+  console.log("[Razorpay] Key Secret present:", true);
+  ipcMain$1.handle("razorpay:create-fee-order", async (_, params) => {
+    var _a;
+    try {
+      if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) ;
+      const amountInPaise = Math.round(params.amount * 100);
+      const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64");
+      const response = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Basic ${auth}`
+        },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          currency: "INR",
+          receipt: `fee_${params.shopId.slice(0, 8)}_${Date.now()}`,
+          notes: {
+            type: "platform_fee_payment",
+            shop_id: params.shopId,
+            shop_name: params.shopName,
+            unpaid_count: params.unpaidCount.toString()
+          }
+        })
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[Razorpay] Order creation failed:", errorData);
+        throw new Error(((_a = errorData == null ? void 0 : errorData.error) == null ? void 0 : _a.description) || "Failed to create Razorpay order");
+      }
+      const order = await response.json();
+      console.log("[Razorpay] Order created:", order.id);
+      return {
+        success: true,
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: RAZORPAY_KEY_ID
+      };
+    } catch (error) {
+      console.error("[Razorpay] Error creating order:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to create payment order"
+      };
+    }
+  });
+  ipcMain$1.handle("razorpay:verify-fee-payment", async (_, params) => {
+    try {
+      if (!RAZORPAY_KEY_SECRET) ;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = params;
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSignature = crypto$1.createHmac("sha256", RAZORPAY_KEY_SECRET).update(body).digest("hex");
+      const isValid = expectedSignature === razorpay_signature;
+      console.log("[Razorpay] Signature verification:", isValid ? "VALID" : "INVALID");
+      return {
+        success: true,
+        verified: isValid
+      };
+    } catch (error) {
+      console.error("[Razorpay] Error verifying payment:", error);
+      return {
+        success: false,
+        error: error.message || "Payment verification failed"
+      };
+    }
+  });
+  ipcMain$1.handle("razorpay:get-key-id", async () => {
+    return RAZORPAY_KEY_ID;
+  });
+  console.log("[Razorpay] Handlers registered successfully");
+}
+function cleanupRazorpayHandlers() {
+  ipcMain$1.removeHandler("razorpay:create-fee-order");
+  ipcMain$1.removeHandler("razorpay:verify-fee-payment");
+  ipcMain$1.removeHandler("razorpay:get-key-id");
+  console.log("[Razorpay] Handlers cleaned up");
+}
 const pdfPrinter = require("pdf-to-printer");
 async function printFile(job, fallbackPrinters = []) {
   if (!(job == null ? void 0 : job.filePath)) {
@@ -12488,6 +12573,7 @@ async function createWindow() {
     };
     setupAuthHandlers();
     setupPrinterHandlers(mainWindow);
+    setupRazorpayHandlers();
     mainWindow.once("ready-to-show", () => {
       mainWindow == null ? void 0 : mainWindow.show();
     });
@@ -12515,12 +12601,14 @@ app.whenReady().then(() => {
 });
 app.on("window-all-closed", () => {
   cleanupPrinterHandlers();
+  cleanupRazorpayHandlers();
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
 app.on("before-quit", () => {
   cleanupPrinterHandlers();
+  cleanupRazorpayHandlers();
 });
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);

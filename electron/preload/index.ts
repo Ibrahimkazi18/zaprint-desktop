@@ -68,6 +68,26 @@ const printerAPI = {
   }
 };
 
+// ================== RAZORPAY API ==================
+const razorpayAPI = {
+  // Create a Razorpay order for fee payment
+  createFeeOrder: (params: { amount: number; shopId: string; shopName: string; unpaidCount: number }) => {
+    console.log('💳 Creating Razorpay fee order...');
+    return ipcRenderer.invoke('razorpay:create-fee-order', params);
+  },
+
+  // Verify a Razorpay payment
+  verifyFeePayment: (params: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+    console.log('✅ Verifying Razorpay payment...');
+    return ipcRenderer.invoke('razorpay:verify-fee-payment', params);
+  },
+
+  // Get Razorpay key ID (public key)
+  getKeyId: () => {
+    return ipcRenderer.invoke('razorpay:get-key-id');
+  },
+};
+
 // ================== ELECTRON API ==================
 const electronAPI = {
   platform: process.platform,
@@ -89,6 +109,9 @@ try {
   
   contextBridge.exposeInMainWorld('electronAPI', electronAPI);
   console.log('✅ Electron API exposed to window.electronAPI');
+
+  contextBridge.exposeInMainWorld('razorpayAPI', razorpayAPI);
+  console.log('✅ Razorpay API exposed to window.razorpayAPI');
 
   contextBridge.exposeInMainWorld("electron", {
     saveFile: (fileName: string, buffer: ArrayBuffer) =>
