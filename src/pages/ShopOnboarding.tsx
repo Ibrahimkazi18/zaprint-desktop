@@ -272,8 +272,8 @@ import completeOnboarding from "@/backend/shops/completeOnboarding.ts"
         // 4️⃣ Mark onboarding complete
         await completeOnboarding(shopId)
 
-        // 5️⃣ Redirect to dashboard
-        navigate("/dashboard")
+        // 5️⃣ Redirect to payment onboarding
+        navigate("/payment-onboarding")
       } catch (err: any) {
         console.error(err)
         setError(err.message || "Something went wrong during onboarding")

@@ -11,6 +11,7 @@ import AuthPage from "./pages/AuthPage";
 
 // Lazy load all other pages
 const ShopOnboarding = lazy(() => import("./pages/ShopOnboarding"));
+const PaymentOnboarding = lazy(() => import("./pages/PaymentOnboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const PendingOrders = lazy(() => import("./pages/PendingOrders"));
 const Analytics = lazy(() => import("./pages/Analytics"));
@@ -47,6 +48,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AuthPage />} />
           <Route path="/onboarding" element={<ShopOnboarding />} />
+          <Route path="/payment-onboarding" element={<PaymentOnboarding />} />
           <Route
             path="/dashboard"
             element={

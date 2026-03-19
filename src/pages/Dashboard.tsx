@@ -170,6 +170,34 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* ── Payment Onboarding Banner ── */}
+        {shop && !shop.is_payment_onboarded && (
+          <div className="p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-xl">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10">
+                  <DollarSign className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-900 dark:text-amber-100">
+                    Complete Payment Setup
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                    Your shop is not visible on the website until payment onboarding is complete
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+                onClick={() => navigate("/payment-onboarding")}
+              >
+                Complete Setup
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ── Stats Row ── */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {/* Shop Status */}

@@ -23,9 +23,28 @@ export function subscribeToOrders(
       async (payload) => {
         const order = payload.new;
 
-        if (order.status !== "pending") return;
+        // Only process paid orders
+        if (order.status !== "paid") return;
 
         await processOrder(order.id, addToQueue);
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "orders",
+        filter: `shop_id=eq.${shopId}`,
+      },
+      async (payload) => {
+        const order = payload.new;
+        const oldOrder = payload.old;
+
+        // Process when status changes to 'paid'
+        if (order.status === "paid" && oldOrder.status !== "paid") {
+          await processOrder(order.id, addToQueue);
+        }
       }
     )
     .subscribe((status) => {
@@ -117,7 +136,7 @@ export async function fetchMissedOrders(
     .from("orders")
     .select("*")
     .eq("shop_id", shopId)
-    .in("status", ["pending"]) // only those not processed
+    .in("status", ["paid"]) // only process paid orders
     .order("created_at", { ascending: true });
 
   if (error) {
