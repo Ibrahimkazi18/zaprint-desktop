@@ -6,9 +6,11 @@
 const { ipcMain } = require('electron');
 const crypto = require('crypto');
 
-// Read Razorpay keys from environment variables (Vite replaces these at build/dev time)
-const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || process.env.VITE_RAZORPAY_KEY_ID || '';
-const RAZORPAY_KEY_SECRET = import.meta.env.VITE_RAZORPAY_KEY_SECRET || process.env.VITE_RAZORPAY_KEY_SECRET || '';
+// SECURITY: Read Razorpay keys from process.env (NOT VITE_ prefix).
+// Using VITE_ prefix would expose these keys in the client-side bundle.
+// The key ID is semi-public (used in checkout), but the secret must stay server-side.
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || '';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
 
 interface CreateFeeOrderParams {
   amount: number; // Amount in rupees
@@ -36,6 +38,20 @@ export function setupRazorpayHandlers() {
     try {
       if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
         throw new Error('Razorpay credentials not configured');
+      }
+
+      // SECURITY: Validate all input parameters
+      if (typeof params.amount !== 'number' || !Number.isFinite(params.amount) || params.amount <= 0 || params.amount > 1000000) {
+        throw new Error('Invalid amount: must be a positive number up to 10,00,000');
+      }
+      if (typeof params.shopId !== 'string' || params.shopId.length < 1 || params.shopId.length > 100) {
+        throw new Error('Invalid shopId');
+      }
+      if (typeof params.shopName !== 'string' || params.shopName.length < 1 || params.shopName.length > 200) {
+        throw new Error('Invalid shopName');
+      }
+      if (typeof params.unpaidCount !== 'number' || !Number.isInteger(params.unpaidCount) || params.unpaidCount < 0) {
+        throw new Error('Invalid unpaidCount');
       }
 
       const amountInPaise = Math.round(params.amount * 100);
@@ -99,6 +115,17 @@ export function setupRazorpayHandlers() {
 
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = params;
 
+      // SECURITY: Validate Razorpay ID formats before processing
+      if (typeof razorpay_order_id !== 'string' || !/^order_[A-Za-z0-9]{14,20}$/.test(razorpay_order_id)) {
+        throw new Error('Invalid Razorpay order ID format');
+      }
+      if (typeof razorpay_payment_id !== 'string' || !/^pay_[A-Za-z0-9]{14,20}$/.test(razorpay_payment_id)) {
+        throw new Error('Invalid Razorpay payment ID format');
+      }
+      if (typeof razorpay_signature !== 'string' || !/^[a-f0-9]{64}$/.test(razorpay_signature)) {
+        throw new Error('Invalid Razorpay signature format');
+      }
+
       // Generate expected signature
       const body = razorpay_order_id + '|' + razorpay_payment_id;
       const expectedSignature = crypto
@@ -106,7 +133,10 @@ export function setupRazorpayHandlers() {
         .update(body)
         .digest('hex');
 
-      const isValid = expectedSignature === razorpay_signature;
+      // SECURITY: Use timing-safe comparison to prevent timing attacks
+      const sigBuffer = Buffer.from(razorpay_signature, 'hex');
+      const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+      const isValid = sigBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(sigBuffer, expectedBuffer);
       console.log('[Razorpay] Signature verification:', isValid ? 'VALID' : 'INVALID');
 
       return {

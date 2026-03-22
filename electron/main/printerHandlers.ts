@@ -5,8 +5,11 @@ import { testPrintService } from './printer/TestPrintService';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Supabase client cache
+// SECURITY: VITE_SUPABASE_URL is public and safe for client-side via import.meta.env
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL 
-const SUPABASE_SERVICE_ROLE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+// SECURITY: Service role key uses process.env (NOT VITE_ prefix) to prevent
+// client-side exposure. This key bypasses all RLS and must stay in main process only.
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment');

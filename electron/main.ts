@@ -1,3 +1,5 @@
+import './envLoader';
+
 import { cleanupPrinterHandlers, setupPrinterHandlers } from "./main/printerHandlers";
 import { cleanupRazorpayHandlers, setupRazorpayHandlers } from "./main/razorpayHandlers";
 import { printFile } from "./main/printHandler";
@@ -46,6 +48,8 @@ async function createWindow() {
 
     // Setup auth and printer IPC handlers
     const setupAuthHandlers = () => {
+      const { safeStorage } = require('electron');
+      
       // Save session to disk
       ipcMain.handle('auth:save-session', async (_: any, session: any) => {
         try {
@@ -58,9 +62,17 @@ async function createWindow() {
             fs.mkdirSync(dir, { recursive: true });
           }
           
-          fs.writeFileSync(sessionPath, sessionData, 'utf8');
-          console.log('[Auth] Session saved successfully');
+          // SECURITY: Encrypt the session data before saving it to disk.
+          // This prevents malware or other users from stealing the JWT token.
+          if (safeStorage.isEncryptionAvailable()) {
+            const encryptedData = safeStorage.encryptString(sessionData);
+            fs.writeFileSync(sessionPath, encryptedData);
+          } else {
+            console.warn('[Security] safeStorage not available, saving session in plain text');
+            fs.writeFileSync(sessionPath, sessionData, 'utf8');
+          }
           
+          console.log('[Auth] Session saved successfully');
           return { success: true };
         } catch (error: any) {
           console.error('[Auth] Error saving session:', error);
@@ -78,13 +90,28 @@ async function createWindow() {
             return null;
           }
           
-          const sessionData = fs.readFileSync(sessionPath, 'utf8');
-          const session = JSON.parse(sessionData);
+          let sessionData;
+          if (safeStorage.isEncryptionAvailable()) {
+            const encryptedData = fs.readFileSync(sessionPath);
+            try {
+              sessionData = safeStorage.decryptString(encryptedData);
+            } catch (decryptError) {
+              // Fallback in case it was previously saved as plain text
+              console.warn('[Security] Failed to decrypt session, trying as plain text');
+              sessionData = fs.readFileSync(sessionPath, 'utf8');
+            }
+          } else {
+            sessionData = fs.readFileSync(sessionPath, 'utf8');
+          }
           
+          const session = JSON.parse(sessionData);
           console.log('[Auth] Session loaded successfully');
           return session;
         } catch (error) {
           console.error('[Auth] Error loading session:', error);
+          // If the file is deeply corrupted or unparseable, delete it
+          const sessionPath = getSessionPath();
+          if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath);
           return null;
         }
       });

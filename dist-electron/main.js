@@ -26,6 +26,35 @@ function _interopNamespaceDefault(e) {
   return Object.freeze(n);
 }
 const path__namespace = /* @__PURE__ */ _interopNamespaceDefault(path$1);
+const _fs = require("fs");
+const _path = require("path");
+function loadEnvFile() {
+  const envPaths = [
+    _path.resolve(process.cwd(), ".env"),
+    _path.resolve(__dirname, "..", ".env"),
+    _path.resolve(__dirname, ".env")
+  ];
+  for (const envPath of envPaths) {
+    if (_fs.existsSync(envPath)) {
+      const content = _fs.readFileSync(envPath, "utf8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIndex = trimmed.indexOf("=");
+        if (eqIndex === -1) continue;
+        const key = trimmed.slice(0, eqIndex).trim();
+        const value = trimmed.slice(eqIndex + 1).trim();
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+      console.log("[Security] Loaded .env from:", envPath);
+      return;
+    }
+  }
+  console.warn("[Security] No .env file found — secret keys may be missing");
+}
+loadEnvFile();
 const execAsync = util.promisify(child_process.exec);
 class PrinterService {
   constructor() {
@@ -4904,8 +4933,8 @@ var StorageFileApi = class {
       }
       if (fileOptions === null || fileOptions === void 0 ? void 0 : fileOptions.headers) headers = _objectSpread2$1(_objectSpread2$1({}, headers), fileOptions.headers);
       const cleanPath = _this._removeEmptyFolders(path2);
-      const _path = _this._getFinalPath(cleanPath);
-      const data = await (method == "PUT" ? put : post$1)(_this.fetch, `${_this.url}/object/${_path}`, body, _objectSpread2$1({ headers }, (options === null || options === void 0 ? void 0 : options.duplex) ? { duplex: options.duplex } : {}));
+      const _path2 = _this._getFinalPath(cleanPath);
+      const data = await (method == "PUT" ? put : post$1)(_this.fetch, `${_this.url}/object/${_path2}`, body, _objectSpread2$1({ headers }, (options === null || options === void 0 ? void 0 : options.duplex) ? { duplex: options.duplex } : {}));
       return {
         data: {
           path: cleanPath,
@@ -5004,8 +5033,8 @@ var StorageFileApi = class {
   async uploadToSignedUrl(path2, token, fileBody, fileOptions) {
     var _this3 = this;
     const cleanPath = _this3._removeEmptyFolders(path2);
-    const _path = _this3._getFinalPath(cleanPath);
-    const url2 = new URL(_this3.url + `/object/upload/sign/${_path}`);
+    const _path2 = _this3._getFinalPath(cleanPath);
+    const url2 = new URL(_this3.url + `/object/upload/sign/${_path2}`);
     url2.searchParams.set("token", token);
     try {
       let body;
@@ -5072,10 +5101,10 @@ var StorageFileApi = class {
   async createSignedUploadUrl(path2, options) {
     var _this4 = this;
     try {
-      let _path = _this4._getFinalPath(path2);
+      let _path2 = _this4._getFinalPath(path2);
       const headers = _objectSpread2$1({}, _this4.headers);
       if (options === null || options === void 0 ? void 0 : options.upsert) headers["x-upsert"] = "true";
-      const data = await post$1(_this4.fetch, `${_this4.url}/object/upload/sign/${_path}`, {}, { headers });
+      const data = await post$1(_this4.fetch, `${_this4.url}/object/upload/sign/${_path2}`, {}, { headers });
       const url2 = new URL(_this4.url + data.url);
       const token = url2.searchParams.get("token");
       if (!token) throw new StorageError("No token returned by API");
@@ -5293,8 +5322,8 @@ var StorageFileApi = class {
   async createSignedUrl(path2, expiresIn, options) {
     var _this8 = this;
     try {
-      let _path = _this8._getFinalPath(path2);
-      let data = await post$1(_this8.fetch, `${_this8.url}/object/sign/${_path}`, _objectSpread2$1({ expiresIn }, (options === null || options === void 0 ? void 0 : options.transform) ? { transform: options.transform } : {}), { headers: _this8.headers });
+      let _path2 = _this8._getFinalPath(path2);
+      let data = await post$1(_this8.fetch, `${_this8.url}/object/sign/${_path2}`, _objectSpread2$1({ expiresIn }, (options === null || options === void 0 ? void 0 : options.transform) ? { transform: options.transform } : {}), { headers: _this8.headers });
       const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `&download=${options.download === true ? "" : options.download}` : "";
       data = { signedUrl: encodeURI(`${_this8.url}${data.signedURL}${downloadQueryParam}`) };
       return {
@@ -5411,8 +5440,8 @@ var StorageFileApi = class {
     const renderPath = typeof (options === null || options === void 0 ? void 0 : options.transform) !== "undefined" ? "render/image/authenticated" : "object";
     const transformationQuery = this.transformOptsToQueryString((options === null || options === void 0 ? void 0 : options.transform) || {});
     const queryString = transformationQuery ? `?${transformationQuery}` : "";
-    const _path = this._getFinalPath(path2);
-    const downloadFn = () => get(this.fetch, `${this.url}/${renderPath}/${_path}${queryString}`, {
+    const _path2 = this._getFinalPath(path2);
+    const downloadFn = () => get(this.fetch, `${this.url}/${renderPath}/${_path2}${queryString}`, {
       headers: this.headers,
       noResolveJson: true
     });
@@ -5435,10 +5464,10 @@ var StorageFileApi = class {
   */
   async info(path2) {
     var _this10 = this;
-    const _path = _this10._getFinalPath(path2);
+    const _path2 = _this10._getFinalPath(path2);
     try {
       return {
-        data: recursiveToCamel(await get(_this10.fetch, `${_this10.url}/object/info/${_path}`, { headers: _this10.headers })),
+        data: recursiveToCamel(await get(_this10.fetch, `${_this10.url}/object/info/${_path2}`, { headers: _this10.headers })),
         error: null
       };
     } catch (error) {
@@ -5467,9 +5496,9 @@ var StorageFileApi = class {
   */
   async exists(path2) {
     var _this11 = this;
-    const _path = _this11._getFinalPath(path2);
+    const _path2 = _this11._getFinalPath(path2);
     try {
-      await head(_this11.fetch, `${_this11.url}/object/${_path}`, { headers: _this11.headers });
+      await head(_this11.fetch, `${_this11.url}/object/${_path2}`, { headers: _this11.headers });
       return {
         data: true,
         error: null
@@ -5537,7 +5566,7 @@ var StorageFileApi = class {
   * ```
   */
   getPublicUrl(path2, options) {
-    const _path = this._getFinalPath(path2);
+    const _path2 = this._getFinalPath(path2);
     const _queryString = [];
     const downloadQueryParam = (options === null || options === void 0 ? void 0 : options.download) ? `download=${options.download === true ? "" : options.download}` : "";
     if (downloadQueryParam !== "") _queryString.push(downloadQueryParam);
@@ -5546,7 +5575,7 @@ var StorageFileApi = class {
     if (transformationQuery !== "") _queryString.push(transformationQuery);
     let queryString = _queryString.join("&");
     if (queryString !== "") queryString = `?${queryString}`;
-    return { data: { publicUrl: encodeURI(`${this.url}/${renderPath}/public/${_path}${queryString}`) } };
+    return { data: { publicUrl: encodeURI(`${this.url}/${renderPath}/public/${_path2}${queryString}`) } };
   }
   /**
   * Deletes files within the same bucket
@@ -12104,7 +12133,10 @@ function shouldShowDeprecationWarning() {
 }
 if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
 const SUPABASE_URL = "https://mrqsiucmkonrfmikecxm.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ycXNpdWNta29ucmZtaWtlY3htIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIxMDYzMSwiZXhwIjoyMDgxNzg2NjMxfQ.h8AX6ZXrrvsLmkqKjTbRqp7plcr33brduvJcd-8u11U";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment");
+}
 const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY
@@ -12277,16 +12309,30 @@ function cleanupPrinterHandlers() {
 }
 const { ipcMain: ipcMain$1 } = require("electron");
 const crypto$1 = require("crypto");
-const RAZORPAY_KEY_ID = "rzp_test_SRQucg5K4cBDAm";
-const RAZORPAY_KEY_SECRET = "KHaKRGnRZl97L84Yhxrs9PoY";
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
 function setupRazorpayHandlers() {
   console.log("[Razorpay] Setting up handlers...");
-  console.log("[Razorpay] Key ID present:", true);
-  console.log("[Razorpay] Key Secret present:", true);
+  console.log("[Razorpay] Key ID present:", !!RAZORPAY_KEY_ID);
+  console.log("[Razorpay] Key Secret present:", !!RAZORPAY_KEY_SECRET);
   ipcMain$1.handle("razorpay:create-fee-order", async (_, params) => {
     var _a;
     try {
-      if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) ;
+      if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+        throw new Error("Razorpay credentials not configured");
+      }
+      if (typeof params.amount !== "number" || !Number.isFinite(params.amount) || params.amount <= 0 || params.amount > 1e6) {
+        throw new Error("Invalid amount: must be a positive number up to 10,00,000");
+      }
+      if (typeof params.shopId !== "string" || params.shopId.length < 1 || params.shopId.length > 100) {
+        throw new Error("Invalid shopId");
+      }
+      if (typeof params.shopName !== "string" || params.shopName.length < 1 || params.shopName.length > 200) {
+        throw new Error("Invalid shopName");
+      }
+      if (typeof params.unpaidCount !== "number" || !Number.isInteger(params.unpaidCount) || params.unpaidCount < 0) {
+        throw new Error("Invalid unpaidCount");
+      }
       const amountInPaise = Math.round(params.amount * 100);
       const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64");
       const response = await fetch("https://api.razorpay.com/v1/orders", {
@@ -12331,11 +12377,24 @@ function setupRazorpayHandlers() {
   });
   ipcMain$1.handle("razorpay:verify-fee-payment", async (_, params) => {
     try {
-      if (!RAZORPAY_KEY_SECRET) ;
+      if (!RAZORPAY_KEY_SECRET) {
+        throw new Error("Razorpay secret key not configured");
+      }
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = params;
+      if (typeof razorpay_order_id !== "string" || !/^order_[A-Za-z0-9]{14,20}$/.test(razorpay_order_id)) {
+        throw new Error("Invalid Razorpay order ID format");
+      }
+      if (typeof razorpay_payment_id !== "string" || !/^pay_[A-Za-z0-9]{14,20}$/.test(razorpay_payment_id)) {
+        throw new Error("Invalid Razorpay payment ID format");
+      }
+      if (typeof razorpay_signature !== "string" || !/^[a-f0-9]{64}$/.test(razorpay_signature)) {
+        throw new Error("Invalid Razorpay signature format");
+      }
       const body = razorpay_order_id + "|" + razorpay_payment_id;
       const expectedSignature = crypto$1.createHmac("sha256", RAZORPAY_KEY_SECRET).update(body).digest("hex");
-      const isValid = expectedSignature === razorpay_signature;
+      const sigBuffer = Buffer.from(razorpay_signature, "hex");
+      const expectedBuffer = Buffer.from(expectedSignature, "hex");
+      const isValid = sigBuffer.length === expectedBuffer.length && crypto$1.timingSafeEqual(sigBuffer, expectedBuffer);
       console.log("[Razorpay] Signature verification:", isValid ? "VALID" : "INVALID");
       return {
         success: true,
@@ -12350,7 +12409,7 @@ function setupRazorpayHandlers() {
     }
   });
   ipcMain$1.handle("razorpay:get-key-id", async () => {
-    return RAZORPAY_KEY_ID;
+    return RAZORPAY_KEY_ID || null;
   });
   console.log("[Razorpay] Handlers registered successfully");
 }
@@ -12477,18 +12536,41 @@ async function printPDF(filePath, printerName, copies) {
     throw new Error(`PDF print failed: ${error.message || "unknown error"}`);
   }
 }
+function sanitizeFileName(fileName) {
+  const baseName = path$1.basename(fileName);
+  const sanitized = baseName.replace(/[^a-zA-Z0-9._\-\s]/g, "_");
+  if (!sanitized || sanitized === "." || sanitized === "..") {
+    return `file_${Date.now()}`;
+  }
+  if (sanitized.length > 255) {
+    const ext = path$1.extname(sanitized);
+    return sanitized.slice(0, 255 - ext.length) + ext;
+  }
+  return sanitized;
+}
 function saveFile(fileName, buffer) {
+  const safeName = sanitizeFileName(fileName);
   const folder = path$1.join(process.cwd(), "print-queue");
   if (!fs$1.existsSync(folder)) {
     fs$1.mkdirSync(folder);
   }
-  const filePath = path$1.join(folder, fileName);
+  const filePath = path$1.join(folder, safeName);
+  const resolvedPath = path$1.resolve(filePath);
+  const resolvedFolder = path$1.resolve(folder);
+  if (!resolvedPath.startsWith(resolvedFolder + path$1.sep) && resolvedPath !== resolvedFolder) {
+    throw new Error("Invalid file path: attempted path traversal");
+  }
   fs$1.writeFileSync(filePath, Buffer.from(buffer));
   return filePath;
 }
 function deleteFile(filePath) {
-  if (fs$1.existsSync(filePath)) {
-    fs$1.unlinkSync(filePath);
+  const folder = path$1.resolve(process.cwd(), "print-queue");
+  const resolvedPath = path$1.resolve(filePath);
+  if (!resolvedPath.startsWith(folder + path$1.sep) && resolvedPath !== folder) {
+    throw new Error("Invalid file path: attempted path traversal");
+  }
+  if (fs$1.existsSync(resolvedPath)) {
+    fs$1.unlinkSync(resolvedPath);
   }
 }
 const { ipcMain, app: electronApp } = require("electron");
@@ -12524,6 +12606,7 @@ async function createWindow() {
       return path.join(userDataPath, "session.json");
     };
     const setupAuthHandlers = () => {
+      const { safeStorage } = require("electron");
       ipcMain.handle("auth:save-session", async (_, session) => {
         try {
           const sessionPath = getSessionPath();
@@ -12532,7 +12615,13 @@ async function createWindow() {
           if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
           }
-          fs.writeFileSync(sessionPath, sessionData, "utf8");
+          if (safeStorage.isEncryptionAvailable()) {
+            const encryptedData = safeStorage.encryptString(sessionData);
+            fs.writeFileSync(sessionPath, encryptedData);
+          } else {
+            console.warn("[Security] safeStorage not available, saving session in plain text");
+            fs.writeFileSync(sessionPath, sessionData, "utf8");
+          }
           console.log("[Auth] Session saved successfully");
           return { success: true };
         } catch (error) {
@@ -12547,12 +12636,25 @@ async function createWindow() {
             console.log("[Auth] No session file found");
             return null;
           }
-          const sessionData = fs.readFileSync(sessionPath, "utf8");
+          let sessionData;
+          if (safeStorage.isEncryptionAvailable()) {
+            const encryptedData = fs.readFileSync(sessionPath);
+            try {
+              sessionData = safeStorage.decryptString(encryptedData);
+            } catch (decryptError) {
+              console.warn("[Security] Failed to decrypt session, trying as plain text");
+              sessionData = fs.readFileSync(sessionPath, "utf8");
+            }
+          } else {
+            sessionData = fs.readFileSync(sessionPath, "utf8");
+          }
           const session = JSON.parse(sessionData);
           console.log("[Auth] Session loaded successfully");
           return session;
         } catch (error) {
           console.error("[Auth] Error loading session:", error);
+          const sessionPath = getSessionPath();
+          if (fs.existsSync(sessionPath)) fs.unlinkSync(sessionPath);
           return null;
         }
       });
