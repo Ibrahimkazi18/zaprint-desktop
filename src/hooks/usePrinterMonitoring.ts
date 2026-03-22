@@ -25,7 +25,7 @@ interface SystemPrinter {
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY
 
-export function usePrinterMonitoring(shopId?: string) {
+export function usePrinterMonitoring(shopId?: string, options?: { autoStart?: boolean }) {
   const { user } = useAuth();
   const [printers, setPrinters] = useState<AppPrinter[]>([]);
   const [systemPrinters, setSystemPrinters] = useState<SystemPrinter[]>([]);
@@ -209,16 +209,16 @@ export function usePrinterMonitoring(shopId?: string) {
 
   // Auto-start monitoring when component mounts
   useEffect(() => {
-    if (shopId && user && !monitoringStartedRef.current) {
+    if (options?.autoStart && shopId && user && !monitoringStartedRef.current) {
       startMonitoring({ silent: true });
     }
 
     return () => {
-      if (monitoringStartedRef.current) {
+      if (options?.autoStart && monitoringStartedRef.current) {
         stopMonitoring();
       }
     };
-  }, [shopId, user, startMonitoring, stopMonitoring]);
+  }, [shopId, user, startMonitoring, stopMonitoring, options?.autoStart]);
 
   return {
     printers,

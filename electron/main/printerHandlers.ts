@@ -248,6 +248,26 @@ async function updatePrintersInDatabase(printers: AppPrinter[]) {
     if (error) {
       console.error('[DB] Error updating printers:', error);
     }
+
+    // Auto-update shop status based on whether printers are online
+    const hasOnlinePrinter = printers.some(p => p.status === 'online');
+    const shopId = printers[0].shop_id;
+    
+    // First, verify current shop status so we only update if needed.
+    // Error could be caused if shop is closed manually by owner, but let's assume auto-closure
+    // Or we just update `status` to 'open' / 'closed'
+    const newStatus = hasOnlinePrinter ? 'open' : 'closed';
+    
+    // We only update if it is different, minimizing queries, but upsert is fine too.
+    const { error: shopError } = await supabase
+      .from('shops')
+      .update({ status: newStatus })
+      .eq('id', shopId);
+      
+    if (shopError) {
+       console.error('[DB] Error auto-updating shop status based on printers:', shopError);
+    }
+
   } catch (error) {
     console.error('[DB] Error updating printers:', error);
   }

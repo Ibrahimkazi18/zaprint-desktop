@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 
 // Eager load only the auth page since it's the entry point
 import AuthPage from "./pages/AuthPage";
+import GlobalSystemServices from "./components/GlobalSystemServices";
 
 // Lazy load all other pages
 const ShopOnboarding = lazy(() => import("./pages/ShopOnboarding"));
@@ -39,7 +40,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <PageLoader />;
   }
 
-  return user ? <>{children}</> : <Navigate to="/" replace />;
+  return user ? (
+    <>
+      <GlobalSystemServices />
+      {children}
+    </>
+  ) : (
+    <Navigate to="/" replace />
+  );
 }
 
 function App() {

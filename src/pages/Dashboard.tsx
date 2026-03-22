@@ -44,13 +44,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useShopDashboard } from "@/hooks/useShopDashboard";
-import {
-  fetchMissedOrders,
-  subscribeToOrders,
-} from "@/backend/realtime/subscribeToOrders";
 import { useEffect, useState } from "react";
-import { supabase } from "@/auth/supabase";
-import { usePrintQueue } from "@/hooks/usePrintQueue";
 import { useLiveQueue } from "@/hooks/useLiveQueue";
 import fetchDashboardStats, {
   DashboardStats,
@@ -63,9 +57,7 @@ export default function Dashboard() {
 
   const { shop, printers, loading } = useShopDashboard();
   useFeeReminder();
-  const { addJob: addToQueue } = usePrintQueue(printers, {
-    detectSystemPrinters: false,
-  });
+  
   const queue = useLiveQueue();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -86,15 +78,6 @@ export default function Dashboard() {
     };
     loadStats();
   }, [shop?.id]);
-
-  useEffect(() => {
-    if (!shop?.id) return;
-    fetchMissedOrders(shop.id, addToQueue);
-    const channel = subscribeToOrders(shop.id, addToQueue);
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [shop?.id, addToQueue]);
 
   const fetchQueue = async () => {
     console.log("Queue is live - no manual refresh needed");

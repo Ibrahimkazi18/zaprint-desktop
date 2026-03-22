@@ -12299,6 +12299,13 @@ async function updatePrintersInDatabase(printers) {
     if (error) {
       console.error("[DB] Error updating printers:", error);
     }
+    const hasOnlinePrinter = printers.some((p) => p.status === "online");
+    const shopId = printers[0].shop_id;
+    const newStatus = hasOnlinePrinter ? "open" : "closed";
+    const { error: shopError } = await supabase.from("shops").update({ status: newStatus }).eq("id", shopId);
+    if (shopError) {
+      console.error("[DB] Error auto-updating shop status based on printers:", shopError);
+    }
   } catch (error) {
     console.error("[DB] Error updating printers:", error);
   }
