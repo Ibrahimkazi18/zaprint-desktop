@@ -211,8 +211,10 @@ async function maybeCompleteOrder(job: PrintQueueJob) {
   if (!shouldComplete) return;
 
   try {
-    await updateOrderStatus(job.orderId, "completed");
-    console.log("[PrintQueue] Order marked completed", job.orderId);
+    // Mark as "ready" (not "completed") so the order appears in Pending Orders
+    // for OTP-based pickup verification. The DB trigger will auto-generate the OTP.
+    await updateOrderStatus(job.orderId, "ready");
+    console.log("[PrintQueue] Order marked ready for pickup", job.orderId);
   } catch (error) {
     console.error("[PrintQueue] Failed to update order status", error);
   }
